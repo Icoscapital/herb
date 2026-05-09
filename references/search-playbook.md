@@ -59,7 +59,10 @@ Queries (standard: pick 2–3 / deep: run all):
 - Sofinnova Partners, Ctrl+Alt, Clean Energy Ventures
 - EQT Ventures, Northzone, Creandum (Nordics generalist)
 
-Fetch portfolio pages → extract company names/links → fetch each company site for full profile.
+**VC Roster** (always available in both modes):
+Load `references/vc-roster.xlsx` (VCs sheet). Contains 87 VCs tagged as "YES" (core fit) or "MAYBE" (generalist deep tech with some relevant exposure) across Germany, UK, France. For each VC in the roster: fetch portfolio page → extract company names/links → fetch each company site for full profile. Add source = "VC Roster: [VC name]" for all rows from this source.
+
+Fetch portfolio pages (all sources) → extract company names/links → fetch each company site for full profile.
 
 ---
 

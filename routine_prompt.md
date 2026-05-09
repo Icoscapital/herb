@@ -127,8 +127,10 @@ Reply, status `WAITING_LEARN_FEEDBACK`. Append the feedback to `references/searc
 
 Read `references/search-playbook.md` for source list and query patterns. Read `references/field-spec.md` for Level 1 column schema.
 
-**STANDARD mode:** Sources 1–5 + any author intake files present in `runs/[slug]/intake/`.
-**DEEP mode:** Sources 1–10 + intake files. Expect 3–5 hours; if time-budget exceeded mid-tick, persist progress and resume next tick.
+**STANDARD mode:** Sources 1–5 + VC Roster + any author intake files present in `runs/[slug]/intake/`.
+**DEEP mode:** Sources 1–10 + VC Roster + intake files. Expect 3–5 hours; if time-budget exceeded mid-tick, persist progress and resume next tick.
+
+The VC Roster (`references/vc-roster.xlsx`, VCs sheet) is always available and should be crawled in all modes. It contains 87 pre-qualified VCs (Germany/UK/France) with demonstrated interest in climate, food, chemicals, or industrial/AI tech.
 
 Spawn one sub-agent per source via the Task tool (subagent_type=`general-purpose`, model=`haiku`). Each search agent's prompt MUST end with:
 
