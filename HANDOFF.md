@@ -48,25 +48,11 @@ These are the same values as `~/.dropin-pipedrive/config.json` and `~/IcosCapita
 - ✅ `scripts/email_check.py` — mailbox poll, env-var-based auth
 - ✅ `scripts/email_send.py` — T1–T8 sender, env-var-based auth
 - ✅ `scripts/run_state.py` — read/write run-state.md as repo files
+- ✅ `scripts/longlist_builder.py` — full Excel + docx builder, scorecard parser handles all 3 agent-output format variations (inline / shorthand / table); 10/10 today's scorecards parse cleanly with score, all gates, all 3 LP scores
 
 ## What's left to build
 
-### 1. `scripts/longlist_builder.py` (~250 lines)
-
-Port from today's manual run scripts:
-- `~/.dropin-pipedrive/_build_v2.py` — v1→v2 merger with Comp Focus column
-- `~/.dropin-pipedrive/_finalize_run.py` — Sheet 2 builder + final docx (already deleted; reference today's run output structure: `~/IcosCapital/.../herb/runs/2026-05-07-enzyme-design/final-longlist-enzyme-design.xlsx` and `final-summary-enzyme-design.docx`)
-
-Functions to expose:
-- `build_longlist_v1(slug, rows: list[dict]) -> Path` — Sheet 1 with all field-spec.md columns, Sheet 2 placeholder
-- `build_longlist_vN(slug, n: int, base_v: int, new_rows: list[dict]) -> Path` — preserve prior row order, append new
-- `tag_comp_focus(rows) -> rows` — adds HIGH/MED/LOW from tech-line keyword matching (algorithm in `_build_v2.py`)
-- `build_final_longlist(slug, scorecards: list[dict]) -> Path` — populate Sheet 2 with parsed scorecards
-- `build_final_summary_docx(slug, summary_data: dict) -> Path` — cover, top picks, methodology
-
-Each should commit its output via `git_state.commit_and_push` so the team sees results immediately.
-
-### 2. `routine_prompt.md` (~300 lines, the "brain")
+### 1. `routine_prompt.md` (~300 lines, the "brain")
 
 The full prompt registered with the schedule skill. Encodes the herb protocol entirely. Must be self-contained because each routine tick is a fresh sandbox.
 
@@ -102,7 +88,7 @@ python -m scripts.git_state commit "tick: [summary]"
 
 ⚠ Important: routine sandboxes by default have allowed_tools = [Bash, Read, Write, Edit, Glob, Grep]. To spawn parallel search agents and parallel icos-fit-evals (Phase 2 / Phase 5), add `Task` to the allowed_tools list when calling `RemoteTrigger create`. If the runtime doesn't support sub-agents inside routines, fall back to serial execution (slower but simpler).
 
-### 3. Local end-to-end test
+### 2. Local end-to-end test
 
 Before registering the routine:
 
@@ -118,7 +104,7 @@ python -c "from scripts import run_state; print(run_state.list_active())"
 
 Once those pass, simulate one tick by running the routine_prompt.md instructions manually in Claude Code from the repo root — verify it pulls, processes, commits, pushes correctly.
 
-### 4. Register the routine via the schedule skill
+### 3. Register the routine via the schedule skill
 
 ```
 /schedule
@@ -131,7 +117,7 @@ Settings:
 - Allowed tools: `Bash, Read, Write, Edit, Glob, Grep, Task` (add Task for sub-agents)
 - Prompt: contents of `routine_prompt.md`
 
-### 5. Smoke test the live routine
+### 4. Smoke test the live routine
 
 Send a test "Hello Herb, let's go fetch — test mandate" from your @icoscapital.com address. Wait ≤1 hour. Verify:
 - T2 mandate confirmation email arrives
