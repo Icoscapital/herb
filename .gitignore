@@ -15,8 +15,7 @@ venv/
 .env
 *.local
 
-# Run artifacts (these are committed via Graph to OneDrive, not git)
-runs/
+# poll-log only — run/ folder is intentionally tracked (option C: state lives in repo)
 poll-log.txt
 
 # OS

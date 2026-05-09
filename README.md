@@ -8,7 +8,7 @@ Cloud-hosted version of Herb. Runs as an [Anthropic Routine](https://claude.ai/c
 |---|---|
 | **Execution** | Anthropic Routine — fresh sandbox per tick, clones this repo |
 | **Mailbox** | Microsoft Graph API (herb@icoscapital.com) — see `scripts/email_check.py` / `email_send.py` |
-| **Run state + intake files + longlists** | Microsoft Graph API → OneDrive paths the team already sees (`/IcosCapital/.../herb/`). Code in `scripts/graph_io.py` + `scripts/run_state.py` |
+| **Run state + intake files + longlists** | Committed to this repo under `runs/[slug]/`. Each tick pulls latest, runs logic, commits any changes, pushes. Team browses via github.com/Icoscapital/herb/tree/main/runs. (We chose this over SharePoint/OneDrive to avoid an Azure admin permission grant.) |
 | **Pipedrive** | Inline REST via `scripts/pipedrive_client.py` (no MCP server, no Railway) |
 | **Cron** | `0 * * * *` UTC — every hour on the hour |
 | **Credentials** | Embedded in the routine prompt (private to authorized routine viewers) |
@@ -28,10 +28,19 @@ herb/
 │   ├── schema_constants.py    # Pipedrive field IDs / option IDs
 │   ├── longlist_builder.py    # Excel + docx builder (Phase 4 + 5 outputs)
 │   └── herb_run.py            # orchestrator — main entry point the routine calls
-└── references/
-    ├── email-templates.md     # T1–T8
-    ├── search-playbook.md     # per-source query patterns
-    └── field-spec.md          # Level 1 + Level 2 field definitions
+├── references/
+│   ├── email-templates.md     # T1–T8
+│   ├── search-playbook.md     # per-source query patterns
+│   └── field-spec.md          # Level 1 + Level 2 field definitions
+└── runs/                       # state lives here, committed each tick
+    └── [YYYY-MM-DD-slug]/
+        ├── run-state.md
+        ├── intake/             # author-attached PitchBook/Pipedrive/list/check-sites files
+        ├── longlist-v1.xlsx
+        ├── longlist-v2.xlsx
+        ├── final-longlist-[slug].xlsx
+        ├── final-summary-[slug].docx
+        └── evals/              # icos-fit-eval scorecards, [Company]-YYYY-MM-DD.md
 ```
 
 ## Running locally (for testing)
