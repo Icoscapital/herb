@@ -59,8 +59,10 @@ Queries (standard: pick 2–3 / deep: run all):
 - Sofinnova Partners, Ctrl+Alt, Clean Energy Ventures
 - EQT Ventures, Northzone, Creandum (Nordics generalist)
 
-**VC Roster** (always available in both modes):
-Load `references/vc-roster.xlsx` (VCs sheet). Contains 87 VCs tagged as "YES" (core fit) or "MAYBE" (generalist deep tech with some relevant exposure) across Germany, UK, France. For each VC in the roster: fetch portfolio page → extract company names/links → fetch each company site for full profile. Add source = "VC Roster: [VC name]" for all rows from this source.
+**VC Rosters** (tiered by search mode):
+- **STANDARD mode:** Load `references/vc-roster.xlsx` ("VCs" sheet, 87 VCs). Icos-curated deep-tech + climate/food/chem/industrial-AI funds from Germany, UK, France.
+- **DEEP mode:** Load `references/vc-roster.xlsx` ("VCs (deep)" sheet, 350 investors). Expanded with top PitchBook investors: 200 climate/food/chem/industry-AI + 150 deep-tech generalist by AUM.
+For each VC: fetch portfolio page → extract company names/links → fetch each company site for full profile. Add source = "VC Roster: [VC name]" for all rows from this source.
 
 Fetch portfolio pages (all sources) → extract company names/links → fetch each company site for full profile.
 
