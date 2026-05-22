@@ -187,3 +187,23 @@ To proceed, please reply with one of:
 I'll wait for your reply before doing anything further.
 
 Herb
+
+---
+
+## T9 — Data attachment confirmation (anytime during a run)
+
+**Subject:** Herb — Data Received — [slug]
+**To:** [author]
+
+Hi [first name],
+
+Received your [data type: companies / investors / keywords / market research]:
+
+- **File:** [filename]
+- **Rows:** [N] [data items]
+- **Mandate fit:** [detected relevance to current run theme]
+- **Action:** [integrated into intake / merged into VC roster / added to research notes]
+
+I'll use this in the next search iteration or Pipedrive sweep.
+
+Herb

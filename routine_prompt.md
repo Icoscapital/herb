@@ -62,7 +62,7 @@ For each email, capture: `id`, `from_email`, `subject`, `body_text`, `has_attach
 
 ## STEP 2 — Route each email
 
-Determine the route by inspecting body + sender + active run-state. There are seven routes; check in this order and dispatch to the matching phase.
+Determine the route by inspecting body + sender + active run-state. There are nine routes; check in this order and dispatch to the matching phase.
 
 ### Route A — Unauthorized sender
 Sender does NOT end in `@icoscapital.com` → send T1 and skip. Do not create a run, do not save attachments.
@@ -104,6 +104,22 @@ Reply to T5, status `WAITING_PIPEDRIVE_APPROVAL`. Parse approved companies/rows 
 
 ### Route H — Learning reply
 Reply, status `WAITING_LEARN_FEEDBACK`. Append the feedback to `references/search-playbook.md` under a new `## Run notes — [slug] — [date]` heading. If the feedback contains scoring corrections, also write a separate file `references/icos-fit-feedback-[date].md` with the corrections (the local icosfit-feedback skill does the merge; cloud just records). Set status `COMPLETED`.
+
+### Route I — Data attachment (anytime)
+Email has attachments AND an active run exists (any status). Flexible intake for company lists, investor rosters, market research, or any structured data. No filename pattern required — herb detects structure automatically.
+
+**Processing:**
+1. Extract attachment via `get_attachments(message_id)` — supports .xlsx, .csv, .json
+2. Parse structure: detect if it's companies (has columns like name/domain/stage), investors (has VC names/sectors), keywords (simple list), or market data
+3. Screen for mandate relevance: if companies/investors, cross-check against active run theme/keywords
+4. Integrate:
+   - Companies: add to current longlist in `intake/` folder, tag with source, re-parse for dedup on next Phase 2 iteration
+   - Investors: merge into `references/vc-roster.xlsx` if screening passes, or save to `runs/[slug]/intake/added-vcs.csv`
+   - Keywords/market data: append to `runs/[slug]/run-state.md` under `additional_research` field
+5. Update run-state with `data_input_received: [filename] | [row_count] | [detected_type]`
+6. Send confirmation email to the author with a brief summary (row count, mandate fit score, integration status)
+
+**Key:** No naming convention required. Herb infers type from structure. Supports multiple attachments in one email.
 
 ---
 
@@ -215,9 +231,18 @@ Commit covers the poll-log too. End the tick.
 
 ---
 
-## Email templates (T1–T8)
+## Email templates (T1–T9)
 
 Full text lives in `references/email-templates.md`. Substitute `[slug]`, `[first name]`, `[N]`, etc. before sending. Always send plain-text (Graph `contentType: Text`).
+- **T1**: Unauthorized sender notification
+- **T2**: Mandate confirmation (Phase 0)
+- **T3**: Attachment receipt (Route D)
+- **T4**: Long list draft (Phase 3)
+- **T5**: Final longlist (Phase 5)
+- **T6**: Pipedrive entry confirmation (Phase 6)
+- **T7**: Learning request (after Phase 6)
+- **T8**: Max rounds reached (Route F fallback)
+- **T9**: Data attachment confirmation (Route I)
 
 ---
 
