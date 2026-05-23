@@ -41,11 +41,7 @@ If `git_state pull` fails (non-fast-forward), abort the tick — a human pushed 
 python -m scripts.email_check
 ```
 
-This prints unread messages but does NOT mark them read (CLI default). Read the output. If the count is 0:
-
-- Append one line to `runs/_poll-log.txt` (`[ISO datetime] | 0 unread | no actions`)
-- `python -m scripts.git_state commit "tick: empty inbox"`
-- STOP. End the tick.
+This prints unread messages but does NOT mark them read (CLI default). Read the output. If the count is 0, note it but **do not stop** — continue to STEP 1B to check for web mandates. Only log and exit at STEP 3 if both inbox AND web mandate list are empty.
 
 If there are unread messages, read each one in turn via the Python module — call `get_unread_emails(mark_read=True)` so they don't reprocess next tick. Use a small Python snippet from a Bash heredoc; do not write a separate file unless multi-step routing demands it.
 
@@ -313,7 +309,14 @@ Update run-state: `deals_created`, `deal_names`. Send T6. Then send T7 (learning
 
 ## STEP 3 — Persist state and exit
 
-After all routes have been processed:
+After completing STEP 1B (and STEP 2 if emails were present):
+
+If inbox was empty AND no web mandates were found:
+- Append one line to `runs/_poll-log.txt` (`[ISO datetime UTC] | 0 unread | web:none | no actions`)
+- `python -m scripts.git_state commit "tick: empty"`
+- End the tick.
+
+Otherwise, after all work is done:
 
 ```bash
 python -m scripts.git_state commit "tick: <one-line summary of actions, e.g. 'Phase 2 search complete for 2026-05-09-enzyme-design; Round 1 sent'>"
