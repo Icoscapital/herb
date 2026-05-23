@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "cd web && npm run build",
-  "outputCommand": "web/.next",
+  "outputDirectory": "web/.next",
   "installCommand": "npm install --legacy-peer-deps",
   "functions": {
     "api/functions/**/*.ts": {
