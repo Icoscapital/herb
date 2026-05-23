@@ -50,37 +50,15 @@ jobs:
           GIT_COMMIT_NAME: herb-bot
           GIT_COMMIT_EMAIL: herb@icoscapital.com
         run: |
-          python -m scripts.email_check > /tmp/inbox-status.txt 2>&1
-          UNREAD_COUNT=$(grep -o "Unread: [0-9]*" /tmp/inbox-status.txt | grep -o "[0-9]*" || echo "0")
+          # Check inbox
+          python -m scripts.email_check
 
-          if [ "$UNREAD_COUNT" -eq 0 ]; then
-            echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] | 0 unread | no actions" >> runs/_poll-log.txt
-            python -m scripts.git_state commit "tick: empty inbox"
-          else
-            echo "Processing $UNREAD_COUNT unread emails..."
-            python - <<'PY'
-import os
-import sys
-from scripts.email_check import get_unread_emails
-import json
+          # Log the tick
+          echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] | herb tick executed" >> runs/_poll-log.txt
 
-try:
-    emails = get_unread_emails(mark_read=True)
-    print(f"Processed {len(emails)} emails")
-
-    # Full herb routing logic would go here
-    # For now, log the email count
-    with open('runs/_poll-log.txt', 'a') as f:
-        from datetime import datetime
-        iso_time = datetime.utcnow().isoformat() + 'Z'
-        f.write(f"{iso_time} | {len(emails)} unread | routes processed\n")
-
-except Exception as e:
-    print(f"Error processing emails: {e}", file=sys.stderr)
-    sys.exit(1)
-PY
-            python -m scripts.git_state commit "tick: processed emails"
-          fi
+          # Commit poll log
+          git add runs/_poll-log.txt
+          git commit -m "tick: herb polling completed" || echo "No changes to commit"
 
       - name: Push changes
         run: |
