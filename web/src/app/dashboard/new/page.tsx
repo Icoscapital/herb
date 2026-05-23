@@ -102,7 +102,7 @@ export default function NewMandatePage() {
           <div className="rounded-2xl overflow-hidden transition-all"
             style={{
               background: 'var(--surface)',
-              border: dragOver ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
+              border: dragOver ? '1.5px solid var(--teal)' : '1.5px solid var(--border)',
             }}
             onDragOver={e => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
@@ -114,7 +114,7 @@ export default function NewMandatePage() {
               placeholder="e.g. Sustainable packaging startups in Europe at Series A, bio-based materials, not already in our pipeline..."
               disabled={submitting}
               className="w-full px-5 pt-5 pb-4 text-sm leading-relaxed resize-none outline-none"
-              style={{ minHeight: '160px', height: '160px', background: 'transparent', color: 'var(--text)', caretColor: 'var(--accent)' }}
+              style={{ minHeight: '160px', height: '160px', background: 'transparent', color: 'var(--text)', caretcolor: 'var(--teal)' }}
               autoFocus />
 
             {files.length > 0 && (
@@ -147,7 +147,7 @@ export default function NewMandatePage() {
               </div>
               <button onClick={submit} disabled={!ready}
                 className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all"
-                style={{ background: ready ? 'var(--accent)' : 'var(--border)', color: ready ? '#fff' : 'var(--subtle)', cursor: ready ? 'pointer' : 'not-allowed' }}>
+                style={{ background: ready ? 'var(--teal)' : 'var(--border)', color: ready ? '#fff' : 'var(--subtle)', cursor: ready ? 'pointer' : 'not-allowed' }}>
                 {submitting ? 'Submitting…' : 'Search →'}
               </button>
             </div>

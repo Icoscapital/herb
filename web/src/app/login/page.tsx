@@ -4,7 +4,6 @@ export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import Image from 'next/image'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -24,7 +23,7 @@ export default function LoginPage() {
 
       {/* Top bar */}
       <header className="px-8 py-5">
-        <Image src="/icos-logo.jpg" alt="Icos Capital" width={120} height={66} priority style={{ objectFit: 'contain' }} />
+        <img src="/icos-logo.svg" alt="Icos Capital" style={{ width: "120px", height: "auto" }} />
       </header>
 
       {/* Center */}

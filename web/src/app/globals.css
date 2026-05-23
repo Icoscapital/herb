@@ -4,20 +4,21 @@
 @tailwind utilities;
 
 :root {
-  --bg:             #f7f7f5;
-  --surface:        #ffffff;
-  --border:         #e8e8e4;
-  --border-hover:   #d0d0c8;
-  --text:           #141414;
-  --muted:          #5c5c56;
-  --subtle:         #9a9a92;
+  --bg:           #f7f7f5;
+  --surface:      #ffffff;
+  --border:       #e8e8e4;
+  --border-hover: #d0d0c8;
+  --text:         #141414;
+  --muted:        #5c5c56;
+  --subtle:       #9a9a92;
 
-  /* Icos Capital brand — sampled directly from logo */
-  --navy:           #1a4785;
-  --navy-light:     #eef3fb;
-  --teal:           #0e7d65;
-  --teal-light:     #e6f4f0;
-  --teal-mid:       #1a8f74;
+  /* Icos Capital exact brand colors — from SVG source file */
+  --navy:         #003f64;   /* ICOS letterforms */
+  --navy-light:   #e6eef4;
+  --navy-mid:     #004f7a;
+  --teal:         #00918f;   /* leaf circle + CAPITAL */
+  --teal-light:   #e0f4f4;
+  --teal-mid:     #007a78;
 }
 
 * { box-sizing: border-box; }
@@ -40,9 +41,5 @@ body {
   flex-shrink: 0;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
-}
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }

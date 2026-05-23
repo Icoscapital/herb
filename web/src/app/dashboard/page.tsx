@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 
 type Run = {
   id: string; theme: string; status: string
@@ -31,10 +30,10 @@ function timeAgo(iso: string) {
 
 // Status display config using Icos brand colors
 const STATUS_CFG: Record<string, { label: string; dotColor: string; textColor: string; bgColor: string; pulse: boolean }> = {
-  PENDING:   { label: 'Queued',       dotColor: '#1a4785', textColor: '#1a4785', bgColor: '#eef3fb', pulse: false },
-  SEARCHING: { label: 'Searching',    dotColor: '#0e7d65', textColor: '#0e7d65', bgColor: '#e6f4f0', pulse: true  },
-  DONE:      { label: 'Complete',     dotColor: '#0e7d65', textColor: '#0e7d65', bgColor: '#e6f4f0', pulse: false },
-  EMAILED:   { label: 'Results sent', dotColor: '#0e7d65', textColor: '#0e7d65', bgColor: '#e6f4f0', pulse: false },
+  PENDING:   { label: 'Queued',       dotColor: 'var(--navy)', textColor: 'var(--navy)', bgColor: 'var(--navy-light)', pulse: false },
+  SEARCHING: { label: 'Searching',    dotColor: 'var(--teal)', textColor: 'var(--teal)', bgColor: 'var(--teal-light)', pulse: true  },
+  DONE:      { label: 'Complete',     dotColor: 'var(--teal)', textColor: 'var(--teal)', bgColor: 'var(--teal-light)', pulse: false },
+  EMAILED:   { label: 'Results sent', dotColor: 'var(--teal)', textColor: 'var(--teal)', bgColor: 'var(--teal-light)', pulse: false },
   ERROR:     { label: 'Failed',       dotColor: '#c0392b', textColor: '#c0392b', bgColor: '#fdf2f1', pulse: false },
 }
 
@@ -110,7 +109,7 @@ export default function LogPage() {
       <header style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Image src="/icos-logo.jpg" alt="Icos Capital" width={80} height={44} style={{ objectFit: 'contain' }} />
+            <img src="/icos-logo.svg" alt="Icos Capital" style={{ width: "88px", height: "auto" }} />
             <div className="w-px h-6" style={{ background: 'var(--border)' }} />
             <span className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--teal)' }}>
               &#127807; Herb
