@@ -8,24 +8,18 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 type Company = {
-  id: string
-  name: string
-  website: string | null
-  description: string | null
-  geography: string | null
-  stage: string | null
-  score: number | null
-  linkedin: string | null
-  notes: string | null
+  id: string; name: string; website: string | null
+  description: string | null; geography: string | null
+  stage: string | null; score: number | null
+  linkedin: string | null; notes: string | null
 }
-
 type Run = {
-  id: string; theme: string; slug: string; status: string
-  geography: string; stage: string; search_mode: string
+  id: string; theme: string; status: string
+  geography: string; stage: string
   special_instructions: string | null; created_at: string
 }
 
-export default function MandateResultsPage({ params }: { params: { id: string } }) {
+export default function ResultsPage({ params }: { params: { id: string } }) {
   const [run, setRun] = useState<Run | null>(null)
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
@@ -35,27 +29,20 @@ export default function MandateResultsPage({ params }: { params: { id: string } 
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
-      const { data: runData } = await supabase
-        .from('herb_runs')
-        .select('*')
-        .eq('id', params.id)
-        .eq('user_id', session.user.id)
-        .single()
-      if (!runData) { router.push('/dashboard'); return }
-      setRun(runData)
-      const { data: companyData } = await supabase
-        .from('herb_longlist')
-        .select('*')
-        .eq('run_id', params.id)
-        .order('score', { ascending: false })
-      setCompanies(companyData ?? [])
+      const { data: r } = await supabase.from('herb_runs').select('*')
+        .eq('id', params.id).eq('user_id', session.user.id).single()
+      if (!r) { router.push('/dashboard'); return }
+      setRun(r)
+      const { data: c } = await supabase.from('herb_longlist').select('*')
+        .eq('run_id', params.id).order('score', { ascending: false })
+      setCompanies(c ?? [])
       setLoading(false)
     }
     load()
   }, [params.id, router])
 
   if (loading) return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-50">
+    <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg)' }}>
       <div className="loading-spinner" />
     </div>
   )
@@ -64,57 +51,84 @@ export default function MandateResultsPage({ params }: { params: { id: string } 
   const date = new Date(run.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-100 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link href="/dashboard" className="text-slate-400 hover:text-slate-600 text-sm">&larr; All searches</Link>
-          <span className="text-slate-300">|</span>
-          <span className="font-semibold text-slate-800">&#127807; Herb</span>
-        </div>
-      </nav>
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+      <header className="px-6 py-4 sticky top-0 z-10 flex items-center gap-3"
+        style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
+        <Link href="/dashboard" className="text-sm transition-colors" style={{ color: 'var(--muted)' }}>
+          &#8592; All searches
+        </Link>
+        <span style={{ color: 'var(--border)' }}>|</span>
+        <span className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>{run.theme}</span>
+      </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        {/* Meta */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">{run.theme}</h1>
-          <div className="flex flex-wrap gap-x-3 text-sm text-slate-500 mt-2">
+          <div className="flex flex-wrap items-center gap-2 text-xs mb-2" style={{ color: 'var(--subtle)' }}>
             <span>{run.geography}</span><span>&middot;</span>
             <span>{run.stage}</span><span>&middot;</span>
-            <span>{date}</span><span>&middot;</span>
-            <span className="text-green-600 font-medium">{companies.length} companies found</span>
+            <span>{date}</span>
           </div>
           {run.special_instructions && (
-            <p className="mt-3 text-sm text-slate-600 bg-slate-100 rounded-lg px-3 py-2">
-              <span className="font-medium">Instructions:</span> {run.special_instructions}
+            <p className="text-sm p-3 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
+              <strong style={{ color: 'var(--text)' }}>Brief:</strong> {run.special_instructions}
             </p>
           )}
         </div>
 
+        {/* Count bar */}
+        {companies.length > 0 && (
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--subtle)' }}>
+              {companies.length} companies found
+            </p>
+          </div>
+        )}
+
+        {/* Companies */}
         {companies.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-            <p className="text-slate-400">No results yet. Herb may still be searching.</p>
-            <Link href="/dashboard" className="mt-4 inline-block text-sm text-slate-500 hover:text-slate-700 underline">Back to dashboard</Link>
+          <div className="rounded-2xl py-16 text-center"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>Results not yet available. Herb may still be searching.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {companies.map((co, i) => (
-              <div key={co.id} className="bg-white rounded-xl border border-slate-200 p-5">
+              <div key={co.id} className="rounded-xl px-5 py-4"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
                 <div className="flex items-start gap-4">
-                  <span className="text-xs text-slate-300 w-5 text-right pt-1 flex-shrink-0">{i + 1}</span>
+                  <span className="text-xs pt-0.5 w-5 text-right flex-shrink-0" style={{ color: 'var(--subtle)' }}>{i + 1}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-slate-900">{co.name}</h3>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{co.name}</span>
                       {co.score !== null && (
-                        <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">{co.score}/10</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+                          style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+                          {co.score}/10
+                        </span>
                       )}
-                      {co.stage && <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{co.stage}</span>}
+                      {co.stage && (
+                        <span className="text-xs px-2 py-0.5 rounded-full"
+                          style={{ background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
+                          {co.stage}
+                        </span>
+                      )}
                     </div>
-                    {co.description && <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">{co.description}</p>}
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400 mt-2">
+                    {co.description && (
+                      <p className="text-sm leading-relaxed mb-2" style={{ color: 'var(--muted)' }}>{co.description}</p>
+                    )}
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: 'var(--subtle)' }}>
                       {co.geography && <span>&#128205; {co.geography}</span>}
-                      {co.website && <a href={co.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">&#127760; Website</a>}
-                      {co.linkedin && <a href={co.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">LinkedIn</a>}
+                      {co.website && (
+                        <a href={co.website} target="_blank" rel="noopener noreferrer"
+                          className="underline" style={{ color: 'var(--accent)' }}>Website</a>
+                      )}
+                      {co.linkedin && (
+                        <a href={co.linkedin} target="_blank" rel="noopener noreferrer"
+                          className="underline" style={{ color: 'var(--accent)' }}>LinkedIn</a>
+                      )}
                     </div>
-                    {co.notes && <p className="text-xs text-slate-400 mt-1.5 italic">{co.notes}</p>}
+                    {co.notes && <p className="text-xs mt-1.5 italic" style={{ color: 'var(--subtle)' }}>{co.notes}</p>}
                   </div>
                 </div>
               </div>
