@@ -9,17 +9,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 type Run = {
-  id: string
-  theme: string
-  status: string
-  geography: string
-  stage: string
-  search_mode: string
+  id: string; theme: string; status: string
+  geography: string; stage: string; search_mode: string
   created_at: string
-  submitted_by_email: string | null
-  submitted_by_name: string | null
-  result_count: number | null
-  duration_seconds: number | null
+  submitted_by_email: string | null; submitted_by_name: string | null
+  result_count: number | null; duration_seconds: number | null
   error_message: string | null
 }
 
@@ -35,24 +29,22 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
-const DOT: Record<string, { color: string; pulse: boolean }> = {
-  PENDING:   { color: '#f59e0b', pulse: true },
-  SEARCHING: { color: '#3b82f6', pulse: true },
-  DONE:      { color: '#22c55e', pulse: false },
-  EMAILED:   { color: '#22c55e', pulse: false },
-  ERROR:     { color: '#ef4444', pulse: false },
+// Status display config using Icos brand colors
+const STATUS_CFG: Record<string, { label: string; dotColor: string; textColor: string; bgColor: string; pulse: boolean }> = {
+  PENDING:   { label: 'Queued',       dotColor: '#1a4785', textColor: '#1a4785', bgColor: '#eef3fb', pulse: false },
+  SEARCHING: { label: 'Searching',    dotColor: '#0e7d65', textColor: '#0e7d65', bgColor: '#e6f4f0', pulse: true  },
+  DONE:      { label: 'Complete',     dotColor: '#0e7d65', textColor: '#0e7d65', bgColor: '#e6f4f0', pulse: false },
+  EMAILED:   { label: 'Results sent', dotColor: '#0e7d65', textColor: '#0e7d65', bgColor: '#e6f4f0', pulse: false },
+  ERROR:     { label: 'Failed',       dotColor: '#c0392b', textColor: '#c0392b', bgColor: '#fdf2f1', pulse: false },
 }
 
 async function downloadCSV(runId: string, theme: string) {
   const { data } = await supabase
-    .from('herb_longlist')
-    .select('*')
-    .eq('run_id', runId)
-    .order('score', { ascending: false })
+    .from('herb_longlist').select('*').eq('run_id', runId).order('score', { ascending: false })
   if (!data || data.length === 0) { alert('No results to download yet.'); return }
-  const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'score', 'source', 'notes']
+  const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'score', 'source', 'notes'] as const
   const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Score', 'Source', 'Notes']
-  const rows = data.map(c => cols.map(k => `"${String(c[k] ?? '').replace(/"/g, '""')}"`).join(','))
+  const rows = data.map((c: any) => cols.map(k => `"${String(c[k] ?? '').replace(/"/g, '""')}"`).join(','))
   const csv = '﻿' + [headers.join(','), ...rows].join('\n')
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })),
@@ -91,46 +83,53 @@ export default function LogPage() {
     return () => clearInterval(t)
   }, [load])
 
-  const filtered = runs.filter(r => {
-    if (filter === 'running') return r.status === 'SEARCHING' || r.status === 'PENDING'
-    if (filter === 'done') return r.status === 'DONE' || r.status === 'EMAILED'
-    if (filter === 'error') return r.status === 'ERROR'
-    return true
-  })
-
-  const running = runs.filter(r => r.status === 'SEARCHING' || r.status === 'PENDING').length
-
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg)' }}>
-      <div className="loading-spinner" />
+      <div className="loading-spinner" style={{ width: '24px', height: '24px' }} />
     </div>
   )
+
+  const counts = {
+    all: runs.length,
+    running: runs.filter(r => r.status === 'SEARCHING' || r.status === 'PENDING').length,
+    done: runs.filter(r => r.status === 'DONE' || r.status === 'EMAILED').length,
+    error: runs.filter(r => r.status === 'ERROR').length,
+  }
+
+  const filtered = runs.filter(r => {
+    if (filter === 'running') return r.status === 'SEARCHING' || r.status === 'PENDING'
+    if (filter === 'done')    return r.status === 'DONE' || r.status === 'EMAILED'
+    if (filter === 'error')   return r.status === 'ERROR'
+    return true
+  })
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
 
-      {/* Top nav */}
+      {/* Nav */}
       <header style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
-        <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-3">
-              <Image src="/icos-logo.jpg" alt="Icos Capital" width={72} height={40} style={{ objectFit: 'contain' }} />
-              <span className="text-sm font-medium" style={{ color: 'var(--muted)' }}>&#127807; Herb</span>
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Image src="/icos-logo.jpg" alt="Icos Capital" width={80} height={44} style={{ objectFit: 'contain' }} />
+            <div className="w-px h-6" style={{ background: 'var(--border)' }} />
+            <span className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--teal)' }}>
+              &#127807; Herb
             </span>
-            {running > 0 && (
-              <span className="flex items-center gap-1.5 text-xs" style={{ color: '#3b82f6' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" style={{ animation: 'pulse 1.5s infinite' }} />
-                {running} running
+            {counts.running > 0 && (
+              <span className="flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full"
+                style={{ background: 'var(--teal-light)', color: 'var(--teal)' }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--teal)', animation: 'pulse 1.5s infinite' }} />
+                {counts.running} running
               </span>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <span className="text-xs hidden sm:block" style={{ color: 'var(--subtle)' }}>{user?.email}</span>
             <button onClick={() => supabase.auth.signOut().then(() => router.push('/login'))}
               className="text-xs" style={{ color: 'var(--muted)' }}>Sign out</button>
             <Link href="/dashboard/new"
-              className="flex items-center gap-1 text-xs font-medium px-3.5 py-1.5 rounded-lg"
-              style={{ background: 'var(--text)', color: '#fff' }}>
+              className="flex items-center gap-1 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-all"
+              style={{ background: 'var(--teal)', color: '#fff' }}>
               + New search
             </Link>
           </div>
@@ -139,28 +138,32 @@ export default function LogPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-8">
 
-        {/* Page title + filters */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Title + filters */}
+        <div className="flex items-center justify-between mb-5">
           <h1 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>Search log</h1>
-          <div className="flex items-center gap-0.5 rounded-xl p-1" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-0.5 p-1 rounded-xl"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             {(['all', 'running', 'done', 'error'] as Filter[]).map(f => (
-              <button key={f}
-                onClick={() => setFilter(f)}
+              <button key={f} onClick={() => setFilter(f)}
                 className="px-3 py-1 rounded-lg text-xs font-medium capitalize transition-all"
                 style={{
-                  background: filter === f ? 'var(--bg)' : 'transparent',
-                  color: filter === f ? 'var(--text)' : 'var(--subtle)',
-                  border: filter === f ? '1px solid var(--border)' : '1px solid transparent',
+                  background: filter === f ? 'var(--navy-light)' : 'transparent',
+                  color: filter === f ? 'var(--navy)' : 'var(--subtle)',
+                  border: filter === f ? '1px solid #c8d8f0' : '1px solid transparent',
                 }}>
-                {f === 'all' ? `All (${runs.length})` : f === 'running' ? `Running (${runs.filter(r => r.status === 'SEARCHING' || r.status === 'PENDING').length})` : f === 'done' ? `Done (${runs.filter(r => r.status === 'DONE' || r.status === 'EMAILED').length})` : `Errors (${runs.filter(r => r.status === 'ERROR').length})`}
+                {f === 'all' ? `All (${counts.all})` :
+                 f === 'running' ? `Running (${counts.running})` :
+                 f === 'done' ? `Done (${counts.done})` :
+                 `Errors (${counts.error})`}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Log table */}
+        {/* Empty */}
         {filtered.length === 0 ? (
-          <div className="rounded-2xl py-20 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl py-20 text-center"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <p className="text-3xl mb-3">&#127793;</p>
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>
               {filter === 'all' ? 'No searches yet' : `No ${filter} searches`}
@@ -168,17 +171,18 @@ export default function LogPage() {
             {filter === 'all' && (
               <Link href="/dashboard/new"
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium px-5 py-2 rounded-xl"
-                style={{ background: 'var(--text)', color: '#fff' }}>
+                style={{ background: 'var(--teal)', color: '#fff' }}>
                 Start first search
               </Link>
             )}
           </div>
         ) : (
-          <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
 
             {/* Column headers */}
-            <div className="grid gap-4 px-5 py-2.5 text-xs font-medium uppercase tracking-wider border-b"
-              style={{ gridTemplateColumns: '16px 1fr 120px 80px 100px 40px', color: 'var(--subtle)', borderColor: 'var(--border)' }}>
+            <div className="grid px-5 py-2 text-xs font-medium uppercase tracking-wider"
+              style={{ gridTemplateColumns: '12px 1fr 130px 80px 130px 36px', color: 'var(--subtle)', borderBottom: '1px solid var(--border)', gap: '16px' }}>
               <span />
               <span>Search</span>
               <span>Submitted by</span>
@@ -187,39 +191,36 @@ export default function LogPage() {
               <span />
             </div>
 
-            {/* Rows */}
             {filtered.map((run, i) => {
-              const dot = DOT[run.status] ?? DOT.PENDING
+              const cfg = STATUS_CFG[run.status] ?? STATUS_CFG.PENDING
               const done = run.status === 'DONE' || run.status === 'EMAILED'
               const active = run.status === 'SEARCHING' || run.status === 'PENDING'
               const name = run.submitted_by_name ?? run.submitted_by_email?.split('@')[0] ?? '—'
-              const rowStyle = {
-                borderBottom: i < filtered.length - 1 ? `1px solid var(--border)` : 'none',
-              }
+
               const row = (
-                <div className="grid gap-4 px-5 py-4 items-center transition-colors"
+                <div className="grid px-5 py-4 items-center transition-colors"
                   style={{
-                    gridTemplateColumns: '16px 1fr 120px 80px 100px 40px',
-                    ...rowStyle,
+                    gridTemplateColumns: '12px 1fr 130px 80px 130px 36px',
+                    gap: '16px',
+                    borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none',
                     cursor: done ? 'pointer' : 'default',
                   }}>
 
                   {/* Status dot */}
-                  <span className="flex items-center justify-center">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0"
+                  <span className="flex justify-center">
+                    <span className="w-2 h-2 rounded-full"
                       style={{
-                        background: dot.color,
-                        boxShadow: dot.pulse ? `0 0 0 3px ${dot.color}22` : 'none',
-                        animation: dot.pulse ? 'pulse 1.8s ease-in-out infinite' : 'none',
+                        background: cfg.dotColor,
+                        animation: cfg.pulse ? 'pulse 1.8s ease-in-out infinite' : 'none',
+                        boxShadow: cfg.pulse ? `0 0 0 3px ${cfg.bgColor}` : 'none',
                       }} />
                   </span>
 
-                  {/* Theme + meta */}
+                  {/* Theme */}
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>{run.theme}</p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--subtle)' }}>
                       {run.geography} &middot; {run.stage}
-                      {run.search_mode === 'DEEP' && <span> &middot; Deep</span>}
                     </p>
                   </div>
 
@@ -230,15 +231,29 @@ export default function LogPage() {
                   <span className="text-xs" style={{ color: 'var(--subtle)' }}>{timeAgo(run.created_at)}</span>
 
                   {/* Result */}
-                  <span className="text-xs font-medium"
-                    style={{ color: done ? 'var(--accent)' : active ? '#3b82f6' : '#ef4444' }}>
-                    {active && <span className="flex items-center gap-1.5"><span className="loading-spinner" style={{ width: '12px', height: '12px' }} /> Searching</span>}
-                    {done && `${run.result_count ?? '—'} companies`}
-                    {run.status === 'ERROR' && 'Failed'}
+                  <span className="text-xs font-medium flex items-center gap-1.5">
+                    {active && (
+                      <span className="flex items-center gap-1.5" style={{ color: 'var(--teal)' }}>
+                        <div className="loading-spinner" style={{ width: '12px', height: '12px' }} />
+                        Searching&hellip;
+                      </span>
+                    )}
+                    {done && (
+                      <span className="px-2 py-0.5 rounded-full text-xs"
+                        style={{ background: 'var(--teal-light)', color: 'var(--teal)' }}>
+                        {run.result_count ?? '—'} companies
+                      </span>
+                    )}
+                    {run.status === 'ERROR' && (
+                      <span className="px-2 py-0.5 rounded-full text-xs"
+                        style={{ background: '#fdf2f1', color: '#c0392b' }}>
+                        Failed
+                      </span>
+                    )}
                   </span>
 
                   {/* Download */}
-                  <span className="flex items-center justify-end">
+                  <span className="flex justify-end">
                     {done && (
                       <button
                         onClick={async e => {
@@ -248,10 +263,12 @@ export default function LogPage() {
                           setDownloading(null)
                         }}
                         title="Download CSV"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-all text-sm"
-                        style={{ background: downloading === run.id ? 'var(--accent-light)' : 'transparent', color: 'var(--accent)' }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-all font-medium"
+                        style={{ color: 'var(--teal)', background: downloading === run.id ? 'var(--teal-light)' : 'transparent' }}
                       >
-                        {downloading === run.id ? <span className="loading-spinner" style={{ width: '12px', height: '12px' }} /> : '&#8595;'}
+                        {downloading === run.id
+                          ? <div className="loading-spinner" style={{ width: '12px', height: '12px' }} />
+                          : '&#8595;'}
                       </button>
                     )}
                   </span>
@@ -259,23 +276,21 @@ export default function LogPage() {
               )
 
               return done
-                ? <Link key={run.id} href={`/dashboard/mandates/${run.id}`} className="block hover:bg-slate-50 transition-colors">{row}</Link>
+                ? <Link key={run.id} href={`/dashboard/mandates/${run.id}`} className="block"
+                    style={{ display: 'block' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    {row}
+                  </Link>
                 : <div key={run.id}>{row}</div>
             })}
           </div>
         )}
 
-        <p className="text-xs text-center mt-6" style={{ color: 'var(--subtle)' }}>
-          Showing all searches across Icos Capital &middot; Auto-refreshes every 20s
+        <p className="text-center text-xs mt-5" style={{ color: 'var(--subtle)' }}>
+          All Icos Capital searches &middot; auto-refreshes every 20s
         </p>
       </div>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.15); }
-        }
-      `}</style>
     </div>
   )
 }

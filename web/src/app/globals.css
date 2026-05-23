@@ -4,15 +4,20 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f7f7f5;
-  --surface: #ffffff;
-  --border: #e8e8e4;
-  --border-hover: #d0d0c8;
-  --text: #1a1a18;
-  --muted: #6b6b63;
-  --subtle: #a0a098;
-  --accent: #2d6a4f;
-  --accent-light: #e8f5ee;
+  --bg:             #f7f7f5;
+  --surface:        #ffffff;
+  --border:         #e8e8e4;
+  --border-hover:   #d0d0c8;
+  --text:           #141414;
+  --muted:          #5c5c56;
+  --subtle:         #9a9a92;
+
+  /* Icos Capital brand — sampled directly from logo */
+  --navy:           #1a4785;
+  --navy-light:     #eef3fb;
+  --teal:           #0e7d65;
+  --teal-light:     #e6f4f0;
+  --teal-mid:       #1a8f74;
 }
 
 * { box-sizing: border-box; }
@@ -25,13 +30,19 @@ body {
 }
 
 .loading-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #e2e2dc;
-  border-top-color: #6b6b63;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #e2e2dc;
+  border-top-color: var(--teal);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
