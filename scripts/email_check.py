@@ -1,6 +1,7 @@
 """Herb email reader — Microsoft Graph API (client credentials flow).
 
 Cloud port: reads creds from environment variables instead of a local JSON file.
+Includes 401 retry logic for token expiry.
 Required env vars (set on the Routine config):
     GRAPH_TENANT_ID
     GRAPH_CLIENT_ID
@@ -11,6 +12,7 @@ from __future__ import annotations
 import base64
 import os
 import sys
+import time
 from typing import Optional
 
 import requests
@@ -46,12 +48,27 @@ def _get_token() -> tuple[str, str]:
     return resp.json()["access_token"], mailbox
 
 
+def _retry_on_401(func, *args, **kwargs):
+    """Call func(*args, **kwargs). If 401, get fresh token and retry once."""
+    try:
+        return func(*args, **kwargs)
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 401:
+            sys.stderr.write("Graph API 401 (token expired); retrying with fresh token...\n")
+            time.sleep(1)
+            # Force a new token by calling _get_token again
+            return func(*args, **kwargs)
+        raise
+
+
 def get_unread_emails(max_results: int = 20, mark_read: bool = True) -> list[dict]:
     """Returns unread messages from the herb mailbox. Marks each as read after fetching
     (default), so a subsequent call doesn't re-process them.
 
     Each dict has: id, subject, from_email, from_name, received, body_text, has_attachments,
     conversation_id.
+
+    Includes 401 retry logic for token expiry.
     """
     token, mailbox = _get_token()
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -63,6 +80,15 @@ def get_unread_emails(max_results: int = 20, mark_read: bool = True) -> list[dic
         f"&$orderby=receivedDateTime desc"
     )
     resp = requests.get(url, headers=headers, timeout=30)
+
+    # 401 retry
+    if resp.status_code == 401:
+        sys.stderr.write("Graph API 401 on get_unread_emails; retrying with fresh token...\n")
+        time.sleep(1)
+        token, mailbox = _get_token()
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        resp = requests.get(url, headers=headers, timeout=30)
+
     resp.raise_for_status()
     msgs = resp.json().get("value", [])
 
@@ -79,12 +105,27 @@ def get_unread_emails(max_results: int = 20, mark_read: bool = True) -> list[dic
             "conversation_id": m.get("conversationId", ""),
         })
         if mark_read:
-            requests.patch(
+            mark_resp = requests.patch(
                 f"{GRAPH_BASE}/users/{mailbox}/messages/{m['id']}",
                 headers=headers,
                 json={"isRead": True},
                 timeout=30,
             )
+            # 401 on mark — retry once but don't block the whole batch
+            if mark_resp.status_code == 401:
+                sys.stderr.write(f"Graph API 401 marking {m['id']} read; retrying...\n")
+                time.sleep(1)
+                token, mailbox = _get_token()
+                headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+                mark_resp = requests.patch(
+                    f"{GRAPH_BASE}/users/{mailbox}/messages/{m['id']}",
+                    headers=headers,
+                    json={"isRead": True},
+                    timeout=30,
+                )
+                if mark_resp.status_code != 200:
+                    sys.stderr.write(f"Failed to mark {m['id']} read after retry; continuing anyway\n")
+
     return out
 
 
@@ -94,6 +135,15 @@ def get_attachments(message_id: str) -> list[dict]:
     headers = {"Authorization": f"Bearer {token}"}
     url = f"{GRAPH_BASE}/users/{mailbox}/messages/{message_id}/attachments"
     resp = requests.get(url, headers=headers, timeout=30)
+
+    # 401 retry
+    if resp.status_code == 401:
+        sys.stderr.write("Graph API 401 on get_attachments; retrying with fresh token...\n")
+        time.sleep(1)
+        token, mailbox = _get_token()
+        headers = {"Authorization": f"Bearer {token}"}
+        resp = requests.get(url, headers=headers, timeout=30)
+
     resp.raise_for_status()
     out = []
     for att in resp.json().get("value", []):
@@ -108,12 +158,26 @@ def get_attachments(message_id: str) -> list[dict]:
 def mark_unread(message_id: str) -> None:
     """Mark a specific message as unread — escape hatch for when processing fails mid-tick."""
     token, mailbox = _get_token()
-    requests.patch(
+    resp = requests.patch(
         f"{GRAPH_BASE}/users/{mailbox}/messages/{message_id}",
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
         json={"isRead": False},
         timeout=30,
     )
+
+    # 401 retry
+    if resp.status_code == 401:
+        sys.stderr.write("Graph API 401 on mark_unread; retrying with fresh token...\n")
+        time.sleep(1)
+        token, mailbox = _get_token()
+        resp = requests.patch(
+            f"{GRAPH_BASE}/users/{mailbox}/messages/{message_id}",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"isRead": False},
+            timeout=30,
+        )
+
+    resp.raise_for_status()
 
 
 if __name__ == "__main__":

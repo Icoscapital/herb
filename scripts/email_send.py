@@ -1,11 +1,13 @@
 """Herb email sender — Microsoft Graph API.
 
 Cloud port: reads creds from environment variables.
+Includes 401 retry logic for token expiry.
 """
 from __future__ import annotations
 import base64
 import os
 import sys
+import time
 
 import requests
 
@@ -45,6 +47,8 @@ def send_email(to_address: str, subject: str, body_text: str,
     """Send a plain-text email from the herb mailbox.
 
     attachments: list of {"filename": str, "content_bytes": bytes}
+
+    Includes 401 retry logic: if token expires mid-send, gets a fresh token and retries once.
     """
     token, mailbox = _get_token()
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -70,6 +74,20 @@ def send_email(to_address: str, subject: str, body_text: str,
         json={"message": message, "saveToSentItems": True},
         timeout=60,
     )
+
+    # 401 = token expired; retry once with fresh token
+    if resp.status_code == 401:
+        sys.stderr.write("Graph API 401 (token expired); getting fresh token and retrying...\n")
+        time.sleep(1)  # brief delay before retry
+        token, mailbox = _get_token()
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        resp = requests.post(
+            f"{GRAPH_BASE}/users/{mailbox}/sendMail",
+            headers=headers,
+            json={"message": message, "saveToSentItems": True},
+            timeout=60,
+        )
+
     resp.raise_for_status()
 
 
