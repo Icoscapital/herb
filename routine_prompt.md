@@ -127,7 +127,7 @@ Email has attachments AND an active run exists (any status). Flexible intake for
 
 1. Generate slug: `YYYY-MM-DD-<2-3 word slug>` from the mandate theme. Example: theme "enzyme design and optimization" → `2026-05-09-enzyme-design`.
 2. Extract from the email body: `theme`, `keywords` (comma-separated), `geography` (default Europe), `stage` (default "Series A / B"), `special_instructions`.
-3. Detect mode: if body contains "deep search" → `search_mode=DEEP`, else `STANDARD`.
+3. Detect mode: **default `search_mode=DEEP`** (comprehensive search across all 10+ sources + 350 VC portfolios). If email contains "quick" or "standard" → `search_mode=STANDARD` (faster, 5 sources only).
 4. Create the run state:
    ```python
    from scripts import run_state
@@ -143,8 +143,8 @@ Email has attachments AND an active run exists (any status). Flexible intake for
 
 Read `references/search-playbook.md` for source list and query patterns. Read `references/field-spec.md` for Level 1 column schema.
 
-**STANDARD mode:** Sources 1–5 + VC Roster (focused) + any author intake files present in `runs/[slug]/intake/`.
-**DEEP mode:** Sources 1–10 + VC Roster (expanded) + intake files. Expect 3–5 hours; if time-budget exceeded mid-tick, persist progress and resume next tick.
+**DEEP mode (DEFAULT):** Sources 1–10 + VC Roster (expanded) + intake files. Expect 3–5 hours; if time-budget exceeded mid-tick, persist progress and resume next tick.
+**STANDARD mode (opt-in):** Sources 1–5 + VC Roster (focused) + any author intake files present in `runs/[slug]/intake/`. Use if you send "quick" or "standard" in the activation email.
 
 VC Rosters (`references/vc-roster.xlsx`):
 - **"VCs" sheet (STANDARD mode):** 87 Icos-curated VCs from Germany, UK, France with deep-tech + climate/food/chem/industrial-AI focus

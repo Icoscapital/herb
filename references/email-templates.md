@@ -38,7 +38,9 @@ Sector focus: [inferred sector(s)]
 Geography: [inferred or stated geography]
 Stage target: [inferred or stated stage]
 
-I'll start searching once you reply "Start".
+I'll start a comprehensive DEEP search once you reply "Start". This searches across 10+ sources + 350 VC portfolios (expect results in 3–5 hours).
+
+If you'd prefer a quicker search instead, just reply "Start — quick" or "Start — standard" and I'll search only the top 5 sources (30–60 min).
 
 If any of the above looks wrong, just correct me before replying Start
 and I'll adjust.
