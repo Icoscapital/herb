@@ -1,14 +1,5 @@
 {
-  "version": 2,
-  "buildCommand": "cd web && npm install --legacy-peer-deps && npm run build",
+  "buildCommand": "cd web && npm run build",
   "outputDirectory": "web/.next",
-  "installCommand": "echo 'Using build command for install'",
-  "functions": {
-    "api/functions/**/*.ts": {
-      "memory": 1024,
-      "maxDuration": 300
-    }
-  },
-  "regions": ["iad1"],
   "framework": "nextjs"
 }
