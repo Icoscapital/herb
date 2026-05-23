@@ -114,7 +114,7 @@ export default function NewMandatePage() {
               placeholder="e.g. Sustainable packaging startups in Europe at Series A, bio-based materials, not already in our pipeline..."
               disabled={submitting}
               className="w-full px-5 pt-5 pb-4 text-sm leading-relaxed resize-none outline-none"
-              style={{ minHeight: '160px', height: '160px', background: 'transparent', color: 'var(--text)', caretcolor: 'var(--teal)' }}
+              style={{ minHeight: '160px', height: '160px', background: 'transparent', color: 'var(--text)', caretColor: 'var(--teal)' }}
               autoFocus />
 
             {files.length > 0 && (
