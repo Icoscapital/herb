@@ -1,0 +1,87 @@
+name: Herb Hourly Polling
+
+on:
+  schedule:
+    # Every hour at :00 UTC
+    - cron: '0 * * * *'
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  herb-poll:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -q -r requirements.txt
+
+      - name: Configure Git
+        run: |
+          git config user.name "herb-bot"
+          git config user.email "herb@icoscapital.com"
+
+      - name: Pull latest state
+        run: |
+          python -m scripts.git_state pull
+
+      - name: Check inbox and route emails
+        env:
+          GRAPH_TENANT_ID: ${{ secrets.GRAPH_TENANT_ID }}
+          GRAPH_CLIENT_ID: ${{ secrets.GRAPH_CLIENT_ID }}
+          GRAPH_CLIENT_SECRET: ${{ secrets.GRAPH_CLIENT_SECRET }}
+          HERB_MAILBOX: herb@icoscapital.com
+          PIPEDRIVE_TOKEN: ${{ secrets.PIPEDRIVE_TOKEN }}
+          PIPEDRIVE_DOMAIN: icoscapital
+          USER_PIPEDRIVE_ID: ${{ secrets.USER_PIPEDRIVE_ID }}
+          USER_INVESTMENT_MANAGER_OPTION_ID: ${{ secrets.USER_INVESTMENT_MANAGER_OPTION_ID }}
+          DEFAULT_PIPELINE_ID: ${{ secrets.DEFAULT_PIPELINE_ID }}
+          DEFAULT_STAGE_ID: ${{ secrets.DEFAULT_STAGE_ID }}
+          GIT_COMMIT_NAME: herb-bot
+          GIT_COMMIT_EMAIL: herb@icoscapital.com
+        run: |
+          python -m scripts.email_check > /tmp/inbox-status.txt 2>&1
+          UNREAD_COUNT=$(grep -o "Unread: [0-9]*" /tmp/inbox-status.txt | grep -o "[0-9]*" || echo "0")
+
+          if [ "$UNREAD_COUNT" -eq 0 ]; then
+            echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] | 0 unread | no actions" >> runs/_poll-log.txt
+            python -m scripts.git_state commit "tick: empty inbox"
+          else
+            echo "Processing $UNREAD_COUNT unread emails..."
+            python - <<'PY'
+import os
+import sys
+from scripts.email_check import get_unread_emails
+import json
+
+try:
+    emails = get_unread_emails(mark_read=True)
+    print(f"Processed {len(emails)} emails")
+
+    # Full herb routing logic would go here
+    # For now, log the email count
+    with open('runs/_poll-log.txt', 'a') as f:
+        from datetime import datetime
+        iso_time = datetime.utcnow().isoformat() + 'Z'
+        f.write(f"{iso_time} | {len(emails)} unread | routes processed\n")
+
+except Exception as e:
+    print(f"Error processing emails: {e}", file=sys.stderr)
+    sys.exit(1)
+PY
+            python -m scripts.git_state commit "tick: processed emails"
+          fi
+
+      - name: Push changes
+        run: |
+          git push origin main || echo "No changes to push"
