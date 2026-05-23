@@ -10,9 +10,9 @@ import Link from 'next/link'
 type Attachment = { name: string; size: number; url: string; path: string }
 
 const EXAMPLES = [
-  'Sustainable packaging startups in Europe, Series A, using bio-based or recycled materials',
-  'B2B SaaS tools for supply chain visibility, pre-Series A, Netherlands or Germany',
-  'Alt-protein companies working on fermentation, not yet in our pipeline',
+  'Sustainable packaging startups in Europe, Series A, bio-based or recycled materials',
+  'B2B SaaS for supply chain visibility, pre-Series A, Netherlands or Germany',
+  'Alt-protein using fermentation, not yet in our pipeline, global',
 ]
 
 export default function NewMandatePage() {
@@ -57,17 +57,20 @@ export default function NewMandatePage() {
 
   const submit = async () => {
     if (!text.trim()) return
-    setSubmitting(true)
-    setError('')
+    setSubmitting(true); setError('')
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/login'); return }
+    const meta = session.user.user_metadata
     const lines = text.trim().split('\n')
     const theme = lines[0].trim()
     const special_instructions = lines.slice(1).join('\n').trim() || null
     const date = new Date().toISOString().split('T')[0]
     const slug = `${date}-${theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}`
     const { error: e } = await supabase.from('herb_runs').insert({
-      user_id: session.user.id, slug, theme, special_instructions,
+      user_id: session.user.id,
+      submitted_by_email: session.user.email,
+      submitted_by_name: meta?.full_name ?? meta?.name ?? null,
+      slug, theme, special_instructions,
       geography: 'Europe', stage: 'Series A/B', search_mode: 'DEEP',
       status: 'PENDING', current_round: 1,
       attachments: files.length ? files.map(f => ({ name: f.name, url: f.url })) : null,
@@ -82,147 +85,88 @@ export default function NewMandatePage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
-      {/* Top bar */}
-      <header className="px-6 py-4 flex items-center gap-3" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-        <Link href="/dashboard" className="flex items-center gap-1.5 text-sm transition-colors"
-          style={{ color: 'var(--muted)' }}>
-          <span>&#8592;</span> Back
-        </Link>
+      <header className="px-6 py-4 flex items-center gap-3"
+        style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
+        <Link href="/dashboard" className="text-sm" style={{ color: 'var(--muted)' }}>&#8592; Back</Link>
         <span style={{ color: 'var(--border)' }}>|</span>
-        <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>New search mandate</span>
+        <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>New search</span>
       </header>
 
-      {/* Main compose area */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-10">
         <div className="w-full max-w-2xl">
-
-          {/* Heading */}
-          <h1 className="text-2xl font-semibold mb-1" style={{ color: 'var(--text)' }}>
-            What are you looking for?
-          </h1>
+          <h1 className="text-2xl font-semibold mb-1" style={{ color: 'var(--text)' }}>What are you looking for?</h1>
           <p className="text-sm mb-8" style={{ color: 'var(--muted)' }}>
-            Describe the startups in plain language. Herb will search globally and email you a longlist.
+            Describe the startups in plain language. Herb searches globally and emails you a longlist.
           </p>
 
-          {/* Compose box */}
-          <div
-            className="rounded-2xl overflow-hidden transition-all"
+          <div className="rounded-2xl overflow-hidden transition-all"
             style={{
               background: 'var(--surface)',
               border: dragOver ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}
             onDragOver={e => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={e => { e.preventDefault(); setDragOver(false); upload(e.dataTransfer.files) }}
-          >
-            <textarea
-              ref={textRef}
-              value={text}
+            onDrop={e => { e.preventDefault(); setDragOver(false); upload(e.dataTransfer.files) }}>
+
+            <textarea ref={textRef} value={text}
               onChange={e => { setText(e.target.value); grow(e.target) }}
-              onPaste={e => {
-                if (e.clipboardData.files.length > 0) {
-                  e.preventDefault()
-                  upload(e.clipboardData.files)
-                }
-              }}
-              placeholder="e.g. Sustainable packaging startups in Europe at Series A, using bio-based materials, not already in our pipeline..."
+              onPaste={e => { if (e.clipboardData.files.length > 0) { e.preventDefault(); upload(e.clipboardData.files) } }}
+              placeholder="e.g. Sustainable packaging startups in Europe at Series A, bio-based materials, not already in our pipeline..."
               disabled={submitting}
               className="w-full px-5 pt-5 pb-4 text-sm leading-relaxed resize-none outline-none"
-              style={{
-                minHeight: '160px',
-                height: '160px',
-                background: 'transparent',
-                color: 'var(--text)',
-                caretColor: 'var(--accent)',
-              }}
-              autoFocus
-            />
+              style={{ minHeight: '160px', height: '160px', background: 'transparent', color: 'var(--text)', caretColor: 'var(--accent)' }}
+              autoFocus />
 
-            {/* Attached files */}
             {files.length > 0 && (
               <div className="px-4 pb-3 flex flex-wrap gap-2">
                 {files.map(f => (
-                  <div key={f.path}
-                    className="flex items-center gap-2 text-xs rounded-lg px-3 py-1.5"
+                  <div key={f.path} className="flex items-center gap-2 text-xs rounded-lg px-3 py-1.5"
                     style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
-                    <span style={{ fontSize: '13px' }}>&#128206;</span>
+                    <span>&#128206;</span>
                     <span className="max-w-[140px] truncate font-medium" style={{ color: 'var(--text)' }}>{f.name}</span>
                     <span>{fmt(f.size)}</span>
-                    <button onClick={() => remove(f.path)}
-                      className="transition-colors ml-0.5"
-                      style={{ color: 'var(--subtle)' }}
-                      onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--subtle)')}
-                    >&#10005;</button>
+                    <button onClick={() => remove(f.path)} style={{ color: 'var(--subtle)' }}>&#10005;</button>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Bottom action bar */}
             <div className="flex items-center justify-between px-4 py-3"
               style={{ borderTop: '1px solid var(--border)' }}>
-              <div className="flex items-center gap-1">
-                {/* Attach button */}
+              <div className="flex items-center gap-1.5">
                 <input ref={fileRef} type="file" multiple className="hidden"
                   accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.pptx,.ppt"
                   onChange={e => upload(e.target.files)} />
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading || submitting}
-                  title="Attach files"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-all"
-                  style={{ color: 'var(--subtle)', background: 'transparent' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--subtle)' }}
-                >+</button>
-                {uploading && (
-                  <span className="text-xs ml-1" style={{ color: 'var(--subtle)' }}>Uploading…</span>
-                )}
-                {!uploading && files.length === 0 && (
-                  <span className="text-xs ml-1" style={{ color: 'var(--subtle)' }}>Attach files for context</span>
-                )}
+                <button onClick={() => fileRef.current?.click()} disabled={uploading || submitting}
+                  title="Attach files (PDF, Excel, Word, CSV)"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-light transition-all"
+                  style={{ color: 'var(--subtle)' }}>+</button>
+                <span className="text-xs" style={{ color: 'var(--subtle)' }}>
+                  {uploading ? 'Uploading…' : 'Attach files for context'}
+                </span>
               </div>
-              <button
-                onClick={submit}
-                disabled={!ready}
+              <button onClick={submit} disabled={!ready}
                 className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all"
-                style={{
-                  background: ready ? 'var(--accent)' : 'var(--border)',
-                  color: ready ? '#fff' : 'var(--subtle)',
-                  cursor: ready ? 'pointer' : 'not-allowed',
-                }}
-              >
-                {submitting ? <><div className="loading-spinner" style={{ width: '14px', height: '14px', borderColor: '#ccc', borderTopColor: '#fff' }} /> Submitting…</> : 'Search &#8594;'}
+                style={{ background: ready ? 'var(--accent)' : 'var(--border)', color: ready ? '#fff' : 'var(--subtle)', cursor: ready ? 'pointer' : 'not-allowed' }}>
+                {submitting ? 'Submitting…' : 'Search →'}
               </button>
             </div>
           </div>
 
           {error && <p className="mt-3 text-sm text-center" style={{ color: '#ef4444' }}>{error}</p>}
 
-          {/* Example prompts */}
           <div className="mt-8">
-            <p className="text-xs font-medium mb-3" style={{ color: 'var(--subtle)' }}>EXAMPLES</p>
+            <p className="text-xs font-medium mb-3 uppercase tracking-wider" style={{ color: 'var(--subtle)' }}>Examples</p>
             <div className="space-y-2">
               {EXAMPLES.map((ex, i) => (
-                <button key={i}
-                  onClick={() => { setText(ex); if (textRef.current) { textRef.current.focus(); grow(textRef.current) } }}
+                <button key={i} onClick={() => { setText(ex); if (textRef.current) { textRef.current.focus(); grow(textRef.current) } }}
                   className="w-full text-left text-sm px-4 py-3 rounded-xl transition-all"
-                  style={{
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--muted)',
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-hover)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--muted)' }}
-                >
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
                   {ex}
                 </button>
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </div>
