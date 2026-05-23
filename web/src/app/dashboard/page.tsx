@@ -240,7 +240,7 @@ export default function LogPage() {
                   {/* Result / Progress */}
                   <span className="text-xs font-medium flex items-center gap-1.5 min-w-0">
                     {active && (() => {
-                      const stalled = minutesSince(run.last_heartbeat) > 45
+                      const stalled = run.last_heartbeat !== null && minutesSince(run.last_heartbeat) > 45
                       const pending = run.status === 'PENDING'
                       return stalled ? (
                         <span className="flex items-center gap-1.5" style={{ color: '#c0392b' }}>
