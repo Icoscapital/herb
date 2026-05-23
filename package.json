@@ -4,7 +4,7 @@
   "description": "Herb - Icos Capital Sourcing Agent",
   "private": true,
   "scripts": {
-    "build": "cd web && npm run build",
+    "build": "cd web && npm run build && cd .. && cp -r web/.next .next && cp web/public . 2>/dev/null || true",
     "dev": "cd web && npm run dev",
     "start": "cd web && npm run start"
   },
