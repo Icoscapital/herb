@@ -66,3 +66,4 @@ To pause: disable via https://claude.ai/code/routines.
 ## Migration history
 
 Migrated from local cron-on-laptop setup on 2026-05-09 after the laptop-bound version proved unreliable (zombie sessions on permission prompts). See `~/IcosCapital/.../claude-stuff-donot-touch/herb/runs/` for prior run history.
+
