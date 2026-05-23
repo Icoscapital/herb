@@ -82,7 +82,7 @@ If the list is empty, skip to STEP 2. Otherwise process each mandate in turn.
 Immediately flip the status so the dashboard shows the live spinner:
 
 ```python
-from scripts.herb_web_run import mark_searching, mark_done, mark_emailed, mark_error, store_results
+from scripts.herb_web_run import mark_searching, mark_done, mark_emailed, mark_error, store_results, update_progress
 import time
 mark_searching(m['id'])
 t_start = time.time()
@@ -94,7 +94,18 @@ Use `m['slug']` (already set by the web form). If blank, generate: `YYYY-MM-DD-<
 
 ### 3 — Run Phase 2 search
 
-Execute Phase 2 exactly as described in the Phase 2 section below. Substitute:
+Call `update_progress` at every major checkpoint so the dashboard stays live:
+
+```python
+update_progress(m['id'], "Reading search playbook and field spec")
+```
+
+Then execute Phase 2 exactly as described in the Phase 2 section below.
+Throughout Phase 2, call `update_progress(m['id'], <message>)` at each step:
+- Before spawning source agents: `update_progress(m['id'], f"Searching source {n}/{total}: {source_name}")`
+- After collecting rows: `update_progress(m['id'], f"Collected {raw_count} raw rows — deduplicating")`
+- During Pipedrive check: `update_progress(m['id'], f"Pipedrive cross-check — batch {i}/{total_batches}")`
+- Before storing: `update_progress(m['id'], f"Storing {len(companies)} companies to database")` Substitute:
 
 | Phase 2 parameter | Value |
 |---|---|

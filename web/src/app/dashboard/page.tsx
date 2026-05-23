@@ -14,9 +14,15 @@ type Run = {
   submitted_by_email: string | null; submitted_by_name: string | null
   result_count: number | null; duration_seconds: number | null
   error_message: string | null
+  progress: string | null; last_heartbeat: string | null
 }
 
 type Filter = 'all' | 'running' | 'done' | 'error'
+
+function minutesSince(iso: string | null) {
+  if (!iso) return Infinity
+  return (Date.now() - new Date(iso).getTime()) / 60000
+}
 
 function timeAgo(iso: string) {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
@@ -63,7 +69,7 @@ export default function LogPage() {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from('herb_runs')
-      .select('id,theme,status,geography,stage,search_mode,created_at,submitted_by_email,submitted_by_name,result_count,duration_seconds,error_message')
+      .select('id,theme,status,geography,stage,search_mode,created_at,submitted_by_email,submitted_by_name,result_count,duration_seconds,error_message,progress,last_heartbeat')
       .order('created_at', { ascending: false })
       .limit(100)
     if (data) setRuns(data)
@@ -77,10 +83,12 @@ export default function LogPage() {
     })
   }, [router, load])
 
+  // Refresh every 8s when searches are running, 20s otherwise
   useEffect(() => {
-    const t = setInterval(load, 20_000)
+    const interval = runs.some(r => r.status === 'SEARCHING' || r.status === 'PENDING') ? 8_000 : 20_000
+    const t = setInterval(load, interval)
     return () => clearInterval(t)
-  }, [load])
+  }, [load, runs])
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg)' }}>
@@ -229,14 +237,29 @@ export default function LogPage() {
                   {/* Time */}
                   <span className="text-xs" style={{ color: 'var(--subtle)' }}>{timeAgo(run.created_at)}</span>
 
-                  {/* Result */}
-                  <span className="text-xs font-medium flex items-center gap-1.5">
-                    {active && (
-                      <span className="flex items-center gap-1.5" style={{ color: 'var(--teal)' }}>
-                        <div className="loading-spinner" style={{ width: '12px', height: '12px' }} />
-                        Searching&hellip;
-                      </span>
-                    )}
+                  {/* Result / Progress */}
+                  <span className="text-xs font-medium flex items-center gap-1.5 min-w-0">
+                    {active && (() => {
+                      const stalled = minutesSince(run.last_heartbeat) > 45
+                      const pending = run.status === 'PENDING'
+                      return stalled ? (
+                        <span className="flex items-center gap-1.5" style={{ color: '#c0392b' }}>
+                          <span>⚠ Stalled</span>
+                        </span>
+                      ) : pending ? (
+                        <span className="flex items-center gap-1.5" style={{ color: 'var(--subtle)' }}>
+                          <div className="loading-spinner" style={{ width: '12px', height: '12px', borderTopColor: 'var(--subtle)' }} />
+                          Queued
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 min-w-0" style={{ color: 'var(--teal)' }}>
+                          <div className="loading-spinner" style={{ width: '12px', height: '12px', flexShrink: 0 }} />
+                          <span className="truncate" title={run.progress ?? 'Searching…'}>
+                            {run.progress ?? 'Searching…'}
+                          </span>
+                        </span>
+                      )
+                    })()}
                     {done && (
                       <span className="px-2 py-0.5 rounded-full text-xs"
                         style={{ background: 'var(--teal-light)', color: 'var(--teal)' }}>
@@ -244,9 +267,10 @@ export default function LogPage() {
                       </span>
                     )}
                     {run.status === 'ERROR' && (
-                      <span className="px-2 py-0.5 rounded-full text-xs"
+                      <span className="px-2 py-0.5 rounded-full text-xs truncate"
+                        title={run.error_message ?? ''}
                         style={{ background: '#fdf2f1', color: '#c0392b' }}>
-                        Failed
+                        {run.error_message ? run.error_message.slice(0, 40) : 'Failed'}
                       </span>
                     )}
                   </span>
