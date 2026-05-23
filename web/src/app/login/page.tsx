@@ -1,12 +1,12 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { supabase } from '../../lib/supabase'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   const handleMicrosoftLogin = async () => {
     setLoading(true)
@@ -15,6 +15,7 @@ export default function LoginPage() {
         provider: 'azure',
         options: {
           scopes: 'email profile openid',
+          redirectTo: `${window.location.origin}/dashboard`,
         },
       })
       if (error) throw error
