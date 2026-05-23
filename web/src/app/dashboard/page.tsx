@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 type Run = {
   id: string
@@ -112,8 +113,9 @@ export default function LogPage() {
       <header style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <span className="font-semibold text-sm tracking-tight flex items-center gap-2">
-              <span>&#127807;</span> Herb
+            <span className="flex items-center gap-3">
+              <Image src="/icos-logo.jpg" alt="Icos Capital" width={72} height={40} style={{ objectFit: 'contain' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--muted)' }}>&#127807; Herb</span>
             </span>
             {running > 0 && (
               <span className="flex items-center gap-1.5 text-xs" style={{ color: '#3b82f6' }}>
