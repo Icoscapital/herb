@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd web && npm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "web/.next",
-  "installCommand": "cd web && npm install --legacy-peer-deps",
+  "installCommand": "npm install --legacy-peer-deps",
   "functions": {
     "api/functions/**/*.ts": {
       "memory": 1024,
