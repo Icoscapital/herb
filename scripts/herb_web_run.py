@@ -222,3 +222,84 @@ def get_run_files(run_id: str) -> list:
         ]
 
     return run_files + global_files
+
+
+def load_attachments(run_id: str) -> tuple[list[dict], list[dict]]:
+    """Download and parse all herb_files attachments for a run.
+
+    Returns (additional_companies, extra_check_sites) ready to merge into
+    a Phase 2 search:
+        additional_companies: list of {name, domain, source} extracted from
+            PitchBook exports and company lists (CSV or xlsx).
+        extra_check_sites:    list of {name, url} extracted from check-sites
+            files — used as additional VC portfolios to scrape in Phase 2.
+
+    Errors on individual files are logged and skipped (non-fatal).
+    """
+    import requests, csv, io
+    files = get_run_files(run_id)
+    additional_companies: list[dict] = []
+    extra_check_sites: list[dict] = []
+
+    def _download(url: str) -> bytes:
+        r = requests.get(url, timeout=30)
+        r.raise_for_status()
+        return r.content
+
+    def _parse_xlsx_rows(raw: bytes):
+        import openpyxl, tempfile, os as _os
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
+            tmp.write(raw); tmp_path = tmp.name
+        try:
+            wb = openpyxl.load_workbook(tmp_path, read_only=True, data_only=True)
+            ws = wb.active
+            headers = [str(c.value or '').lower() for c in next(ws.iter_rows(min_row=1, max_row=1))]
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                yield headers, row
+            wb.close()
+        finally:
+            _os.unlink(tmp_path)
+
+    for f in files:
+        slot = f.get('slot_type')
+        try:
+            raw = _download(f['url'])
+            is_csv = f['name'].lower().endswith('.csv')
+
+            if slot in ('pitchbook', 'company-list'):
+                if is_csv:
+                    reader = csv.DictReader(io.StringIO(raw.decode('utf-8', errors='replace')))
+                    for row in reader:
+                        name = row.get('Company') or row.get('Name') or row.get('company') or ''
+                        domain = row.get('Domain') or row.get('Website') or row.get('website') or ''
+                        if name.strip():
+                            additional_companies.append({'name': name.strip(), 'domain': domain.strip(), 'source': f['name']})
+                else:
+                    for headers, row in _parse_xlsx_rows(raw):
+                        name_col = next((i for i, h in enumerate(headers) if 'company' in h or 'name' in h), 0)
+                        domain_col = next((i for i, h in enumerate(headers) if 'domain' in h or 'website' in h or 'url' in h), None)
+                        name = str(row[name_col] or '').strip()
+                        domain = str(row[domain_col] or '').strip() if domain_col is not None else ''
+                        if name:
+                            additional_companies.append({'name': name, 'domain': domain, 'source': f['name']})
+
+            elif slot == 'check-sites':
+                if is_csv:
+                    reader = csv.DictReader(io.StringIO(raw.decode('utf-8', errors='replace')))
+                    for row in reader:
+                        site_name = row.get('name') or row.get('Name') or row.get('VC') or ''
+                        site_url = row.get('url') or row.get('URL') or row.get('website') or ''
+                        if site_url.strip():
+                            extra_check_sites.append({'name': site_name.strip(), 'url': site_url.strip()})
+                else:
+                    for headers, row in _parse_xlsx_rows(raw):
+                        name_col = next((i for i, h in enumerate(headers) if 'name' in h or 'vc' in h), 0)
+                        url_col = next((i for i, h in enumerate(headers) if 'url' in h or 'website' in h), None)
+                        site_name = str(row[name_col] or '').strip()
+                        site_url = str(row[url_col] or '').strip() if url_col is not None else ''
+                        if site_url:
+                            extra_check_sites.append({'name': site_name, 'url': site_url})
+        except Exception as e:
+            print(f"[load_attachments] could not parse {f.get('name')}: {e}")
+
+    return additional_companies, extra_check_sites
