@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +22,97 @@ type Run = {
   result_count: number | null
 }
 
+const PAGE_SIZE = 10
+
+// Country name → ISO-2 code
+const COUNTRY_CODE: Record<string, string> = {
+  'united kingdom': 'GB', 'uk': 'GB', 'germany': 'DE', 'switzerland': 'CH',
+  'france': 'FR', 'netherlands': 'NL', 'sweden': 'SE', 'denmark': 'DK',
+  'finland': 'FI', 'norway': 'NO', 'belgium': 'BE', 'austria': 'AT',
+  'italy': 'IT', 'spain': 'ES', 'poland': 'PL', 'ireland': 'IE',
+  'portugal': 'PT', 'czech republic': 'CZ', 'hungary': 'HU', 'romania': 'RO',
+  'europe': 'EU', 'estonia': 'EE', 'latvia': 'LV', 'lithuania': 'LT',
+}
+function countryCode(geo: string | null): string {
+  if (!geo) return '—'
+  const key = geo.toLowerCase().trim()
+  return COUNTRY_CODE[key] ?? geo.slice(0, 2).toUpperCase()
+}
+
+// Derive up to 4 tag chips from description + notes
+type Tag = { label: string; style: 'tech' | 'sector' | 'status' }
+function deriveTags(co: Company): Tag[] {
+  const haystack = `${co.description ?? ''} ${co.notes ?? ''} ${co.source ?? ''}`.toLowerCase()
+  const tags: Tag[] = []
+
+  // Tech tags (blue)
+  if (haystack.includes('causal ai') || haystack.includes('causal inference') || haystack.includes('causal machine'))
+    tags.push({ label: 'Causal AI', style: 'tech' })
+  if (haystack.includes('process opt') || haystack.includes('process optimization') || haystack.includes('process booster') || haystack.includes('setpoint'))
+    tags.push({ label: 'Process opt.', style: 'tech' })
+  if (haystack.includes('generative ai') || haystack.includes('generative mol') || haystack.includes('llm'))
+    tags.push({ label: 'Generative AI', style: 'tech' })
+  if (haystack.includes('computer vision') || haystack.includes('vision ai') || haystack.includes('histopath'))
+    tags.push({ label: 'Computer vision', style: 'tech' })
+  if (haystack.includes('knowledge graph') || haystack.includes('causal graph'))
+    tags.push({ label: 'Knowledge graph', style: 'tech' })
+  if (haystack.includes('decision') && (haystack.includes('intel') || haystack.includes('simulation')))
+    tags.push({ label: 'Decision intel.', style: 'tech' })
+
+  // Sector tags (green)
+  if (haystack.includes('food') || haystack.includes('dairy') || haystack.includes('nutrition') || haystack.includes('beverage') || haystack.includes('fmcg'))
+    tags.push({ label: 'Food', style: 'sector' })
+  if (haystack.includes('chem') || haystack.includes('specialty chem') || haystack.includes('catalysis') || haystack.includes('molecule'))
+    tags.push({ label: 'Chem.', style: 'sector' })
+  if (haystack.includes('pharma') || haystack.includes('drug') || haystack.includes('biomedical') || haystack.includes('biotech'))
+    tags.push({ label: 'Pharma', style: 'sector' })
+  if (haystack.includes('material') || haystack.includes('advanced material'))
+    tags.push({ label: 'Materials', style: 'sector' })
+  if (haystack.includes('carbon') || haystack.includes('co2') || haystack.includes('ccus') || haystack.includes('emission') || haystack.includes('decarboni'))
+    tags.push({ label: 'CCUS', style: 'sector' })
+  if (haystack.includes('supply chain') || haystack.includes('procurement') || haystack.includes('logistics'))
+    tags.push({ label: 'Supply chain', style: 'sector' })
+  if (haystack.includes('manufacturing') || haystack.includes('industrial') || haystack.includes('factory'))
+    tags.push({ label: 'Industrial AI', style: 'sector' })
+
+  // Pipedrive status tag
+  if (haystack.includes('pipedrive: lost'))
+    tags.push({ label: 'Prev. evaluated', style: 'status' })
+
+  // Return max 4, prioritising tech first then sector
+  return tags.slice(0, 4)
+}
+
+// Deterministic avatar color from company name
+const AVATAR_COLORS = [
+  { bg: '#1a2b4a', fg: '#fff' },  // navy
+  { bg: '#0e7c6e', fg: '#fff' },  // teal
+  { bg: '#7c4daa', fg: '#fff' },  // purple
+  { bg: '#c0392b', fg: '#fff' },  // red
+  { bg: '#b7600a', fg: '#fff' },  // amber
+  { bg: '#2471a3', fg: '#fff' },  // blue
+  { bg: '#1e8449', fg: '#fff' },  // green
+  { bg: '#6c3483', fg: '#fff' },  // violet
+]
+function avatarColor(name: string) {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff
+  return AVATAR_COLORS[h % AVATAR_COLORS.length]
+}
+function initials(name: string): string {
+  const words = name.trim().split(/\s+/)
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  return (words[0][0] + words[1][0]).toUpperCase()
+}
+
+// Thesis fit bar color
+function fitColor(score: number | null): string {
+  if (score === null) return 'var(--subtle)'
+  if (score >= 8) return '#1e8449'
+  if (score >= 6) return '#b7600a'
+  return '#999'
+}
+
 function timeAgo(iso: string) {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
   if (s < 60) return 'just now'
@@ -37,6 +128,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
+  const [page, setPage] = useState(1)
   // Feedback state
   const [excluded, setExcluded] = useState<Set<string>>(new Set())
   const [feedbackText, setFeedbackText] = useState('')
@@ -85,7 +177,6 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
       const json = await res.json()
       if (!json.ok) throw new Error(json.error || 'Unknown error')
       setFeedbackDone(true)
-      // Go back to dashboard after short pause so user sees the new PENDING run + Run button
       setTimeout(() => router.push('/dashboard'), 1800)
     } catch (e: any) {
       setFeedbackError(String(e))
@@ -117,148 +208,237 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   if (!run) return null
 
   const submitter = run.submitted_by_name ?? run.submitted_by_email?.split('@')[0] ?? 'Unknown'
-
-  // Group by source for dealflow intelligence
-  const sourceMap = companies.reduce((acc, c) => {
-    const src = c.source ?? 'Other'
-    acc[src] = (acc[src] ?? 0) + 1
-    return acc
-  }, {} as Record<string, number>)
-  const sources = Object.entries(sourceMap).sort((a, b) => b[1] - a[1])
+  const totalPages = Math.ceil(companies.length / PAGE_SIZE)
+  const pageCompanies = companies.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+
+      {/* Nav */}
       <header className="px-6 py-3.5 sticky top-0 z-10 flex items-center justify-between"
         style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/dashboard" className="text-sm flex-shrink-0" style={{ color: 'var(--muted)' }}>&#8592; Log</Link>
+          <Link href="/dashboard" className="text-sm flex-shrink-0" style={{ color: 'var(--muted)' }}>← Log</Link>
           <span style={{ color: 'var(--border)' }}>|</span>
           <span className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>{run.theme}</span>
         </div>
         {companies.length > 0 && (
           <button onClick={download} disabled={downloading}
             className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg flex-shrink-0 transition-all"
-            style={{ background: 'var(--accent-light)', color: 'var(--accent)', border: '1px solid var(--accent)' }}>
+            style={{ background: 'var(--teal-light)', color: 'var(--teal)', border: '1px solid var(--teal)' }}>
             {downloading
               ? <><span className="loading-spinner" style={{ width: '13px', height: '13px' }} /> Downloading…</>
-              : <>&#8595; Download CSV ({companies.length})</>}
+              : <>↓ CSV ({companies.length})</>}
           </button>
         )}
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-8">
 
-        {/* Run meta */}
-        <div className="rounded-xl px-5 py-4 mb-6"
-          style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs" style={{ color: 'var(--muted)' }}>
-            <span><strong style={{ color: 'var(--text)' }}>Submitted by</strong> {submitter}</span>
-            <span><strong style={{ color: 'var(--text)' }}>When</strong> {timeAgo(run.created_at)}</span>
-            <span><strong style={{ color: 'var(--text)' }}>Geography</strong> {run.geography}</span>
-            <span><strong style={{ color: 'var(--text)' }}>Stage</strong> {run.stage}</span>
-            <span><strong style={{ color: 'var(--text)' }}>Mode</strong> {run.search_mode}</span>
-          </div>
-          {run.special_instructions && (
-            <p className="mt-3 pt-3 text-sm" style={{ borderTop: '1px solid var(--border)', color: 'var(--muted)' }}>
-              <strong style={{ color: 'var(--text)' }}>Brief: </strong>{run.special_instructions}
-            </p>
-          )}
+        {/* Run meta bar */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs mb-6 px-1"
+          style={{ color: 'var(--muted)' }}>
+          <span style={{ color: 'var(--text)', fontWeight: 600 }}>{companies.length} companies</span>
+          <span>by {submitter}</span>
+          <span>{timeAgo(run.created_at)}</span>
+          <span className="px-2 py-0.5 rounded-full text-xs"
+            style={{ background: 'var(--navy-light)', color: 'var(--navy)' }}>
+            {run.geography}
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-xs"
+            style={{ background: 'var(--navy-light)', color: 'var(--navy)' }}>
+            {run.stage}
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-xs"
+            style={{ background: 'var(--navy-light)', color: 'var(--navy)' }}>
+            {run.search_mode}
+          </span>
         </div>
 
-        {/* Dealflow sources */}
-        {sources.length > 0 && (
-          <div className="rounded-xl px-5 py-4 mb-6"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <p className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: 'var(--subtle)' }}>
-              Dealflow sources
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {sources.map(([src, count]) => (
-                <span key={src} className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5"
-                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
-                  <span className="font-medium" style={{ color: 'var(--text)' }}>{src}</span>
-                  <span style={{ color: 'var(--subtle)' }}>{count}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Companies */}
+        {/* Table */}
         {companies.length === 0 ? (
           <div className="rounded-2xl py-16 text-center"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <p className="text-sm" style={{ color: 'var(--muted)' }}>Results not yet available.</p>
           </div>
         ) : (
-          <>
-            <p className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: 'var(--subtle)' }}>
-              {companies.length} companies
-            </p>
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-              {companies.map((co, i) => {
-                const isExcluded = excluded.has(co.name)
-                return (
-                  <div key={co.id} className="px-5 py-4"
-                    style={{
-                      borderBottom: i < companies.length - 1 ? '1px solid var(--border)' : 'none',
-                      opacity: isExcluded ? 0.4 : 1,
-                      transition: 'opacity 0.15s',
-                    }}>
-                    <div className="flex items-start gap-3">
-                      <span className="text-xs pt-0.5 w-5 text-right flex-shrink-0" style={{ color: 'var(--subtle)' }}>{i + 1}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{co.name}</span>
-                          {co.score !== null && (
-                            <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                              style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>{co.score}/10</span>
-                          )}
-                          {co.stage && (
-                            <span className="text-xs px-2 py-0.5 rounded-full"
-                              style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>{co.stage}</span>
-                          )}
-                        </div>
-                        {co.description && <p className="text-sm leading-relaxed mb-2" style={{ color: 'var(--muted)' }}>{co.description}</p>}
-                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs" style={{ color: 'var(--subtle)' }}>
-                          {co.geography && <span>&#128205; {co.geography}</span>}
-                          {co.source && <span>via {co.source}</span>}
-                          {co.website && <a href={co.website} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--accent)' }}>Website</a>}
-                          {co.linkedin && <a href={co.linkedin} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--accent)' }}>LinkedIn</a>}
-                        </div>
-                        {co.notes && <p className="text-xs mt-1.5 italic" style={{ color: 'var(--subtle)' }}>{co.notes}</p>}
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+
+            {/* Column headers */}
+            <div className="grid px-4 py-2.5 text-xs font-medium uppercase tracking-wider"
+              style={{
+                gridTemplateColumns: '2fr 1.4fr 52px 90px 90px 80px',
+                gap: '12px',
+                color: 'var(--subtle)',
+                borderBottom: '1px solid var(--border)',
+              }}>
+              <span>Company</span>
+              <span>Tags</span>
+              <span>Country</span>
+              <span>Stage</span>
+              <span>Pipedrive</span>
+              <span>Thesis fit</span>
+            </div>
+
+            {/* Rows */}
+            {pageCompanies.map((co, i) => {
+              const isExcluded = excluded.has(co.name)
+              const tags = deriveTags(co)
+              const av = avatarColor(co.name)
+              const fit = co.score !== null ? Math.round(co.score * 10) : null
+              const pipedrive = co.notes?.match(/Pipedrive:\s*([^|]+)/)?.[1]?.trim() ?? 'New'
+              const isLost = pipedrive.toLowerCase().includes('lost')
+
+              return (
+                <div key={co.id}
+                  className="grid px-4 items-center transition-colors"
+                  style={{
+                    gridTemplateColumns: '2fr 1.4fr 52px 90px 90px 80px',
+                    gap: '12px',
+                    borderBottom: i < pageCompanies.length - 1 ? '1px solid var(--border)' : 'none',
+                    opacity: isExcluded ? 0.35 : 1,
+                    transition: 'opacity 0.15s, background 0.1s',
+                    minHeight: '56px',
+                    cursor: 'default',
+                  }}
+                  onMouseEnter={e => !isExcluded && (e.currentTarget.style.background = 'var(--bg)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  {/* Company */}
+                  <div className="flex items-center gap-2.5 min-w-0 py-2">
+                    {/* Avatar */}
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+                      style={{ background: av.bg, color: av.fg, letterSpacing: '0.02em' }}>
+                      {initials(co.name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>
+                          {co.name}
+                        </span>
+                        {co.website && (
+                          <a href={co.website} target="_blank" rel="noopener noreferrer"
+                            className="flex-shrink-0 text-xs"
+                            style={{ color: 'var(--subtle)' }}
+                            title={co.website}>↗</a>
+                        )}
                       </div>
-                      {/* Exclude toggle */}
-                      <button
-                        onClick={() => toggleExclude(co.name)}
-                        title={isExcluded ? 'Include in round 2' : 'Exclude from round 2'}
-                        className="flex-shrink-0 text-xs px-2 py-1 rounded-lg transition-all"
-                        style={{
-                          background: isExcluded ? '#fdf2f1' : 'var(--bg)',
-                          color: isExcluded ? '#c0392b' : 'var(--subtle)',
-                          border: `1px solid ${isExcluded ? '#e74c3c' : 'var(--border)'}`,
-                        }}>
-                        {isExcluded ? '✕ Excluded' : 'Exclude'}
-                      </button>
+                      {co.description && (
+                        <p className="text-xs truncate mt-0.5" style={{ color: 'var(--muted)' }}
+                          title={co.description}>
+                          {co.description.slice(0, 70)}{co.description.length > 70 ? '…' : ''}
+                        </p>
+                      )}
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          </>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1 py-2">
+                    {tags.map(tag => (
+                      <span key={tag.label} className="text-xs px-2 py-0.5 rounded-full whitespace-nowrap"
+                        style={{
+                          background: tag.style === 'tech' ? '#e8f0fc' : tag.style === 'sector' ? '#e8f5ee' : '#fdf2f1',
+                          color: tag.style === 'tech' ? '#2471a3' : tag.style === 'sector' ? '#1e8449' : '#c0392b',
+                        }}>
+                        {tag.label}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Country */}
+                  <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>
+                    {countryCode(co.geography)}
+                  </div>
+
+                  {/* Stage */}
+                  <div>
+                    {co.stage && (
+                      <span className="text-xs px-2 py-1 rounded-lg"
+                        style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+                        {co.stage}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Pipedrive */}
+                  <div className="text-xs truncate"
+                    style={{ color: isLost ? '#c0392b' : 'var(--subtle)' }}>
+                    {isLost ? `Lost` : 'New'}
+                  </div>
+
+                  {/* Thesis fit */}
+                  <div className="flex items-center gap-1.5">
+                    {fit !== null ? (
+                      <>
+                        <div className="w-5 h-1 rounded-full flex-shrink-0"
+                          style={{ background: fitColor(co.score) }} />
+                        <span className="text-sm font-semibold"
+                          style={{ color: fitColor(co.score) }}>
+                          {fit}%
+                        </span>
+                        {/* Exclude toggle on hover */}
+                        <button
+                          onClick={() => toggleExclude(co.name)}
+                          title={isExcluded ? 'Re-include' : 'Exclude from round 2'}
+                          className="ml-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity rounded px-1"
+                          style={{
+                            color: isExcluded ? '#c0392b' : 'var(--subtle)',
+                            background: isExcluded ? '#fdf2f1' : 'transparent',
+                            border: `1px solid ${isExcluded ? '#e74c3c' : 'transparent'}`,
+                          }}>
+                          {isExcluded ? '✕' : '×'}
+                        </button>
+                      </>
+                    ) : (
+                      <span style={{ color: 'var(--subtle)' }}>—</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-1 mt-5">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => {
+              const isEllipsis = totalPages > 6 && p !== 1 && p !== totalPages && Math.abs(p - page) > 2
+              if (isEllipsis && (p === 2 || p === totalPages - 1)) {
+                return <span key={p} className="px-2 text-sm" style={{ color: 'var(--subtle)' }}>…</span>
+              }
+              if (isEllipsis) return null
+              return (
+                <button key={p} onClick={() => setPage(p)}
+                  className="w-8 h-8 rounded-lg text-sm font-medium transition-all"
+                  style={{
+                    background: p === page ? 'var(--navy)' : 'var(--surface)',
+                    color: p === page ? '#fff' : 'var(--muted)',
+                    border: `1px solid ${p === page ? 'var(--navy)' : 'var(--border)'}`,
+                  }}>
+                  {p}
+                </button>
+              )
+            })}
+            {page < totalPages && (
+              <button onClick={() => setPage(p => p + 1)}
+                className="w-8 h-8 rounded-lg text-sm transition-all"
+                style={{ background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
+                ›
+              </button>
+            )}
+          </div>
         )}
 
         {/* Feedback panel */}
         {companies.length > 0 && (
           <div className="mt-8 rounded-2xl px-6 py-5"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-
-            <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text)' }}>
-              Start round 2
-            </p>
+            <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text)' }}>Start round 2</p>
             <p className="text-xs mb-4" style={{ color: 'var(--muted)' }}>
-              Exclude companies above by clicking "Exclude", then describe adjustments below.
-              Herb will run a fresh search incorporating your feedback.
+              Click any company row's × to exclude it, then describe adjustments below.
+              Herb runs a fresh search incorporating your feedback.
             </p>
 
             {excluded.size > 0 && (
@@ -276,14 +456,12 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
             <textarea
               value={feedbackText}
               onChange={e => setFeedbackText(e.target.value)}
-              placeholder="e.g. Focus more on Series A companies. Add supply chain / logistics angle. Find more German and Dutch companies. Less pharma, more industrial."
+              placeholder="e.g. Focus on Series A only. More German and Dutch companies. Less pharma, more industrial process optimization."
               rows={3}
-              className="w-full text-sm rounded-xl px-4 py-3 resize-none outline-none transition-all"
+              className="w-full text-sm rounded-xl px-4 py-3 resize-none outline-none"
               style={{
-                background: 'var(--bg)',
-                border: '1px solid var(--border)',
-                color: 'var(--text)',
-                fontFamily: 'inherit',
+                background: 'var(--bg)', border: '1px solid var(--border)',
+                color: 'var(--text)', fontFamily: 'inherit',
               }}
               onFocus={e => e.currentTarget.style.borderColor = 'var(--teal)'}
               onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
@@ -295,17 +473,17 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
 
             {feedbackDone ? (
               <div className="mt-3 flex items-center gap-2 text-sm" style={{ color: 'var(--teal)' }}>
-                <span>✓</span>
-                <span>Round 2 queued — returning to dashboard…</span>
+                ✓ Round 2 queued — returning to dashboard…
               </div>
             ) : (
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-xs" style={{ color: 'var(--subtle)' }}>
                   {excluded.size > 0 ? `${excluded.size} excluded · ` : ''}
-                  {feedbackText.trim() ? `"${feedbackText.trim().slice(0, 60)}${feedbackText.length > 60 ? '…' : ''}"` : 'No instructions yet'}
+                  {feedbackText.trim()
+                    ? `"${feedbackText.trim().slice(0, 60)}${feedbackText.length > 60 ? '…' : ''}"`
+                    : 'No instructions yet'}
                 </span>
-                <button
-                  onClick={submitFeedback}
+                <button onClick={submitFeedback}
                   disabled={submitting || (!feedbackText.trim() && excluded.size === 0)}
                   className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
                   style={{
