@@ -64,6 +64,8 @@ export default function LogPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('all')
   const [downloading, setDownloading] = useState<string | null>(null)
+  const [triggering, setTriggering] = useState<string | null>(null)
+  const [triggerMsg, setTriggerMsg] = useState<{ id: string; text: string; ok: boolean } | null>(null)
   const router = useRouter()
 
   const load = useCallback(async () => {
@@ -82,6 +84,30 @@ export default function LogPage() {
       load().then(() => setLoading(false))
     })
   }, [router, load])
+
+  const triggerRun = useCallback(async (runId: string) => {
+    setTriggering(runId)
+    setTriggerMsg(null)
+    try {
+      const res = await fetch('/api/run-mandate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ run_id: runId }),
+      })
+      const json = await res.json()
+      if (json.ok) {
+        setTriggerMsg({ id: runId, text: 'Search triggered — starting now…', ok: true })
+      } else {
+        setTriggerMsg({ id: runId, text: json.message || json.error || 'Could not trigger', ok: false })
+      }
+      // Refresh immediately so user sees status change
+      setTimeout(load, 1500)
+    } catch (e: any) {
+      setTriggerMsg({ id: runId, text: String(e), ok: false })
+    } finally {
+      setTriggering(null)
+    }
+  }, [load])
 
   // Refresh every 8s when searches are running, 20s otherwise
   useEffect(() => {
@@ -167,6 +193,19 @@ export default function LogPage() {
           </div>
         </div>
 
+        {/* Trigger feedback toast */}
+        {triggerMsg && (
+          <div className="mb-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm"
+            style={{
+              background: triggerMsg.ok ? 'var(--teal-light)' : '#fdf2f1',
+              color: triggerMsg.ok ? 'var(--teal)' : '#c0392b',
+              border: `1px solid ${triggerMsg.ok ? 'var(--teal)' : '#e74c3c'}`,
+            }}>
+            <span>{triggerMsg.ok ? '▶ ' : '⚠ '}{triggerMsg.text}</span>
+            <button onClick={() => setTriggerMsg(null)} style={{ opacity: 0.5, fontSize: '16px', lineHeight: 1 }}>×</button>
+          </div>
+        )}
+
         {/* Empty */}
         {filtered.length === 0 ? (
           <div className="rounded-2xl py-20 text-center"
@@ -189,7 +228,7 @@ export default function LogPage() {
 
             {/* Column headers */}
             <div className="grid px-5 py-2 text-xs font-medium uppercase tracking-wider"
-              style={{ gridTemplateColumns: '12px 1fr 130px 80px 130px 36px', color: 'var(--subtle)', borderBottom: '1px solid var(--border)', gap: '16px' }}>
+              style={{ gridTemplateColumns: '12px 1fr 130px 80px 130px 68px', color: 'var(--subtle)', borderBottom: '1px solid var(--border)', gap: '16px' }}>
               <span />
               <span>Search</span>
               <span>Submitted by</span>
@@ -207,7 +246,7 @@ export default function LogPage() {
               const row = (
                 <div className="grid px-5 py-4 items-center transition-colors"
                   style={{
-                    gridTemplateColumns: '12px 1fr 130px 80px 130px 36px',
+                    gridTemplateColumns: '12px 1fr 130px 80px 130px 68px',
                     gap: '16px',
                     borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none',
                     cursor: done ? 'pointer' : 'default',
@@ -275,8 +314,30 @@ export default function LogPage() {
                     )}
                   </span>
 
-                  {/* Download */}
-                  <span className="flex justify-end">
+                  {/* Actions: Run (PENDING) or Download (done) */}
+                  <span className="flex justify-end items-center gap-1">
+                    {run.status === 'PENDING' && (
+                      <button
+                        onClick={async e => {
+                          e.preventDefault(); e.stopPropagation()
+                          triggerRun(run.id)
+                        }}
+                        disabled={triggering === run.id}
+                        title="Run now (don't wait for hourly tick)"
+                        className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all"
+                        style={{
+                          background: triggering === run.id ? 'var(--teal-light)' : 'var(--teal)',
+                          color: triggering === run.id ? 'var(--teal)' : '#fff',
+                          opacity: triggering === run.id ? 0.7 : 1,
+                          minWidth: '52px',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {triggering === run.id
+                          ? <div className="loading-spinner" style={{ width: '10px', height: '10px', borderTopColor: 'var(--teal)' }} />
+                          : '▶ Run'}
+                      </button>
+                    )}
                     {done && (
                       <button
                         onClick={async e => {
@@ -291,7 +352,7 @@ export default function LogPage() {
                       >
                         {downloading === run.id
                           ? <div className="loading-spinner" style={{ width: '12px', height: '12px' }} />
-                          : '&#8595;'}
+                          : '↓'}
                       </button>
                     )}
                   </span>
