@@ -44,12 +44,13 @@ export default function NewMandatePage() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/login'); return }
     const added: Attachment[] = []
-    for (const f of Array.from(list)) {
+    for (let i = 0; i < Array.from(list).length; i++) {
+      const f = Array.from(list)[i]
       const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_')
       const prefix = slotType ? `${slotType}-` : ''
-      const path = `mandates/${session.user.id}/${Date.now()}-${prefix}${safe}`
+      const path = `mandates/${session.user.id}/${Date.now()}-${i}-${prefix}${safe}`
       const { error: e } = await supabase.storage.from('herb-uploads').upload(path, f)
-      if (e) { setError(`Could not upload ${f.name}`); continue }
+      if (e) { setError(`Could not upload ${f.name}: ${e.message}`); continue }
       const { data: { publicUrl } } = supabase.storage.from('herb-uploads').getPublicUrl(path)
       added.push({ name: f.name, size: f.size, url: publicUrl, path, fileType: slotType })
     }
@@ -141,9 +142,9 @@ export default function NewMandatePage() {
                     {slotFiles.map(sf => (
                       <div key={sf.path} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl"
                         style={{ background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>
-                        <span className="flex-shrink-0">{slot.icon}</span>
+                        <span className="flex-shrink-0" style={{ fontSize: '11px' }}>✓</span>
                         <span className="truncate flex-1 font-medium" title={sf.name}>{sf.name}</span>
-                        <button onClick={() => remove(sf.path)} style={{ opacity: 0.6 }}>×</button>
+                        <button onClick={() => remove(sf.path)} className="flex-shrink-0" style={{ opacity: 0.5, fontSize: '14px', lineHeight: 1 }}>×</button>
                       </div>
                     ))}
                     <button
@@ -152,18 +153,29 @@ export default function NewMandatePage() {
                       disabled={isUp || submitting}
                       className="w-full flex flex-col items-center gap-0.5 px-2 rounded-xl text-xs transition-all"
                       style={{
-                        background: 'var(--bg)', border: '1px dashed var(--border)',
-                        color: 'var(--subtle)', cursor: 'pointer',
+                        background: isUp ? 'var(--teal-light)' : slotFiles.length > 0 ? 'var(--bg)' : 'var(--bg)',
+                        border: isUp ? '1.5px solid var(--teal)' : slotFiles.length > 0 ? '1.5px solid var(--teal)' : '1px dashed var(--border)',
+                        color: 'var(--subtle)', cursor: isUp ? 'default' : 'pointer',
                         paddingTop: slotFiles.length > 0 ? '5px' : '10px',
                         paddingBottom: slotFiles.length > 0 ? '5px' : '10px',
+                        animation: isUp ? 'pulse 1s ease-in-out infinite' : 'none',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--teal)'}
-                      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
-                      <span className="text-base">{isUp ? '⏳' : slot.icon}</span>
-                      <span className="font-medium" style={{ color: 'var(--muted)' }}>
-                        {slotFiles.length > 0 ? '+ add more' : slot.label}
-                      </span>
-                      {slotFiles.length === 0 && <span style={{ fontSize: '10px' }}>{slot.hint}</span>}
+                      onMouseEnter={e => { if (!isUp) e.currentTarget.style.borderColor = 'var(--teal)' }}
+                      onMouseLeave={e => { if (!isUp && slotFiles.length === 0) e.currentTarget.style.borderColor = 'var(--border)' }}>
+                      {isUp ? (
+                        <>
+                          <span className="loading-spinner" style={{ width: '13px', height: '13px', margin: '2px 0' }} />
+                          <span style={{ color: 'var(--teal)', fontWeight: 500 }}>Uploading…</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-base">{slot.icon}</span>
+                          <span className="font-medium" style={{ color: slotFiles.length > 0 ? 'var(--teal)' : 'var(--muted)' }}>
+                            {slotFiles.length > 0 ? `+ add more (${slotFiles.length})` : slot.label}
+                          </span>
+                          {slotFiles.length === 0 && <span style={{ fontSize: '10px' }}>{slot.hint}</span>}
+                        </>
+                      )}
                     </button>
                   </div>
                 )

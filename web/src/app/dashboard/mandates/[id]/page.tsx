@@ -145,6 +145,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   // File upload for round 2
   const [uploadedFiles, setUploadedFiles] = useState<FileSlot[]>([])
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -173,15 +174,20 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const uploadFiles = useCallback(async (slotKey: string, fileList: FileList) => {
     if (!fileList.length) return
     setUploadingSlot(slotKey)
+    setUploadError(null)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
       const slotType = slotKey as FileSlot['type']
-      for (const file of Array.from(fileList)) {
+      const files = Array.from(fileList)
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
         const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-        const path = `mandates/${session.user.id}/${Date.now()}-${slotKey}-${safe}`
+        const path = `mandates/${session.user.id}/${Date.now()}-${i}-${slotKey}-${safe}`
         const { error: e } = await supabase.storage.from('herb-uploads').upload(path, file)
-        if (!e) {
+        if (e) {
+          setUploadError(`Could not upload ${file.name}: ${e.message}`)
+        } else {
           const { data: { publicUrl } } = supabase.storage.from('herb-uploads').getPublicUrl(path)
           setUploadedFiles(prev => [...prev, { type: slotType, name: file.name, url: publicUrl, path, size: file.size }])
         }
@@ -532,14 +538,14 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                     {slotFiles.map(sf => (
                       <div key={sf.path} style={{
                         display: 'flex', alignItems: 'center', gap: '6px',
-                        fontSize: '12px', padding: '6px 10px', borderRadius: '10px',
+                        fontSize: '12px', padding: '5px 10px', borderRadius: '10px',
                         background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)',
                       }}>
-                        <span style={{ flexShrink: 0 }}>{slot.icon}</span>
+                        <span style={{ flexShrink: 0, fontSize: '11px' }}>✓</span>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontWeight: 500 }}
                           title={sf.name}>{sf.name}</span>
                         <button onClick={() => removeFile(sf)}
-                          style={{ color: 'var(--teal)', opacity: 0.7, flexShrink: 0, lineHeight: 1 }}>×</button>
+                          style={{ color: 'var(--teal)', opacity: 0.6, flexShrink: 0, lineHeight: 1, fontSize: '14px' }}>×</button>
                       </div>
                     ))}
                     <button
@@ -553,25 +559,43 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                         width: '100%', display: 'flex', flexDirection: 'column',
                         alignItems: 'center', gap: '3px',
                         padding: slotFiles.length > 0 ? '6px 8px' : '10px 8px',
-                        borderRadius: '12px', fontSize: '12px', cursor: 'pointer',
-                        background: 'var(--bg)', border: '1px dashed var(--border)',
-                        color: 'var(--subtle)', transition: 'border-color 0.15s',
+                        borderRadius: '12px', fontSize: '12px',
+                        cursor: isUploading ? 'default' : 'pointer',
+                        background: isUploading ? 'var(--teal-light)' : 'var(--bg)',
+                        border: (isUploading || slotFiles.length > 0)
+                          ? '1.5px solid var(--teal)'
+                          : '1px dashed var(--border)',
+                        color: 'var(--subtle)',
+                        animation: isUploading ? 'pulse 1s ease-in-out infinite' : 'none',
+                        transition: 'border-color 0.15s, background 0.15s',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--teal)')}
-                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                      onMouseEnter={e => { if (!isUploading) e.currentTarget.style.borderColor = 'var(--teal)' }}
+                      onMouseLeave={e => { if (!isUploading && slotFiles.length === 0) e.currentTarget.style.borderColor = 'var(--border)' }}
                     >
-                      <span style={{ fontSize: '16px' }}>{isUploading ? '⏳' : slot.icon}</span>
-                      <span style={{ fontWeight: 500, color: 'var(--muted)' }}>
-                        {slotFiles.length > 0 ? '+ add more' : slot.label}
-                      </span>
-                      {slotFiles.length === 0 && (
-                        <span style={{ fontSize: '10px', color: 'var(--subtle)', textAlign: 'center' }}>{slot.hint}</span>
+                      {isUploading ? (
+                        <>
+                          <span className="loading-spinner" style={{ width: '13px', height: '13px', margin: '1px 0' }} />
+                          <span style={{ fontWeight: 500, color: 'var(--teal)' }}>Uploading…</span>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ fontSize: '16px' }}>{slot.icon}</span>
+                          <span style={{ fontWeight: 500, color: slotFiles.length > 0 ? 'var(--teal)' : 'var(--muted)' }}>
+                            {slotFiles.length > 0 ? `+ add more (${slotFiles.length})` : slot.label}
+                          </span>
+                          {slotFiles.length === 0 && (
+                            <span style={{ fontSize: '10px', color: 'var(--subtle)', textAlign: 'center' }}>{slot.hint}</span>
+                          )}
+                        </>
                       )}
                     </button>
                   </div>
                 )
               })}
             </div>
+            {uploadError && (
+              <p className="text-xs mt-2" style={{ color: '#c0392b' }}>⚠ {uploadError}</p>
+            )}
 
             {feedbackError && (
               <p className="text-xs mt-2" style={{ color: '#c0392b' }}>⚠ {feedbackError}</p>
