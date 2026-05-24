@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +27,7 @@ type Run = {
   special_instructions: string | null; created_at: string
   submitted_by_name: string | null; submitted_by_email: string | null
   result_count: number | null
+  current_round: number | null
 }
 
 const PAGE_SIZE = 10
@@ -146,6 +147,13 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const [uploadedFiles, setUploadedFiles] = useState<FileSlot[]>([])
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  // Manual company add
+  const [showManualAdd, setShowManualAdd] = useState(false)
+  const [manualName, setManualName] = useState('')
+  const [manualWebsite, setManualWebsite] = useState('')
+  const [addingManual, setAddingManual] = useState(false)
+  // Mark complete
+  const [completing, setCompleting] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -275,6 +283,53 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const markComplete = async () => {
+    if (!run) return
+    setCompleting(true)
+    const { error } = await supabase
+      .from('herb_runs')
+      .update({ status: 'COMPLETED' })
+      .eq('id', params.id)
+    if (error) {
+      alert('Could not mark as completed: ' + error.message)
+      setCompleting(false)
+      return
+    }
+    setRun(r => r ? { ...r, status: 'COMPLETED' } : r)
+    setCompleting(false)
+  }
+
+  const addManualCompany = async () => {
+    if (!manualName.trim()) return
+    setAddingManual(true)
+    const website = manualWebsite.trim() || null
+    const { data, error } = await supabase
+      .from('herb_longlist')
+      .insert({
+        run_id: params.id,
+        name: manualName.trim(),
+        website,
+        description: null,
+        geography: null,
+        stage: null,
+        score: null,
+        linkedin: null,
+        notes: 'Manually added',
+        source: 'Manual',
+      })
+      .select('*')
+      .single()
+    if (error) {
+      alert('Could not add company: ' + error.message)
+    } else if (data) {
+      setCompanies(prev => [data, ...prev])
+      setManualName('')
+      setManualWebsite('')
+      setShowManualAdd(false)
+    }
+    setAddingManual(false)
   }
 
   const download = async () => {
@@ -531,158 +586,250 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        {/* Feedback panel */}
-        {companies.length > 0 && (
-          <div className="mt-8 rounded-2xl px-6 py-5"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text)' }}>Start round 2</p>
-            <p className="text-xs mb-4" style={{ color: 'var(--muted)' }}>
-              Click any company row's × to exclude it, then describe adjustments below.
-              Herb runs a fresh search incorporating your feedback.
-            </p>
-
-            {excluded.size > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {Array.from(excluded).map(name => (
-                  <span key={name} className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full"
-                    style={{ background: '#fdf2f1', color: '#c0392b', border: '1px solid #e74c3c' }}>
-                    ✕ {name}
-                    <button onClick={() => toggleExclude(name)} style={{ opacity: 0.6, marginLeft: '2px' }}>×</button>
-                  </span>
-                ))}
+        {/* Manual company add */}
+        {companies.length > 0 && run.status !== 'COMPLETED' && (
+          <div className="mt-4">
+            {!showManualAdd ? (
+              <button
+                onClick={() => setShowManualAdd(true)}
+                className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all"
+                style={{ color: 'var(--muted)', border: '1px dashed var(--border)', background: 'transparent' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
+              >
+                + Add a company manually
+              </button>
+            ) : (
+              <div className="rounded-xl px-4 py-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <p className="text-xs font-medium mb-2" style={{ color: 'var(--text)' }}>Add company to this list</p>
+                <div className="flex gap-2 flex-wrap">
+                  <input
+                    value={manualName}
+                    onChange={e => setManualName(e.target.value)}
+                    placeholder="Company name *"
+                    className="flex-1 text-sm rounded-lg px-3 py-2 outline-none min-w-[150px]"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                    onFocus={e => e.currentTarget.style.borderColor = 'var(--teal)'}
+                    onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                    onKeyDown={e => e.key === 'Enter' && addManualCompany()}
+                  />
+                  <input
+                    value={manualWebsite}
+                    onChange={e => setManualWebsite(e.target.value)}
+                    placeholder="Website (optional)"
+                    className="flex-1 text-sm rounded-lg px-3 py-2 outline-none min-w-[150px]"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                    onFocus={e => e.currentTarget.style.borderColor = 'var(--teal)'}
+                    onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                    onKeyDown={e => e.key === 'Enter' && addManualCompany()}
+                  />
+                  <button
+                    onClick={addManualCompany}
+                    disabled={addingManual || !manualName.trim()}
+                    className="text-sm font-medium px-4 py-2 rounded-lg transition-all"
+                    style={{
+                      background: manualName.trim() ? 'var(--teal)' : 'var(--border)',
+                      color: manualName.trim() ? '#fff' : 'var(--subtle)',
+                      cursor: manualName.trim() ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {addingManual ? '…' : 'Add'}
+                  </button>
+                  <button
+                    onClick={() => { setShowManualAdd(false); setManualName(''); setManualWebsite('') }}
+                    className="text-sm px-3 py-2 rounded-lg transition-all"
+                    style={{ color: 'var(--subtle)', background: 'transparent' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
+          </div>
+        )}
 
-            <textarea
-              value={feedbackText}
-              onChange={e => setFeedbackText(e.target.value)}
-              placeholder="e.g. Focus on Series A only. More German and Dutch companies. Less pharma, more industrial process optimization."
-              rows={3}
-              className="w-full text-sm rounded-xl px-4 py-3 resize-none outline-none"
-              style={{
-                background: 'var(--bg)', border: '1px solid var(--border)',
-                color: 'var(--text)', fontFamily: 'inherit',
-              }}
-              onFocus={e => e.currentTarget.style.borderColor = 'var(--teal)'}
-              onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
-            />
+        {/* Feedback / round N+1 panel */}
+        {companies.length > 0 && (
+          <div className="mt-6 rounded-2xl px-6 py-5"
+            style={{ background: 'var(--surface)', border: `1px solid ${run.status === 'COMPLETED' ? 'var(--teal)' : 'var(--border)'}` }}>
 
-            {/* Labeled file upload slots */}
-            <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-              {FILE_SLOTS.map(slot => {
-                const inputId = `r2-file-${slot.key}`
-                const slotFiles = uploadedFiles.filter(f => f.type === slot.key)
-                const isUploading = uploadingSlot === slot.key
-                return (
-                  <div key={slot.key} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <input
-                      id={inputId}
-                      type="file"
-                      accept=".xlsx,.xls,.csv"
-                      multiple
-                      style={{ display: 'none' }}
-                      onChange={e => {
-                        const f = e.target.files
-                        if (f && f.length > 0) uploadFiles(slot.key, f)
-                        e.target.value = ''
-                      }}
-                    />
-                    {slotFiles.map(sf => (
-                      <div key={sf.path} style={{
-                        display: 'flex', flexDirection: 'column', gap: '2px',
-                        fontSize: '12px', padding: '5px 10px', borderRadius: '10px',
-                        background: slot.chipBg, border: `1px solid ${slot.chipBorder}`, color: slot.chipColor,
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ flexShrink: 0, fontSize: '11px' }}>✓</span>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontWeight: 500 }}
-                            title={sf.name}>{sf.name}</span>
-                          <button onClick={() => removeFile(sf)}
-                            style={{ color: slot.chipColor, opacity: 0.6, flexShrink: 0, lineHeight: 1, fontSize: '14px' }}>×</button>
-                        </div>
-                        {sf.isGlobal && (
-                          <span style={{ fontSize: '10px', opacity: 0.8, paddingLeft: '16px' }}>🌐 applies to all searches</span>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      disabled={isUploading}
-                      onClick={() => {
-                        const el = document.getElementById(inputId) as HTMLInputElement | null
-                        el?.click()
-                      }}
-                      style={{
-                        width: '100%', display: 'flex', flexDirection: 'column',
-                        alignItems: 'center', gap: '3px',
-                        padding: slotFiles.length > 0 ? '6px 8px' : '10px 8px',
-                        borderRadius: '12px', fontSize: '12px',
-                        cursor: isUploading ? 'default' : 'pointer',
-                        background: isUploading ? 'var(--teal-light)' : 'var(--bg)',
-                        border: (isUploading || slotFiles.length > 0)
-                          ? '1.5px solid var(--teal)'
-                          : '1px dashed var(--border)',
-                        color: 'var(--subtle)',
-                        animation: isUploading ? 'pulse 1s ease-in-out infinite' : 'none',
-                        transition: 'border-color 0.15s, background 0.15s',
-                      }}
-                      onMouseEnter={e => { if (!isUploading) e.currentTarget.style.borderColor = 'var(--teal)' }}
-                      onMouseLeave={e => { if (!isUploading && slotFiles.length === 0) e.currentTarget.style.borderColor = 'var(--border)' }}
-                    >
-                      {isUploading ? (
-                        <>
-                          <span className="loading-spinner" style={{ width: '13px', height: '13px', margin: '1px 0' }} />
-                          <span style={{ fontWeight: 500, color: 'var(--teal)' }}>Uploading…</span>
-                        </>
-                      ) : (
-                        <>
-                          <span style={{ fontSize: '16px' }}>{slot.icon}</span>
-                          <span style={{ fontWeight: 500, color: slotFiles.length > 0 ? 'var(--teal)' : 'var(--muted)' }}>
-                            {slotFiles.length > 0 ? `+ add more (${slotFiles.length})` : slot.label}
-                          </span>
-                          {slotFiles.length === 0 && (
-                            <span style={{ fontSize: '10px', color: 'var(--subtle)', textAlign: 'center' }}>{slot.hint}</span>
-                          )}
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-            {uploadError && (
-              <p className="text-xs mt-2" style={{ color: '#c0392b' }}>⚠ {uploadError}</p>
-            )}
-
-            {feedbackError && (
-              <p className="text-xs mt-2" style={{ color: '#c0392b' }}>⚠ {feedbackError}</p>
-            )}
-
-            {feedbackDone ? (
-              <div className="mt-3 flex items-center gap-2 text-sm" style={{ color: 'var(--teal)' }}>
-                ✓ Round 2 queued — returning to dashboard…
+            {run.status === 'COMPLETED' ? (
+              <div className="flex items-center gap-3">
+                <span style={{ fontSize: '20px' }}>✓</span>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--teal)' }}>Search completed</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
+                    This search has been marked as complete. Download the final CSV above.
+                  </p>
+                </div>
               </div>
             ) : (
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs" style={{ color: 'var(--subtle)' }}>
-                  {excluded.size > 0 ? `${excluded.size} excluded · ` : ''}
-                  {feedbackText.trim()
-                    ? `"${feedbackText.trim().slice(0, 60)}${feedbackText.length > 60 ? '…' : ''}"`
-                    : 'No instructions yet'}
-                </span>
-                <button onClick={submitFeedback}
-                  disabled={submitting || (!feedbackText.trim() && excluded.size === 0)}
-                  className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+              <>
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
+                      Start round {(run.current_round ?? 1) + 1}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
+                      Exclude companies with ×, describe adjustments, then rerun. Or mark complete if you're done.
+                    </p>
+                  </div>
+                  <button
+                    onClick={markComplete}
+                    disabled={completing}
+                    className="flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
+                    style={{
+                      border: '1px solid var(--border)',
+                      color: 'var(--muted)',
+                      background: 'transparent',
+                      cursor: completing ? 'default' : 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onMouseEnter={e => { if (!completing) { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)' } }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
+                  >
+                    {completing ? '…' : '✓ Mark as completed'}
+                  </button>
+                </div>
+
+                {excluded.size > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {Array.from(excluded).map(name => (
+                      <span key={name} className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full"
+                        style={{ background: '#fdf2f1', color: '#c0392b', border: '1px solid #e74c3c' }}>
+                        ✕ {name}
+                        <button onClick={() => toggleExclude(name)} style={{ opacity: 0.6, marginLeft: '2px' }}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <textarea
+                  value={feedbackText}
+                  onChange={e => setFeedbackText(e.target.value)}
+                  placeholder="e.g. Focus on Series A only. More German and Dutch companies. Less pharma, more industrial process optimization."
+                  rows={3}
+                  className="w-full text-sm rounded-xl px-4 py-3 resize-none outline-none"
                   style={{
-                    background: (feedbackText.trim() || excluded.size > 0) ? 'var(--teal)' : 'var(--border)',
-                    color: (feedbackText.trim() || excluded.size > 0) ? '#fff' : 'var(--subtle)',
-                    cursor: (feedbackText.trim() || excluded.size > 0) ? 'pointer' : 'not-allowed',
-                  }}>
-                  {submitting
-                    ? <><div className="loading-spinner" style={{ width: '13px', height: '13px', borderTopColor: '#fff' }} /> Creating…</>
-                    : '↻ Start round 2'}
-                </button>
-              </div>
+                    background: 'var(--bg)', border: '1px solid var(--border)',
+                    color: 'var(--text)', fontFamily: 'inherit',
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'var(--teal)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                />
+
+                {/* Labeled file upload slots */}
+                <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                  {FILE_SLOTS.map(slot => {
+                    const inputId = `r2-file-${slot.key}`
+                    const slotFiles = uploadedFiles.filter(f => f.type === slot.key)
+                    const isUploading = uploadingSlot === slot.key
+                    return (
+                      <div key={slot.key} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <input
+                          id={inputId}
+                          type="file"
+                          accept=".xlsx,.xls,.csv"
+                          multiple
+                          style={{ display: 'none' }}
+                          onChange={e => {
+                            const f = e.target.files
+                            if (f && f.length > 0) uploadFiles(slot.key, f)
+                            e.target.value = ''
+                          }}
+                        />
+                        {slotFiles.map(sf => (
+                          <div key={sf.path} style={{
+                            display: 'flex', flexDirection: 'column', gap: '2px',
+                            fontSize: '12px', padding: '5px 10px', borderRadius: '10px',
+                            background: slot.chipBg, border: `1px solid ${slot.chipBorder}`, color: slot.chipColor,
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ flexShrink: 0, fontSize: '11px' }}>✓</span>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontWeight: 500 }}
+                                title={sf.name}>{sf.name}</span>
+                              <button onClick={() => removeFile(sf)}
+                                style={{ color: slot.chipColor, opacity: 0.6, flexShrink: 0, lineHeight: 1, fontSize: '14px' }}>×</button>
+                            </div>
+                            {sf.isGlobal && (
+                              <span style={{ fontSize: '10px', opacity: 0.8, paddingLeft: '16px' }}>🌐 applies to all searches</span>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          disabled={isUploading}
+                          onClick={() => {
+                            const el = document.getElementById(inputId) as HTMLInputElement | null
+                            el?.click()
+                          }}
+                          style={{
+                            width: '100%', display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', gap: '3px',
+                            padding: slotFiles.length > 0 ? '6px 8px' : '10px 8px',
+                            borderRadius: '12px', fontSize: '12px',
+                            cursor: isUploading ? 'default' : 'pointer',
+                            background: isUploading ? 'var(--teal-light)' : 'var(--bg)',
+                            border: (isUploading || slotFiles.length > 0)
+                              ? '1.5px solid var(--teal)'
+                              : '1px dashed var(--border)',
+                            color: 'var(--subtle)',
+                            animation: isUploading ? 'pulse 1s ease-in-out infinite' : 'none',
+                            transition: 'border-color 0.15s, background 0.15s',
+                          }}
+                          onMouseEnter={e => { if (!isUploading) e.currentTarget.style.borderColor = 'var(--teal)' }}
+                          onMouseLeave={e => { if (!isUploading && slotFiles.length === 0) e.currentTarget.style.borderColor = 'var(--border)' }}
+                        >
+                          {isUploading ? (
+                            <>
+                              <span className="loading-spinner" style={{ width: '13px', height: '13px', margin: '1px 0' }} />
+                              <span style={{ fontWeight: 500, color: 'var(--teal)' }}>Uploading…</span>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ fontSize: '16px' }}>{slot.icon}</span>
+                              <span style={{ fontWeight: 500, color: slotFiles.length > 0 ? 'var(--teal)' : 'var(--muted)' }}>
+                                {slotFiles.length > 0 ? `+ add more (${slotFiles.length})` : slot.label}
+                              </span>
+                              {slotFiles.length === 0 && (
+                                <span style={{ fontSize: '10px', color: 'var(--subtle)', textAlign: 'center' }}>{slot.hint}</span>
+                              )}
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+                {uploadError && (
+                  <p className="text-xs mt-2" style={{ color: '#c0392b' }}>⚠ {uploadError}</p>
+                )}
+
+                {feedbackError && (
+                  <p className="text-xs mt-2" style={{ color: '#c0392b' }}>⚠ {feedbackError}</p>
+                )}
+
+                {feedbackDone ? (
+                  <div className="mt-3 flex items-center gap-2 text-sm" style={{ color: 'var(--teal)' }}>
+                    ✓ Round {(run.current_round ?? 1) + 1} queued — returning to dashboard…
+                  </div>
+                ) : (
+                  <div className="mt-3 flex items-center justify-end">
+                    <button onClick={submitFeedback}
+                      disabled={submitting || (!feedbackText.trim() && excluded.size === 0)}
+                      className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+                      style={{
+                        background: (feedbackText.trim() || excluded.size > 0) ? 'var(--teal)' : 'var(--border)',
+                        color: (feedbackText.trim() || excluded.size > 0) ? '#fff' : 'var(--subtle)',
+                        cursor: (feedbackText.trim() || excluded.size > 0) ? 'pointer' : 'not-allowed',
+                      }}>
+                      {submitting
+                        ? <><div className="loading-spinner" style={{ width: '13px', height: '13px', borderTopColor: '#fff' }} /> Creating…</>
+                        : `↻ Start round ${(run.current_round ?? 1) + 1}`}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

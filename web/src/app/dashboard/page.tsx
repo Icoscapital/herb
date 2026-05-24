@@ -41,6 +41,7 @@ const STATUS_CFG: Record<string, { label: string; dotColor: string; textColor: s
   DONE:      { label: 'Complete',     dotColor: 'var(--teal)', textColor: 'var(--teal)', bgColor: 'var(--teal-light)', pulse: false },
   EMAILED:   { label: 'Results sent', dotColor: 'var(--teal)', textColor: 'var(--teal)', bgColor: 'var(--teal-light)', pulse: false },
   ERROR:     { label: 'Failed',       dotColor: '#c0392b', textColor: '#c0392b', bgColor: '#fdf2f1', pulse: false },
+  COMPLETED: { label: 'Completed',    dotColor: 'var(--teal)', textColor: 'var(--teal)', bgColor: 'var(--teal-light)', pulse: false },
 }
 
 async function downloadCSV(runId: string, theme: string) {
@@ -125,13 +126,13 @@ export default function LogPage() {
   const counts = {
     all: runs.length,
     running: runs.filter(r => r.status === 'SEARCHING' || r.status === 'PENDING').length,
-    done: runs.filter(r => r.status === 'DONE' || r.status === 'EMAILED').length,
+    done: runs.filter(r => r.status === 'DONE' || r.status === 'EMAILED' || r.status === 'COMPLETED').length,
     error: runs.filter(r => r.status === 'ERROR').length,
   }
 
   const filtered = runs.filter(r => {
     if (filter === 'running') return r.status === 'SEARCHING' || r.status === 'PENDING'
-    if (filter === 'done')    return r.status === 'DONE' || r.status === 'EMAILED'
+    if (filter === 'done')    return r.status === 'DONE' || r.status === 'EMAILED' || r.status === 'COMPLETED'
     if (filter === 'error')   return r.status === 'ERROR'
     return true
   })
