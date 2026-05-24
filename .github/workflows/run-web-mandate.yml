@@ -57,5 +57,5 @@ jobs:
           # override needed — overrides like that trip prompt-injection detection).
           claude -p "$(cat web_mandate_prompt.md)" \
             --allowedTools Bash,Read,Write,Task \
-            --model claude-sonnet-4-6 \
+            --model claude-sonnet-4-5 \
             --max-turns 120
