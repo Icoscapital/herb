@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 function serviceClient() {
   return createClient(SB_URL, SB_SERVICE)
@@ -12,7 +11,8 @@ function serviceClient() {
 async function verifyUser(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
   if (!token) return null
-  const { data: { user } } = await createClient(SB_URL, SB_ANON).auth.getUser(token)
+  // Use service-role client to verify — no dependency on ANON key env var
+  const { data: { user } } = await serviceClient().auth.getUser(token)
   return user
 }
 

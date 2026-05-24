@@ -26,6 +26,7 @@ export default function NewMandatePage() {
   const [files, setFiles] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
+  const [slotError, setSlotError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
@@ -40,29 +41,43 @@ export default function NewMandatePage() {
 
   const upload = useCallback(async (list: FileList | null, slotType?: string) => {
     if (!list || list.length === 0) return
-    if (slotType) setUploadingSlot(slotType); else setUploading(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { router.push('/login'); return }
-    const added: Attachment[] = []
-    const arr = Array.from(list)
-    for (let i = 0; i < arr.length; i++) {
-      const f = arr[i]
-      const fd = new FormData()
-      fd.append('file', f)
-      if (slotType) fd.append('slotType', slotType)
-      fd.append('index', String(i))
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        body: fd,
-      })
-      const json = await res.json()
-      if (!json.ok) { setError(`Could not upload ${f.name}: ${json.error}`); continue }
-      added.push({ name: json.name, size: json.size, url: json.url, path: json.path, fileType: slotType })
+    if (slotType) { setUploadingSlot(slotType); setSlotError(null) } else setUploading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { router.push('/login'); return }
+      const added: Attachment[] = []
+      const arr = Array.from(list)
+      for (let i = 0; i < arr.length; i++) {
+        const f = arr[i]
+        const fd = new FormData()
+        fd.append('file', f)
+        if (slotType) fd.append('slotType', slotType)
+        fd.append('index', String(i))
+        let json: any
+        try {
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            body: fd,
+          })
+          json = await res.json()
+        } catch (fetchErr: any) {
+          if (slotType) setSlotError(`Upload failed: ${fetchErr?.message ?? 'network error'}`)
+          else setError(`Upload failed: ${fetchErr?.message ?? 'network error'}`)
+          continue
+        }
+        if (!json.ok) {
+          if (slotType) setSlotError(`${f.name}: ${json.error}`)
+          else setError(`Could not upload ${f.name}: ${json.error}`)
+          continue
+        }
+        added.push({ name: json.name, size: json.size, url: json.url, path: json.path, fileType: slotType })
+      }
+      setFiles(p => [...p, ...added])
+    } finally {
+      if (slotType) setUploadingSlot(null); else setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
     }
-    setFiles(p => [...p, ...added])
-    if (slotType) setUploadingSlot(null); else setUploading(false)
-    if (fileRef.current) fileRef.current.value = ''
   }, [router])
 
   const remove = async (path: string) => {
@@ -139,6 +154,9 @@ export default function NewMandatePage() {
               autoFocus />
 
             {/* Labeled data file slots */}
+            {slotError && (
+              <p className="px-4 pt-2 text-xs" style={{ color: '#c0392b' }}>⚠ {slotError}</p>
+            )}
             <div className="px-4 pb-3 pt-1 grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               {FILE_SLOTS.map(slot => {
                 const slotFiles = files.filter(f => f.fileType === slot.key)
