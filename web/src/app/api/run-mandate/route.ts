@@ -60,7 +60,18 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // GitHub returns 204 No Content on success
+    // GitHub returns 204 No Content on success.
+    // Flip the run to SEARCHING immediately so the UI hides the Run button.
+    // The workflow will keep updating heartbeat/progress and set DONE when finished.
+    await sb
+      .from('herb_runs')
+      .update({
+        status: 'SEARCHING',
+        progress: 'Dispatched — GitHub Actions starting…',
+        last_heartbeat: new Date().toISOString(),
+      })
+      .eq('id', run_id)
+
     console.log('[run-mandate] GitHub dispatch succeeded for run_id:', run_id)
     return NextResponse.json({
       ok: true,
