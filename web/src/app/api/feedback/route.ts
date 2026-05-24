@@ -6,7 +6,7 @@ const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function POST(req: NextRequest) {
   try {
-    const { run_id, feedback_text, excluded_companies, attachments } = await req.json()
+    const { run_id, feedback_text, excluded_companies, attachments, override_instructions } = await req.json()
     if (!run_id) {
       return NextResponse.json({ error: 'run_id required' }, { status: 400 })
     }
@@ -24,13 +24,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Original run not found' }, { status: 404 })
     }
 
-    // Build the special instructions for round 2
-    const excludeClause = excluded_companies?.length
-      ? `Exclude from results: ${excluded_companies.join(', ')}. `
-      : ''
-    const origInstructions = orig.special_instructions ? `Previous instructions: ${orig.special_instructions}. ` : ''
-    const feedbackClause = feedback_text?.trim() ? `Round 2 feedback: ${feedback_text.trim()}` : ''
-    const round2Instructions = `${origInstructions}${excludeClause}${feedbackClause}`.trim() || null
+    // Build the special instructions for the next round
+    let round2Instructions: string | null
+    if (override_instructions?.trim()) {
+      // Full rewrite — use exactly what the user typed
+      round2Instructions = override_instructions.trim()
+    } else {
+      const excludeClause = excluded_companies?.length
+        ? `Exclude from results: ${excluded_companies.join(', ')}. `
+        : ''
+      const origInstructions = orig.special_instructions ? `Previous instructions: ${orig.special_instructions}. ` : ''
+      const feedbackClause = feedback_text?.trim() ? `Round 2 feedback: ${feedback_text.trim()}` : ''
+      round2Instructions = `${origInstructions}${excludeClause}${feedbackClause}`.trim() || null
+    }
 
     // Determine round number from existing slug
     const slugBase = orig.slug.replace(/-r\d+$/, '')  // strip existing -r2, -r3 suffix

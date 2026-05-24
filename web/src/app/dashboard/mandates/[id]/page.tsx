@@ -143,6 +143,9 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const [submitting, setSubmitting] = useState(false)
   const [feedbackDone, setFeedbackDone] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
+  // Full instruction editor for next round
+  const [showInstructionEditor, setShowInstructionEditor] = useState(false)
+  const [nextInstructions, setNextInstructions] = useState('')
   // File upload for round 2
   const [uploadedFiles, setUploadedFiles] = useState<FileSlot[]>([])
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
@@ -274,9 +277,10 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           run_id: params.id,
-          feedback_text: feedbackText,
-          excluded_companies: Array.from(excluded),
+          feedback_text: showInstructionEditor ? '' : feedbackText,
+          excluded_companies: showInstructionEditor ? [] : Array.from(excluded),
           attachments: uploadedFiles.length ? uploadedFiles.map(f => ({ type: f.type, name: f.name, url: f.url })) : null,
+          ...(showInstructionEditor && nextInstructions.trim() ? { override_instructions: nextInstructions.trim() } : {}),
         }),
       })
       const json = await res.json()
@@ -802,19 +806,61 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                   </div>
                 )}
 
-                <textarea
-                  value={feedbackText}
-                  onChange={e => setFeedbackText(e.target.value)}
-                  placeholder="e.g. Focus on Series A only. More German and Dutch companies. Less pharma, more industrial process optimization."
-                  rows={3}
-                  className="w-full text-sm rounded-xl px-4 py-3 resize-none outline-none"
-                  style={{
-                    background: 'var(--bg)', border: '1px solid var(--border)',
-                    color: 'var(--text)', fontFamily: 'inherit',
-                  }}
-                  onFocus={e => e.currentTarget.style.borderColor = 'var(--teal)'}
-                  onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
-                />
+                {/* Mode toggle */}
+                <div className="flex items-center gap-3 mb-2">
+                  <button
+                    onClick={() => setShowInstructionEditor(false)}
+                    className="text-xs font-medium pb-1 transition-all"
+                    style={{ color: !showInstructionEditor ? 'var(--text)' : 'var(--subtle)', borderBottom: !showInstructionEditor ? '2px solid var(--teal)' : '2px solid transparent' }}
+                  >
+                    Adjustments
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!showInstructionEditor) {
+                        // Pre-fill with current instructions so user has a starting point
+                        const base = [run.theme, run.special_instructions].filter(Boolean).join('
+')
+                        setNextInstructions(base)
+                      }
+                      setShowInstructionEditor(true)
+                    }}
+                    className="text-xs font-medium pb-1 transition-all"
+                    style={{ color: showInstructionEditor ? 'var(--text)' : 'var(--subtle)', borderBottom: showInstructionEditor ? '2px solid var(--teal)' : '2px solid transparent' }}
+                  >
+                    ✎ Full rewrite
+                  </button>
+                </div>
+
+                {!showInstructionEditor ? (
+                  <textarea
+                    value={feedbackText}
+                    onChange={e => setFeedbackText(e.target.value)}
+                    placeholder="e.g. Focus on Series A only. More German and Dutch companies. Less pharma, more industrial process optimization."
+                    rows={3}
+                    className="w-full text-sm rounded-xl px-4 py-3 resize-none outline-none"
+                    style={{
+                      background: 'var(--bg)', border: '1px solid var(--border)',
+                      color: 'var(--text)', fontFamily: 'inherit',
+                    }}
+                    onFocus={e => e.currentTarget.style.borderColor = 'var(--teal)'}
+                    onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                  />
+                ) : (
+                  <textarea
+                    value={nextInstructions}
+                    onChange={e => setNextInstructions(e.target.value)}
+                    placeholder="Write the complete instructions for the next search from scratch…"
+                    rows={5}
+                    className="w-full text-sm rounded-xl px-4 py-3 resize-none outline-none"
+                    style={{
+                      background: 'var(--bg)', border: '1.5px solid var(--teal)',
+                      color: 'var(--text)', fontFamily: 'inherit',
+                    }}
+                    onFocus={e => e.currentTarget.style.borderColor = 'var(--teal)'}
+                    onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                  />
+                )}
 
                 {/* Labeled file upload slots */}
                 <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
@@ -914,12 +960,12 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                 ) : (
                   <div className="mt-3 flex items-center justify-end">
                     <button onClick={submitFeedback}
-                      disabled={submitting || (!feedbackText.trim() && excluded.size === 0)}
+                      disabled={submitting || (!showInstructionEditor && !feedbackText.trim() && excluded.size === 0) || (showInstructionEditor && !nextInstructions.trim())}
                       className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
                       style={{
-                        background: (feedbackText.trim() || excluded.size > 0) ? 'var(--teal)' : 'var(--border)',
-                        color: (feedbackText.trim() || excluded.size > 0) ? '#fff' : 'var(--subtle)',
-                        cursor: (feedbackText.trim() || excluded.size > 0) ? 'pointer' : 'not-allowed',
+                        background: (showInstructionEditor ? nextInstructions.trim() : (feedbackText.trim() || excluded.size > 0)) ? 'var(--teal)' : 'var(--border)',
+                        color: (showInstructionEditor ? nextInstructions.trim() : (feedbackText.trim() || excluded.size > 0)) ? '#fff' : 'var(--subtle)',
+                        cursor: (showInstructionEditor ? nextInstructions.trim() : (feedbackText.trim() || excluded.size > 0)) ? 'pointer' : 'not-allowed',
                       }}>
                       {submitting
                         ? <><div className="loading-spinner" style={{ width: '13px', height: '13px', borderTopColor: '#fff' }} /> Creating…</>
