@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -154,6 +154,11 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const [addingManual, setAddingManual] = useState(false)
   // Mark complete
   const [completing, setCompleting] = useState(false)
+  // Edit & re-run
+  const [editMode, setEditMode] = useState(false)
+  const [editText, setEditText] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  const editRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -285,6 +290,57 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     }
   }
 
+  const openEdit = () => {
+    if (!run) return
+    const txt = [run.theme, run.special_instructions].filter(Boolean).join('
+')
+    setEditText(txt)
+    setEditMode(true)
+    setTimeout(() => { if (editRef.current) { editRef.current.focus(); editRef.current.style.height = 'auto'; editRef.current.style.height = Math.min(editRef.current.scrollHeight, 320) + 'px' } }, 50)
+  }
+
+  const saveEdit = async () => {
+    if (!editText.trim() || !run) return
+    setEditSaving(true)
+    const lines = editText.trim().split('
+')
+    const theme = lines[0].trim()
+    const special_instructions = lines.slice(1).join('
+').trim() || null
+    try {
+      if (run.status === 'PENDING') {
+        // Update in place and re-queue
+        const { error } = await supabase.from('herb_runs')
+          .update({ theme, special_instructions })
+          .eq('id', params.id)
+        if (error) { alert('Could not update: ' + error.message); return }
+        setRun(r => r ? { ...r, theme, special_instructions } : r)
+        setEditMode(false)
+        // Re-queue the run
+        fetch('/api/run-mandate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ run_id: params.id }) }).catch(() => {})
+      } else {
+        // Create a fresh new run and go back to dashboard
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        const date = new Date().toISOString().split('T')[0]
+        const slug = `${date}-${theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}`
+        const { error } = await supabase.from('herb_runs').insert({
+          user_id: session.user.id,
+          submitted_by_email: session.user.email,
+          submitted_by_name: run.submitted_by_name,
+          slug, theme, special_instructions,
+          geography: run.geography, stage: run.stage, search_mode: run.search_mode,
+          status: 'PENDING', current_round: 1,
+          created_at: new Date().toISOString(),
+        })
+        if (error) { alert('Could not create run: ' + error.message); return }
+        router.push('/dashboard')
+      }
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
   const markComplete = async () => {
     if (!run) return
     setCompleting(true)
@@ -400,7 +456,49 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
             style={{ background: 'var(--navy-light)', color: 'var(--navy)' }}>
             {run.search_mode}
           </span>
+          <button
+            onClick={editMode ? () => setEditMode(false) : openEdit}
+            className="flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full transition-all"
+            style={{
+              border: '1px solid var(--border)', color: editMode ? 'var(--teal)' : 'var(--muted)',
+              borderColor: editMode ? 'var(--teal)' : 'var(--border)', background: 'transparent',
+            }}
+          >
+            {editMode ? '✕ cancel' : '✎ edit'}
+          </button>
         </div>
+
+        {/* Edit panel */}
+        {editMode && (
+          <div className="mb-6 rounded-2xl overflow-hidden"
+            style={{ background: 'var(--surface)', border: '1.5px solid var(--teal)' }}>
+            <textarea
+              ref={editRef}
+              value={editText}
+              onChange={e => { setEditText(e.target.value); const el = e.target; el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 320) + 'px' }}
+              className="w-full px-5 pt-5 pb-3 text-sm leading-relaxed resize-none outline-none"
+              style={{ minHeight: '100px', background: 'transparent', color: 'var(--text)', caretColor: 'var(--teal)', fontFamily: 'inherit' }}
+              placeholder="Describe what you're looking for…"
+            />
+            <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: '1px solid var(--border)' }}>
+              <p className="text-xs" style={{ color: 'var(--subtle)' }}>
+                {run.status === 'PENDING' ? 'Will update this search and re-queue it' : 'Will create a new search with this text'}
+              </p>
+              <button
+                onClick={saveEdit}
+                disabled={editSaving || !editText.trim()}
+                className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all"
+                style={{
+                  background: editText.trim() ? 'var(--teal)' : 'var(--border)',
+                  color: editText.trim() ? '#fff' : 'var(--subtle)',
+                  cursor: editText.trim() && !editSaving ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {editSaving ? 'Saving…' : run.status === 'PENDING' ? '↻ Update & re-queue' : '+ New search with this text'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Table */}
         {companies.length === 0 ? (
