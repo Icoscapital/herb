@@ -151,6 +151,9 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const [uploadedFiles, setUploadedFiles] = useState<FileSlot[]>([])
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  // Pipedrive push per-company
+  const [pushingPd, setPushingPd] = useState<string | null>(null)            // company_id currently being pushed
+  const [pdToast, setPdToast] = useState<{ ok: boolean; text: string; url?: string } | null>(null)
   // Manual company add
   const [showManualAdd, setShowManualAdd] = useState(false)
   const [manualName, setManualName] = useState('')
@@ -236,6 +239,39 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
       return next
     })
   }
+
+  const pushToPipedrive = useCallback(async (companyId: string) => {
+    setPushingPd(companyId)
+    setPdToast(null)
+    try {
+      const res = await fetch('/api/push-to-pipedrive', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ company_id: companyId }),
+      })
+      const json = await res.json()
+      if (!json.ok) {
+        setPdToast({ ok: false, text: json.error || 'Push failed' })
+      } else {
+        // Optimistically update the local notes so the row chip flips immediately.
+        const marker = `Pipedrive: ${json.status === 'exists' ? (json.deal_status ?? 'Open') : 'New'} | Deal #${json.deal_id}`
+        setCompanies(prev => prev.map(c =>
+          c.id === companyId
+            ? { ...c, notes: marker + (c.notes ? ` | ${c.notes.replace(/Pipedrive:\s*[^|]*\|?\s*/i, '').trim()}` : '') }
+            : c
+        ))
+        setPdToast({
+          ok: true,
+          text: json.status === 'exists' ? `Already in Pipedrive — Deal #${json.deal_id}` : `Created Deal #${json.deal_id}`,
+          url: json.deal_url,
+        })
+      }
+    } catch (e: any) {
+      setPdToast({ ok: false, text: String(e?.message ?? e) })
+    } finally {
+      setPushingPd(null)
+    }
+  }, [])
 
   const uploadFiles = useCallback(async (slotKey: string, fileList: FileList) => {
     const fileArr = Array.from(fileList)  // Capture before any await — FileList is cleared when input.value resets
@@ -491,6 +527,27 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
           </button>
         </div>
 
+        {/* Pipedrive push toast */}
+        {pdToast && (
+          <div className="mb-4 flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl text-sm"
+            style={{
+              background: pdToast.ok ? 'var(--teal-light)' : '#fdf2f1',
+              color: pdToast.ok ? 'var(--teal)' : '#c0392b',
+              border: `1px solid ${pdToast.ok ? 'var(--teal)' : '#e74c3c'}`,
+            }}>
+            <span className="flex items-center gap-2">
+              {pdToast.ok ? '✓' : '⚠'} {pdToast.text}
+              {pdToast.url && (
+                <a href={pdToast.url} target="_blank" rel="noopener noreferrer"
+                  className="underline font-medium" style={{ color: 'inherit' }}>
+                  Open in Pipedrive ↗
+                </a>
+              )}
+            </span>
+            <button onClick={() => setPdToast(null)} style={{ opacity: 0.6, fontSize: '16px', lineHeight: 1 }}>×</button>
+          </div>
+        )}
+
         {/* Previous rounds */}
         {previousRounds.length > 0 && (
           <div className="flex items-center gap-2 mb-6 text-xs flex-wrap">
@@ -571,7 +628,13 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
               const av = avatarColor(co.name)
               const fit = co.score !== null ? Math.round(co.score * 10) : null
               const pipedrive = co.notes?.match(/Pipedrive:\s*([^|]+)/)?.[1]?.trim() ?? 'New'
-              const isLost = pipedrive.toLowerCase().includes('lost')
+              const dealIdMatch = co.notes?.match(/Deal\s*#(\d+)/i)
+              const pdDealId = dealIdMatch ? parseInt(dealIdMatch[1], 10) : null
+              const pdStatusLower = pipedrive.toLowerCase()
+              const isLost = pdStatusLower.includes('lost')
+              const isPushing = pushingPd === co.id
+              // "Already linked" means we have a deal id OR the status is anything other than the default "New" + no deal yet.
+              const alreadyLinked = pdDealId !== null || isLost || pdStatusLower.includes('open') || pdStatusLower.includes('won')
 
               return (
                 <div key={co.id}
@@ -647,10 +710,42 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                     )}
                   </div>
 
-                  {/* Pipedrive */}
-                  <div className="text-xs truncate"
-                    style={{ color: isLost ? '#c0392b' : 'var(--subtle)' }}>
-                    {isLost ? `Lost` : 'New'}
+                  {/* Pipedrive — interactive: shows status if linked, else a "+ Push" button */}
+                  <div className="text-xs truncate">
+                    {alreadyLinked ? (
+                      pdDealId ? (
+                        <a
+                          href={`https://icoscapital.pipedrive.com/deal/${pdDealId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`Open Deal #${pdDealId} in Pipedrive`}
+                          className="underline"
+                          style={{ color: isLost ? '#c0392b' : 'var(--teal)' }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {isLost ? `Lost · #${pdDealId}` : `✓ #${pdDealId}`}
+                        </a>
+                      ) : (
+                        <span style={{ color: isLost ? '#c0392b' : 'var(--subtle)' }}>
+                          {isLost ? 'Lost' : pipedrive}
+                        </span>
+                      )
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); pushToPipedrive(co.id) }}
+                        disabled={isPushing || isExcluded}
+                        title="Create deal in Pipedrive"
+                        className="text-xs px-2 py-0.5 rounded-full transition-all"
+                        style={{
+                          background: isPushing ? 'var(--teal-light)' : 'transparent',
+                          color: isPushing ? 'var(--teal)' : 'var(--teal)',
+                          border: '1px solid var(--teal)',
+                          cursor: isPushing || isExcluded ? 'not-allowed' : 'pointer',
+                          opacity: isExcluded ? 0.4 : 1,
+                        }}>
+                        {isPushing ? '…' : '+ Push'}
+                      </button>
+                    )}
                   </div>
 
                   {/* Thesis fit */}
