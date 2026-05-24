@@ -96,10 +96,12 @@ export default function LogPage() {
         body: JSON.stringify({ run_id: runId }),
       })
       const json = await res.json()
-      if (json.ok) {
+      if (json.ok && !json.queued) {
         setTriggerMsg({ id: runId, text: 'Search triggered — starting now…', ok: true })
+      } else if (json.ok && json.queued) {
+        setTriggerMsg({ id: runId, text: 'Queued — search will start within the hour', ok: true })
       } else {
-        setTriggerMsg({ id: runId, text: json.message || json.error || 'Could not trigger', ok: false })
+        setTriggerMsg({ id: runId, text: json.error || 'Could not queue search', ok: false })
       }
       // Refresh immediately so user sees status change
       setTimeout(load, 1500)
