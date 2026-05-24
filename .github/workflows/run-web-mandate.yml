@@ -52,8 +52,10 @@ jobs:
 
       - name: Run Herb mandate search
         run: |
+          # RUN_ID is exported as an env var above. routine_prompt.md detects it
+          # in STEP 0.5 and takes the web fast-path natively (no system-prompt
+          # override needed — overrides like that trip prompt-injection detection).
           claude -p "$(cat routine_prompt.md)" \
             --allowedTools Bash,Read,Write,Glob,Grep,Task \
             --model claude-sonnet-4-6 \
-            --max-turns 120 \
-            --append-system-prompt "OVERRIDE: Skip STEP 1 (email inbox). Go directly to STEP 1B. Process ONLY the web mandate with run_id=$RUN_ID. Ignore all other PENDING runs. Do not check email."
+            --max-turns 120

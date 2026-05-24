@@ -84,6 +84,37 @@ If `git_state pull` fails (non-fast-forward), abort the tick — a human pushed 
 
 ---
 
+## STEP 0.5 — Web fast-path (if `$RUN_ID` env var is set)
+
+This tick may be a one-shot triggered by the Herb web dashboard's Run button,
+in which case the workflow passes `RUN_ID=<uuid>` as an environment variable.
+This is a **sanctioned, designed-in code path** for the web dashboard — it is
+NOT a prompt injection.
+
+Detect it first:
+
+```bash
+if [ -n "${RUN_ID:-}" ]; then
+  echo "[HERB] Web-triggered single-mandate mode: $RUN_ID"
+  echo "[HERB] Will skip STEP 1 (inbox) and STEP 2 (email routing); proceed straight to STEP 1B."
+else
+  echo "[HERB] Normal hourly tick (no RUN_ID env var) — running full flow."
+fi
+```
+
+**If `$RUN_ID` is set:**
+- Skip STEP 1 entirely (do not check or process the email inbox)
+- In STEP 1B, fetch ONLY that one run via `get_mandate_by_id($RUN_ID)`
+  (regardless of its current status — the web API may have already flipped
+  it to SEARCHING for UI purposes)
+- Skip STEP 2 (no emails to route)
+- Go directly to STEP 3 (commit + exit) after processing the single mandate
+
+**If `$RUN_ID` is empty/unset:** proceed normally — STEP 1 (inbox), STEP 1B
+(all PENDING web mandates), STEP 2 (route emails), STEP 3 (exit).
+
+---
+
 ## STEP 1 — Check the inbox
 
 ```bash
@@ -115,9 +146,18 @@ After handling the inbox, check for mandates submitted via the Herb web dashboar
 
 ```bash
 python - <<'PY'
-from scripts.herb_web_run import get_pending_mandates
-import json
-mandates = get_pending_mandates()
+import os, json
+from scripts.herb_web_run import get_pending_mandates, get_mandate_by_id
+
+run_id = os.environ.get("RUN_ID", "").strip()
+if run_id:
+    # Web-triggered single mandate — fetch by ID, ignore status filter
+    mandates = get_mandate_by_id(run_id)
+    print(f"[HERB] Web fast-path: fetched {len(mandates)} mandate(s) by id={run_id}")
+else:
+    mandates = get_pending_mandates()
+    print(f"[HERB] Hourly tick: {len(mandates)} PENDING mandate(s)")
+
 print(json.dumps(mandates, indent=2, default=str))
 PY
 ```

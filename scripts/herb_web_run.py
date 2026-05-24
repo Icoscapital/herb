@@ -45,6 +45,27 @@ def get_pending_mandates() -> list:
     return result.data or []
 
 
+def get_mandate_by_id(run_id: str) -> list:
+    """Fetch a specific run by ID regardless of status — used by web-triggered runs.
+
+    The web Run button flips status to SEARCHING immediately (for UI), so the
+    PENDING query won't match. This helper fetches the row by id directly.
+    Returns a list (possibly empty) for symmetry with get_pending_mandates().
+    """
+    sb = _get_sb()
+    result = (
+        sb.table("herb_runs")
+        .select(
+            "id,theme,geography,stage,search_mode,special_instructions,"
+            "submitted_by_email,submitted_by_name,attachments,created_at,slug,status"
+        )
+        .eq("id", run_id)
+        .limit(1)
+        .execute()
+    )
+    return result.data or []
+
+
 def mark_searching(run_id: str) -> None:
     """Transition run to SEARCHING and set initial progress."""
     _get_sb().table("herb_runs").update({
