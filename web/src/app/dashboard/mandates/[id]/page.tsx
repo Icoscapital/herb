@@ -182,14 +182,20 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
       const files = Array.from(fileList)
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-        const path = `mandates/${session.user.id}/${Date.now()}-${i}-${slotKey}-${safe}`
-        const { error: e } = await supabase.storage.from('herb-uploads').upload(path, file)
-        if (e) {
-          setUploadError(`Could not upload ${file.name}: ${e.message}`)
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('slotType', slotKey)
+        fd.append('index', String(i))
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: fd,
+        })
+        const json = await res.json()
+        if (!json.ok) {
+          setUploadError(`Could not upload ${file.name}: ${json.error}`)
         } else {
-          const { data: { publicUrl } } = supabase.storage.from('herb-uploads').getPublicUrl(path)
-          setUploadedFiles(prev => [...prev, { type: slotType, name: file.name, url: publicUrl, path, size: file.size }])
+          setUploadedFiles(prev => [...prev, { type: slotType, name: json.name, url: json.url, path: json.path, size: json.size }])
         }
       }
     } finally {
@@ -199,7 +205,13 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
 
   const removeFile = async (slot: FileSlot) => {
     setUploadedFiles(prev => prev.filter(f => f.path !== slot.path))
-    await supabase.storage.from('herb-uploads').remove([slot.path])
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    await fetch('/api/upload', {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${session.access_token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ path: slot.path }),
+    })
   }
 
   const submitFeedback = async () => {

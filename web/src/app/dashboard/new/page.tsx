@@ -44,15 +44,21 @@ export default function NewMandatePage() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/login'); return }
     const added: Attachment[] = []
-    for (let i = 0; i < Array.from(list).length; i++) {
-      const f = Array.from(list)[i]
-      const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const prefix = slotType ? `${slotType}-` : ''
-      const path = `mandates/${session.user.id}/${Date.now()}-${i}-${prefix}${safe}`
-      const { error: e } = await supabase.storage.from('herb-uploads').upload(path, f)
-      if (e) { setError(`Could not upload ${f.name}: ${e.message}`); continue }
-      const { data: { publicUrl } } = supabase.storage.from('herb-uploads').getPublicUrl(path)
-      added.push({ name: f.name, size: f.size, url: publicUrl, path, fileType: slotType })
+    const arr = Array.from(list)
+    for (let i = 0; i < arr.length; i++) {
+      const f = arr[i]
+      const fd = new FormData()
+      fd.append('file', f)
+      if (slotType) fd.append('slotType', slotType)
+      fd.append('index', String(i))
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: fd,
+      })
+      const json = await res.json()
+      if (!json.ok) { setError(`Could not upload ${f.name}: ${json.error}`); continue }
+      added.push({ name: json.name, size: json.size, url: json.url, path: json.path, fileType: slotType })
     }
     setFiles(p => [...p, ...added])
     if (slotType) setUploadingSlot(null); else setUploading(false)
@@ -61,7 +67,13 @@ export default function NewMandatePage() {
 
   const remove = async (path: string) => {
     setFiles(p => p.filter(f => f.path !== path))
-    await supabase.storage.from('herb-uploads').remove([path])
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    await fetch('/api/upload', {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${session.access_token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ path }),
+    })
   }
 
   const submit = async () => {
