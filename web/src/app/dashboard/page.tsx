@@ -10,6 +10,7 @@ import Link from 'next/link'
 type Run = {
   id: string; theme: string; status: string
   geography: string; stage: string; search_mode: string
+  special_instructions: string | null
   created_at: string
   submitted_by_email: string | null; submitted_by_name: string | null
   result_count: number | null; duration_seconds: number | null
@@ -76,7 +77,7 @@ export default function LogPage() {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from('herb_runs')
-      .select('id,theme,status,geography,stage,search_mode,created_at,submitted_by_email,submitted_by_name,result_count,duration_seconds,error_message,progress,last_heartbeat')
+      .select('id,theme,status,geography,stage,search_mode,special_instructions,created_at,submitted_by_email,submitted_by_name,result_count,duration_seconds,error_message,progress,last_heartbeat')
       .order('created_at', { ascending: false })
       .limit(100)
     if (data) setRuns(data)
@@ -91,8 +92,7 @@ export default function LogPage() {
   }, [router, load])
 
   const openInlineEdit = (run: Run) => {
-    const txt = [run.theme, run.special_instructions].filter(Boolean).join('
-')
+    const txt = [run.theme, run.special_instructions].filter(Boolean).join('\n')
     setEditText(txt)
     setEditingRun(run.id)
     setTimeout(() => {
@@ -107,11 +107,9 @@ export default function LogPage() {
   const saveAndRun = useCallback(async (runId: string) => {
     if (!editText.trim()) return
     setEditSaving(true)
-    const lines = editText.trim().split('
-')
+    const lines = editText.trim().split('\n')
     const theme = lines[0].trim()
-    const special_instructions = lines.slice(1).join('
-').trim() || null
+    const special_instructions = lines.slice(1).join('\n').trim() || null
     try {
       const { error } = await supabase.from('herb_runs').update({ theme, special_instructions }).eq('id', runId)
       if (error) { alert('Could not save: ' + error.message); return }

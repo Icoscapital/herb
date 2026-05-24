@@ -296,8 +296,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
 
   const openEdit = () => {
     if (!run) return
-    const txt = [run.theme, run.special_instructions].filter(Boolean).join('
-')
+    const txt = [run.theme, run.special_instructions].filter(Boolean).join('\n')
     setEditText(txt)
     setEditMode(true)
     setTimeout(() => { if (editRef.current) { editRef.current.focus(); editRef.current.style.height = 'auto'; editRef.current.style.height = Math.min(editRef.current.scrollHeight, 320) + 'px' } }, 50)
@@ -306,11 +305,9 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const saveEdit = async () => {
     if (!editText.trim() || !run) return
     setEditSaving(true)
-    const lines = editText.trim().split('
-')
+    const lines = editText.trim().split('\n')
     const theme = lines[0].trim()
-    const special_instructions = lines.slice(1).join('
-').trim() || null
+    const special_instructions = lines.slice(1).join('\n').trim() || null
     try {
       if (run.status === 'PENDING') {
         // Update in place and re-queue
@@ -819,8 +816,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                     onClick={() => {
                       if (!showInstructionEditor) {
                         // Pre-fill with current instructions so user has a starting point
-                        const base = [run.theme, run.special_instructions].filter(Boolean).join('
-')
+                        const base = [run.theme, run.special_instructions].filter(Boolean).join('\n')
                         setNextInstructions(base)
                       }
                       setShowInstructionEditor(true)
