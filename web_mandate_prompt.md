@@ -76,14 +76,25 @@ Pass `additional_companies` as pre-seeded candidates into Phase 2 (merge before 
 **DEEP mode (default):** sources 1–10 + VC Roster expanded (`references/vc-roster.xlsx` "VCs (deep)" sheet) + attachment files.
 **STANDARD mode:** sources 1–5 + VC Roster focused ("VCs" sheet) + attachment files.
 
-Spawn one sub-agent per source via the Task tool (`subagent_type=general-purpose`, model=`haiku`). Use this **compact template** for every sub-agent's prompt — only `{source_name}` and `{query_pattern}` change between sources:
+### Sub-agent dispatch — BATCHED, not all-at-once
+
+**WebSearch has an org-wide rate limit of 10k tokens/minute that is separate from the model rate limit.** Firing all 10 sub-agents in parallel will burn through it and every sub-agent returns 429. Instead:
+
+- **Dispatch in batches of 3.** Spawn 3 sub-agents in parallel (single message with 3 Task tool uses), wait for all 3 to return, then fire the next batch of 3, etc. With 10 sources that's 4 batches (3+3+3+1).
+- **Cap each sub-agent's WebSearch calls at 5.** Add that limit explicitly in the sub-agent prompt.
+- **On 429 inside a sub-agent**, the sub-agent should back off and retry once after ~30s. If it still 429s, return `{source_name} | rate-limited` so the main agent can continue.
+
+Use this **compact template** for every sub-agent's prompt — only `{source_name}` and `{query_pattern}` change between sources:
 
 ```
 Search {source_name} for companies matching: theme={theme}, geography={geography}, stage={stage}. {query_pattern}
+LIMITS: Max 5 WebSearch calls. On HTTP 429, sleep 30s and retry once; if still 429, output "{source_name} | rate-limited" and stop.
 OUTPUT FORMAT (strict): pipe-delimited table, one row per company. Columns: Company|Domain|HQ Country|Stage|Raised|Last Round|Investors|Tech (1 line)|Sectors served|Source URL|Why Now. Empty cell = Unknown. No prose, no headers, no preamble. If no results: "{source_name} | no results".
 ```
 
-Keep each sub-agent prompt under 200 tokens. Do not paste the full mandate text into sub-agents — they only need theme/geography/stage.
+Keep each sub-agent prompt under 250 tokens. Do not paste the full mandate text into sub-agents — they only need theme/geography/stage.
+
+**Configuration:** `subagent_type=general-purpose`, `model=haiku`.
 
 Collect all rows. Then:
 
