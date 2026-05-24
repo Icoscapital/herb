@@ -97,7 +97,7 @@ export default function LogPage() {
       })
       const json = await res.json()
       if (json.ok && !json.queued) {
-        setTriggerMsg({ id: runId, text: 'Search triggered — starting now…', ok: true })
+        setTriggerMsg({ id: runId, text: json.message || 'Search started — GitHub Actions spinning up (≈30s)', ok: true })
       } else if (json.ok && json.queued) {
         setTriggerMsg({ id: runId, text: 'Queued — search will start within the hour', ok: true })
       } else {

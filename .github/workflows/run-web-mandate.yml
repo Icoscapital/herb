@@ -1,0 +1,59 @@
+name: Run Web Mandate (on-demand)
+
+on:
+  repository_dispatch:
+    types: [run-web-mandate]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    env:
+      ANTHROPIC_API_KEY:               ${{ secrets.ANTHROPIC_API_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL:        ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY:       ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SB_URL:                          ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SB_KEY:                          ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GRAPH_TENANT_ID:                 ${{ secrets.GRAPH_TENANT_ID }}
+      GRAPH_CLIENT_ID:                 ${{ secrets.GRAPH_CLIENT_ID }}
+      GRAPH_CLIENT_SECRET:             ${{ secrets.GRAPH_CLIENT_SECRET }}
+      PIPEDRIVE_TOKEN:                 ${{ secrets.PIPEDRIVE_TOKEN }}
+      PIPEDRIVE_DOMAIN:                icoscapital
+      USER_PIPEDRIVE_ID:               "5523"
+      USER_INVESTMENT_MANAGER_OPTION_ID: "423"
+      DEFAULT_PIPELINE_ID:             "9"
+      DEFAULT_STAGE_ID:                "141"
+      GIT_COMMIT_NAME:                 herb-bot
+      GIT_COMMIT_EMAIL:                herb@icoscapital.com
+      RUN_ID:                          ${{ github.event.client_payload.run_id }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: pip install -q -r requirements.txt
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Configure git
+        run: |
+          git config user.name "herb-bot"
+          git config user.email "herb@icoscapital.com"
+
+      - name: Run Herb mandate search
+        run: |
+          claude -p "$(cat routine_prompt.md)" \
+            --allowedTools Bash,Read,Write,Glob,Grep,Task \
+            --model claude-sonnet-4-6 \
+            --max-turns 120 \
+            --append-system-prompt "OVERRIDE: Skip STEP 1 (email inbox). Go directly to STEP 1B. Process ONLY the web mandate with run_id=$RUN_ID. Ignore all other PENDING runs. Do not check email."
