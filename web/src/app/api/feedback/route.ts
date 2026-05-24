@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const nextRound = roundMatch ? parseInt(roundMatch[1]) + 1 : 2
     const newSlug = `${slugBase}-r${nextRound}`.slice(0, 80)
 
-    // Create round 2 run
+    // Create round N run
     const { data: newRun, error: insertErr } = await sb
       .from('herb_runs')
       .insert({
@@ -62,6 +62,33 @@ export async function POST(req: NextRequest) {
     if (insertErr || !newRun) {
       console.error('[feedback] insert error:', insertErr)
       return NextResponse.json({ error: 'Failed to create round 2 run' }, { status: 500 })
+    }
+
+    // Copy herb_files from the original run to the new run (pitchbook + company-list)
+    // Global check-sites are not copied — they're referenced via is_global=true instead
+    try {
+      const { data: origFiles } = await sb
+        .from('herb_files')
+        .select('*')
+        .eq('run_id', run_id)
+        .eq('is_global', false)
+
+      if (origFiles && origFiles.length > 0) {
+        const copiedRows = origFiles.map((f: any) => ({
+          user_id: f.user_id,
+          run_id: newRun.id,
+          slot_type: f.slot_type,
+          name: f.name,
+          url: f.url,
+          path: f.path,
+          size: f.size,
+          is_global: false,
+        }))
+        await sb.from('herb_files').insert(copiedRows)
+      }
+    } catch (fileErr) {
+      // Non-fatal — herb_files may not exist yet
+      console.warn('[feedback] herb_files copy error (non-fatal):', fileErr)
     }
 
     return NextResponse.json({ ok: true, new_run_id: newRun.id, slug: newRun.slug })

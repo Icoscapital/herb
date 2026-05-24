@@ -7,11 +7,11 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-type FileSlot = { type: 'pitchbook' | 'company-list' | 'check-sites'; name: string; url: string; path: string; size: number }
-const FILE_SLOTS: { key: FileSlot['type']; label: string; hint: string; icon: string }[] = [
-  { key: 'pitchbook',    label: 'PitchBook export', hint: '.xlsx export from PitchBook',        icon: '📊' },
-  { key: 'company-list', label: 'Company list',     hint: 'Your own list of companies (.xlsx/.csv)', icon: '📋' },
-  { key: 'check-sites',  label: 'Check sites',      hint: 'Sites/portfolios to search (.xlsx/.csv)', icon: '🌐' },
+type FileSlot = { type: 'pitchbook' | 'company-list' | 'check-sites'; name: string; url: string; path: string; size: number; isGlobal?: boolean }
+const FILE_SLOTS: { key: FileSlot['type']; label: string; hint: string; icon: string; chipBg: string; chipBorder: string; chipColor: string }[] = [
+  { key: 'pitchbook',    label: 'PitchBook export', hint: '.xlsx export from PitchBook',             icon: '📊', chipBg: '#e8f0fc', chipBorder: '#2471a3', chipColor: '#2471a3' },
+  { key: 'company-list', label: 'Company list',     hint: 'Your own list of companies (.xlsx/.csv)',  icon: '📋', chipBg: '#e8edf5', chipBorder: '#1a2b4a', chipColor: '#1a2b4a' },
+  { key: 'check-sites',  label: 'Check sites',      hint: 'Sites/portfolios to search (.xlsx/.csv)',  icon: '🌐', chipBg: '#e8f5ee', chipBorder: '#1e8449', chipColor: '#1e8449' },
 ]
 
 type Company = {
@@ -158,6 +158,34 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
       const { data: c } = await supabase.from('herb_longlist').select('*')
         .eq('run_id', params.id).order('score', { ascending: false })
       setCompanies(c ?? [])
+
+      // Load persisted files for this run + global check-sites for this user
+      try {
+        const { data: runFiles } = await supabase
+          .from('herb_files')
+          .select('*')
+          .eq('run_id', params.id)
+        const { data: globalFiles } = await supabase
+          .from('herb_files')
+          .select('*')
+          .eq('is_global', true)
+          .eq('user_id', session.user.id)
+        const allFiles: FileSlot[] = []
+        for (const f of runFiles ?? []) {
+          allFiles.push({ type: f.slot_type as FileSlot['type'], name: f.name, url: f.url, path: f.path, size: f.size ?? 0, isGlobal: f.is_global })
+        }
+        // Add global check-sites not already in runFiles
+        const runPaths = new Set((runFiles ?? []).map((f: any) => f.path))
+        for (const f of globalFiles ?? []) {
+          if (!runPaths.has(f.path)) {
+            allFiles.push({ type: f.slot_type as FileSlot['type'], name: f.name, url: f.url, path: f.path, size: f.size ?? 0, isGlobal: true })
+          }
+        }
+        if (allFiles.length > 0) setUploadedFiles(allFiles)
+      } catch {
+        // herb_files table may not exist yet — non-fatal
+      }
+
       setLoading(false)
     }
     load()
@@ -179,13 +207,16 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
       const slotType = slotKey as FileSlot['type']
-      const files = Array.from(fileList)
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
+      const isGlobal = slotKey === 'check-sites'
+      const fileArr = Array.from(fileList)
+      for (let i = 0; i < fileArr.length; i++) {
+        const file = fileArr[i]
         const fd = new FormData()
         fd.append('file', file)
         fd.append('slotType', slotKey)
         fd.append('index', String(i))
+        fd.append('runId', params.id)   // link to this run
+        fd.append('isGlobal', String(isGlobal))
         let json: any
         try {
           const res = await fetch('/api/upload', {
@@ -201,13 +232,13 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
         if (!json.ok) {
           setUploadError(`Could not upload ${file.name}: ${json.error}`)
         } else {
-          setUploadedFiles(prev => [...prev, { type: slotType, name: json.name, url: json.url, path: json.path, size: json.size }])
+          setUploadedFiles(prev => [...prev, { type: slotType, name: json.name, url: json.url, path: json.path, size: json.size, isGlobal }])
         }
       }
     } finally {
       setUploadingSlot(null)
     }
-  }, [])
+  }, [params.id])
 
   const removeFile = async (slot: FileSlot) => {
     setUploadedFiles(prev => prev.filter(f => f.path !== slot.path))
@@ -558,15 +589,20 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                     />
                     {slotFiles.map(sf => (
                       <div key={sf.path} style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
+                        display: 'flex', flexDirection: 'column', gap: '2px',
                         fontSize: '12px', padding: '5px 10px', borderRadius: '10px',
-                        background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)',
+                        background: slot.chipBg, border: `1px solid ${slot.chipBorder}`, color: slot.chipColor,
                       }}>
-                        <span style={{ flexShrink: 0, fontSize: '11px' }}>✓</span>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontWeight: 500 }}
-                          title={sf.name}>{sf.name}</span>
-                        <button onClick={() => removeFile(sf)}
-                          style={{ color: 'var(--teal)', opacity: 0.6, flexShrink: 0, lineHeight: 1, fontSize: '14px' }}>×</button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ flexShrink: 0, fontSize: '11px' }}>✓</span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontWeight: 500 }}
+                            title={sf.name}>{sf.name}</span>
+                          <button onClick={() => removeFile(sf)}
+                            style={{ color: slot.chipColor, opacity: 0.6, flexShrink: 0, lineHeight: 1, fontSize: '14px' }}>×</button>
+                        </div>
+                        {sf.isGlobal && (
+                          <span style={{ fontSize: '10px', opacity: 0.8, paddingLeft: '16px' }}>🌐 applies to all searches</span>
+                        )}
                       </div>
                     ))}
                     <button

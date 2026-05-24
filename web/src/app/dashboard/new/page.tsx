@@ -10,9 +10,9 @@ import Link from 'next/link'
 type Attachment = { name: string; size: number; url: string; path: string; fileType?: string }
 
 const FILE_SLOTS = [
-  { key: 'pitchbook',    label: 'PitchBook export', hint: '.xlsx from PitchBook',               icon: '📊' },
-  { key: 'company-list', label: 'Company list',     hint: 'Your own list (.xlsx / .csv)',        icon: '📋' },
-  { key: 'check-sites',  label: 'Check sites',      hint: 'Portfolios / sites to scrape (.csv)', icon: '🌐' },
+  { key: 'pitchbook',    label: 'PitchBook export', hint: '.xlsx from PitchBook',                icon: '📊', chipBg: '#e8f0fc', chipBorder: '#2471a3', chipColor: '#2471a3' },
+  { key: 'company-list', label: 'Company list',     hint: 'Your own list (.xlsx / .csv)',         icon: '📋', chipBg: '#e8edf5', chipBorder: '#1a2b4a', chipColor: '#1a2b4a' },
+  { key: 'check-sites',  label: 'Check sites',      hint: 'Portfolios / sites to scrape (.csv)',  icon: '🌐', chipBg: '#e8f5ee', chipBorder: '#1e8449', chipColor: '#1e8449' },
 ] as const
 
 const EXAMPLES = [
@@ -102,7 +102,7 @@ export default function NewMandatePage() {
     const special_instructions = lines.slice(1).join('\n').trim() || null
     const date = new Date().toISOString().split('T')[0]
     const slug = `${date}-${theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}`
-    const { error: e } = await supabase.from('herb_runs').insert({
+    const { data: runData, error: e } = await supabase.from('herb_runs').insert({
       user_id: session.user.id,
       submitted_by_email: session.user.email,
       submitted_by_name: meta?.full_name ?? meta?.name ?? null,
@@ -111,8 +111,30 @@ export default function NewMandatePage() {
       status: 'PENDING', current_round: 1,
       attachments: files.length ? files.map(f => ({ name: f.name, url: f.url })) : null,
       created_at: new Date().toISOString(),
-    })
+    }).select('id').single()
     if (e) { setError('Could not submit: ' + e.message); setSubmitting(false); return }
+
+    // Link uploaded files to the new run in herb_files
+    if (runData?.id && files.filter(f => f.fileType).length > 0) {
+      try {
+        const fileRows = files
+          .filter(f => f.fileType)
+          .map(f => ({
+            user_id: session.user.id,
+            run_id: runData.id,
+            slot_type: f.fileType!,
+            name: f.name,
+            url: f.url,
+            path: f.path,
+            size: f.size,
+            is_global: f.fileType === 'check-sites',
+          }))
+        await supabase.from('herb_files').upsert(fileRows, { onConflict: 'path' })
+      } catch {
+        // Non-fatal — files already in storage, just missing DB link
+      }
+    }
+
     router.push('/dashboard')
   }
 
@@ -170,11 +192,16 @@ export default function NewMandatePage() {
                       onChange={e => { const f = e.target.files; if (f) upload(f, slot.key); e.target.value = '' }}
                     />
                     {slotFiles.map(sf => (
-                      <div key={sf.path} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl"
-                        style={{ background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>
-                        <span className="flex-shrink-0" style={{ fontSize: '11px' }}>✓</span>
-                        <span className="truncate flex-1 font-medium" title={sf.name}>{sf.name}</span>
-                        <button onClick={() => remove(sf.path)} className="flex-shrink-0" style={{ opacity: 0.5, fontSize: '14px', lineHeight: 1 }}>×</button>
+                      <div key={sf.path} className="flex flex-col gap-0.5 text-xs px-2.5 py-1.5 rounded-xl"
+                        style={{ background: slot.chipBg, border: `1px solid ${slot.chipBorder}`, color: slot.chipColor }}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="flex-shrink-0" style={{ fontSize: '11px' }}>✓</span>
+                          <span className="truncate flex-1 font-medium" title={sf.name}>{sf.name}</span>
+                          <button onClick={() => remove(sf.path)} className="flex-shrink-0" style={{ opacity: 0.5, fontSize: '14px', lineHeight: 1 }}>×</button>
+                        </div>
+                        {slot.key === 'check-sites' && (
+                          <span style={{ fontSize: '10px', opacity: 0.8, paddingLeft: '16px' }}>🌐 applies to all searches</span>
+                        )}
                       </div>
                     ))}
                     <button

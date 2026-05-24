@@ -24,11 +24,60 @@ export DEFAULT_STAGE_ID=141
 export GIT_COMMIT_NAME=herb-bot
 export GIT_COMMIT_EMAIL=herb@icoscapital.com
 
-export NEXT_PUBLIC_SUPABASE_URL=https://lwgypkokjqerkgcpqhnt.supabase.co
-export SUPABASE_SERVICE_ROLE_KEY=<PASTE_SERVICE_ROLE_KEY_HERE>
+export SB_URL=https://lwgypkokjqerkgcpqhnt.supabase.co
+export SB_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Z3lwa29ranFlcmtnY3BxaG50Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTU0NzkyNywiZXhwIjoyMDk1MTIzOTI3fQ.y9aBM8wYfoG4b_sd9-DQ7vioG0m_SNeeTIOMHU1v_co
+export NEXT_PUBLIC_SUPABASE_URL=$SB_URL
+export SUPABASE_SERVICE_ROLE_KEY=$SB_KEY
+```
 
-pip install -q -r requirements.txt
+**STEP 0 — Debug ping (runs before pip install, uses only stdlib + requests)**
+
+Immediately write a timestamped debug entry to Supabase so we can confirm the tick is alive and at what stage it fails. Use `requests` (pre-installed in CCR base image; do NOT use the `supabase` package here).
+
+```python
+import requests, json
+from datetime import datetime, timezone
+import os, sys
+
+SB_URL = os.environ["SB_URL"]
+SB_KEY = os.environ["SB_KEY"]
+HEADERS = {"apikey": SB_KEY, "Authorization": f"Bearer {SB_KEY}", "Content-Type": "application/json"}
+
+def sb_debug(step: str, detail: str = ""):
+    ts = datetime.now(timezone.utc).isoformat()
+    try:
+        r = requests.patch(
+            f"{SB_URL}/rest/v1/herb_runs?status=eq.PENDING",
+            headers={**HEADERS, "Prefer": "return=minimal"},
+            json={"progress": f"[tick] {step}: {detail}".strip(": ") if not detail else f"[tick] {step}: {detail}"},
+            timeout=10
+        )
+        print(f"[DEBUG] {step} -> HTTP {r.status_code}")
+    except Exception as e:
+        print(f"[DEBUG] {step} -> FAILED: {e}", file=sys.stderr)
+
+sb_debug("setup_start", f"tick alive at {datetime.now(timezone.utc).isoformat()}")
+```
+
+```bash
+pip install -q -r requirements.txt 2>&1 | tail -5
+echo "[DEBUG] pip install exit code: $?"
 python -m scripts.git_state pull
+echo "[DEBUG] git pull done"
+```
+
+After pip completes, re-confirm with the full supabase client:
+
+```python
+import os
+from scripts.herb_web_run import update_progress, get_pending_mandates
+import json
+
+pending = get_pending_mandates()
+print(f"[DEBUG] PENDING mandates: {len(pending)}")
+for m in pending:
+    print(f"  - {m['id']} | {m['theme'][:50]}")
+    update_progress(m['id'], "Tick reached STEP 1B — starting search setup")
 ```
 
 If `git_state pull` fails (non-fast-forward), abort the tick — a human pushed conflicting state and needs to resolve before the next tick. Do not force.
@@ -92,7 +141,101 @@ t_start = time.time()
 
 Use `m['slug']` (already set by the web form). If blank, generate: `YYYY-MM-DD-<2-3-word slug>` from `m['theme']`.
 
-### 3 — Run Phase 2 search
+### 3 — Load attached files
+
+After marking SEARCHING, fetch any files the user uploaded for this run:
+
+```python
+from scripts.herb_web_run import get_run_files
+files = get_run_files(m['id'])  # returns list of {slot_type, name, url, is_global, ...}
+
+pitchbook_files  = [f for f in files if f['slot_type'] == 'pitchbook']
+company_lists    = [f for f in files if f['slot_type'] == 'company-list']
+check_site_files = [f for f in files if f['slot_type'] == 'check-sites']
+
+print(f"[HERB] Attachments: {len(pitchbook_files)} PitchBook, "
+      f"{len(company_lists)} company lists, {len(check_site_files)} check-sites")
+```
+
+For each file, download and parse:
+
+```python
+import requests, csv, io
+
+def download_file_bytes(url: str) -> bytes:
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    return r.content
+
+additional_companies: list[dict] = []   # extra candidates for Phase 2
+extra_check_sites: list[dict] = []      # extra sites to scrape in Phase 2
+
+# PitchBook exports and company lists → extract company names/domains
+for f in pitchbook_files + company_lists:
+    try:
+        raw = download_file_bytes(f['url'])
+        if f['name'].lower().endswith('.csv'):
+            reader = csv.DictReader(io.StringIO(raw.decode('utf-8', errors='replace')))
+            for row in reader:
+                name   = row.get('Company') or row.get('Name') or row.get('company') or ''
+                domain = row.get('Domain') or row.get('Website') or row.get('website') or ''
+                if name.strip():
+                    additional_companies.append({'name': name.strip(), 'domain': domain.strip(), 'source': f['name']})
+        else:
+            # xlsx — use openpyxl
+            import openpyxl, tempfile, os
+            with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
+                tmp.write(raw); tmp_path = tmp.name
+            wb = openpyxl.load_workbook(tmp_path, read_only=True, data_only=True)
+            ws = wb.active
+            headers = [str(c.value or '').lower() for c in next(ws.iter_rows(min_row=1, max_row=1))]
+            name_col   = next((i for i, h in enumerate(headers) if 'company' in h or 'name' in h), 0)
+            domain_col = next((i for i, h in enumerate(headers) if 'domain' in h or 'website' in h or 'url' in h), None)
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                name   = str(row[name_col] or '').strip()
+                domain = str(row[domain_col] or '').strip() if domain_col is not None else ''
+                if name:
+                    additional_companies.append({'name': name, 'domain': domain, 'source': f['name']})
+            wb.close(); os.unlink(tmp_path)
+        update_progress(m['id'], f"Parsed attachment: {f['name']} — {len(additional_companies)} companies so far")
+    except Exception as e:
+        print(f"[HERB] Could not parse {f['name']}: {e}")
+
+# Check-sites files → extract site URLs to scrape during Phase 2
+for f in check_site_files:
+    try:
+        raw = download_file_bytes(f['url'])
+        if f['name'].lower().endswith('.csv'):
+            reader = csv.DictReader(io.StringIO(raw.decode('utf-8', errors='replace')))
+            for row in reader:
+                site_name = row.get('name') or row.get('Name') or row.get('VC') or ''
+                site_url  = row.get('url') or row.get('URL') or row.get('website') or ''
+                if site_url.strip():
+                    extra_check_sites.append({'name': site_name.strip(), 'url': site_url.strip()})
+        else:
+            import openpyxl, tempfile, os
+            with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
+                tmp.write(raw); tmp_path = tmp.name
+            wb = openpyxl.load_workbook(tmp_path, read_only=True, data_only=True)
+            ws = wb.active
+            headers = [str(c.value or '').lower() for c in next(ws.iter_rows(min_row=1, max_row=1))]
+            name_col = next((i for i, h in enumerate(headers) if 'name' in h or 'vc' in h), 0)
+            url_col  = next((i for i, h in enumerate(headers) if 'url' in h or 'website' in h), None)
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                site_name = str(row[name_col] or '').strip()
+                site_url  = str(row[url_col] or '').strip() if url_col is not None else ''
+                if site_url:
+                    extra_check_sites.append({'name': site_name, 'url': site_url})
+            wb.close(); os.unlink(tmp_path)
+        print(f"[HERB] check-sites from {f['name']}: {len(extra_check_sites)} URLs")
+    except Exception as e:
+        print(f"[HERB] Could not parse check-sites file {f['name']}: {e}")
+```
+
+Pass `additional_companies` as pre-seeded candidates to Phase 2 (merge before dedup step).
+Pass `extra_check_sites` to Phase 2 portfolio-scraping step (add alongside vc-roster entries).
+
+### 4 — Run Phase 2 search
 
 Call `update_progress` at every major checkpoint so the dashboard stays live:
 
@@ -117,7 +260,7 @@ Throughout Phase 2, call `update_progress(m['id'], <message>)` at each step:
 
 Web mandates **skip Phase 0** (already confirmed by the submitter clicking Send) and **skip email round-trip** — after Phase 2 completes, go straight to storing results. Do not send T2, do not wait for a Start reply.
 
-### 4 — Store results in Supabase
+### 5 — Store results in Supabase
 
 After Phase 2 produces the deduped, pre-screened company list, convert each row to a dict and call:
 
@@ -133,7 +276,7 @@ mark_done(m['id'], len(companies), duration)
 `/dashboard/mandates/{m['id']}` can display the results immediately.
 `mark_done` sets `result_count`, `duration_seconds`, and `status = 'DONE'`.
 
-### 5 — Email the submitter
+### 6 — Email the submitter
 
 ```python
 from scripts.email_send import send_email
@@ -159,7 +302,7 @@ send_email(m['submitted_by_email'], subject, body)
 mark_emailed(m['id'])
 ```
 
-### 6 — Error handling
+### 7 — Error handling
 
 Wrap the entire per-mandate block in a try/except. If anything fails, record the error
 and move on — never let one run block others:

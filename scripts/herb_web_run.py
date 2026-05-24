@@ -131,3 +131,73 @@ def mark_error(run_id: str, message: str) -> None:
         "progress": f"Failed: {str(message)[:200]}",
         "last_heartbeat": _now(),
     }).eq("id", run_id).execute()
+
+
+def get_run_files(run_id: str) -> list:
+    """
+    Return all files linked to a run PLUS global check-sites for the run's user.
+
+    Each item in the returned list is a dict:
+      {
+        "id": str,
+        "user_id": str,
+        "run_id": str | None,
+        "slot_type": str,   # 'pitchbook' | 'company-list' | 'check-sites'
+        "name": str,
+        "url": str,
+        "path": str,
+        "size": int | None,
+        "is_global": bool,
+      }
+
+    Usage in routine_prompt.md STEP 1B:
+        from scripts.herb_web_run import get_run_files
+        files = get_run_files(m['id'])
+        pitchbook_files  = [f for f in files if f['slot_type'] == 'pitchbook']
+        company_lists    = [f for f in files if f['slot_type'] == 'company-list']
+        check_site_files = [f for f in files if f['slot_type'] == 'check-sites']
+    """
+    sb = _get_sb()
+
+    # Get all files linked to this specific run
+    run_result = (
+        sb.table("herb_files")
+        .select("*")
+        .eq("run_id", run_id)
+        .execute()
+    )
+    run_files = run_result.data or []
+
+    # Derive user_id from the run
+    user_id: str | None = None
+    if run_files:
+        user_id = run_files[0].get("user_id")
+    else:
+        # Look up the run to get user_id
+        run_row = (
+            sb.table("herb_runs")
+            .select("user_id")
+            .eq("id", run_id)
+            .maybe_single()
+            .execute()
+        )
+        if run_row.data:
+            user_id = run_row.data.get("user_id")
+
+    # Get global check-sites for this user (not already in run_files)
+    global_files: list = []
+    if user_id:
+        global_result = (
+            sb.table("herb_files")
+            .select("*")
+            .eq("is_global", True)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        run_paths = {f["path"] for f in run_files}
+        global_files = [
+            f for f in (global_result.data or [])
+            if f["path"] not in run_paths
+        ]
+
+    return run_files + global_files
