@@ -30,7 +30,6 @@ export default function NewMandatePage() {
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const slotRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const textRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
 
@@ -138,9 +137,12 @@ export default function NewMandatePage() {
                 const isUp = uploadingSlot === slot.key
                 return (
                   <div key={slot.key}>
-                    <input type="file" accept=".xlsx,.xls,.csv" className="hidden"
-                      ref={el => { slotRefs.current[slot.key] = el }}
-                      onChange={e => { const f = e.target.files; if (f) upload(f, slot.key); e.target.value = '' }} />
+                    <input
+                      id={`new-file-${slot.key}`}
+                      type="file" accept=".xlsx,.xls,.csv"
+                      style={{ display: 'none' }}
+                      onChange={e => { const f = e.target.files; if (f) upload(f, slot.key); e.target.value = '' }}
+                    />
                     {uploaded ? (
                       <div className="flex items-center gap-1.5 text-xs px-2.5 py-2 rounded-xl"
                         style={{ background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>
@@ -149,7 +151,10 @@ export default function NewMandatePage() {
                         <button onClick={() => remove(uploaded.path)} style={{ opacity: 0.6 }}>×</button>
                       </div>
                     ) : (
-                      <button onClick={() => slotRefs.current[slot.key]?.click()} disabled={isUp || submitting}
+                      <button
+                        type="button"
+                        onClick={() => (document.getElementById(`new-file-${slot.key}`) as HTMLInputElement | null)?.click()}
+                        disabled={isUp || submitting}
                         className="w-full flex flex-col items-center gap-0.5 px-2 py-2.5 rounded-xl text-xs transition-all"
                         style={{ background: 'var(--bg)', border: '1px dashed var(--border)', color: 'var(--subtle)', cursor: 'pointer' }}
                         onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--teal)'}
