@@ -36,6 +36,32 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
+// Strip the -rN suffix from a slug to get the lineage base.
+// Runs that share a base are different rounds of the same mandate.
+function slugBase(slug: string | null, fallbackId: string): string {
+  if (!slug) return fallbackId
+  return slug.replace(/-r\d+$/, '')
+}
+
+// Group runs by lineage and keep only the latest round per lineage.
+// "Latest" = highest current_round; ties broken by most recent created_at.
+function dedupToLatestRound(runs: Run[]): Run[] {
+  const byBase = new Map<string, Run>()
+  for (const run of runs) {
+    const base = slugBase(run.slug, run.id)
+    const existing = byBase.get(base)
+    if (!existing) { byBase.set(base, run); continue }
+    const a = run.current_round ?? 1
+    const b = existing.current_round ?? 1
+    if (a > b || (a === b && new Date(run.created_at) > new Date(existing.created_at))) {
+      byBase.set(base, run)
+    }
+  }
+  return Array.from(byBase.values()).sort((x, y) =>
+    new Date(y.created_at).getTime() - new Date(x.created_at).getTime()
+  )
+}
+
 // Status display config using Icos brand colors
 const STATUS_CFG: Record<string, { label: string; dotColor: string; textColor: string; bgColor: string; pulse: boolean }> = {
   PENDING:   { label: 'Queued',       dotColor: 'var(--navy)', textColor: 'var(--navy)', bgColor: 'var(--navy-light)', pulse: false },
@@ -168,14 +194,18 @@ export default function LogPage() {
     </div>
   )
 
+  // Collapse rounds: show only the latest round per lineage (earlier rounds
+  // remain accessible from the latest round's detail page).
+  const displayRuns = dedupToLatestRound(runs)
+
   const counts = {
-    all: runs.length,
-    running: runs.filter(r => r.status === 'SEARCHING' || r.status === 'PENDING').length,
-    done: runs.filter(r => r.status === 'DONE' || r.status === 'EMAILED' || r.status === 'COMPLETED').length,
-    error: runs.filter(r => r.status === 'ERROR').length,
+    all: displayRuns.length,
+    running: displayRuns.filter(r => r.status === 'SEARCHING' || r.status === 'PENDING').length,
+    done: displayRuns.filter(r => r.status === 'DONE' || r.status === 'EMAILED' || r.status === 'COMPLETED').length,
+    error: displayRuns.filter(r => r.status === 'ERROR').length,
   }
 
-  const filtered = runs.filter(r => {
+  const filtered = displayRuns.filter(r => {
     if (filter === 'running') return r.status === 'SEARCHING' || r.status === 'PENDING'
     if (filter === 'done')    return r.status === 'DONE' || r.status === 'EMAILED' || r.status === 'COMPLETED'
     if (filter === 'error')   return r.status === 'ERROR'
