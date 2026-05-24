@@ -48,10 +48,9 @@ export async function POST(req: NextRequest) {
         special_instructions: round2Instructions,
         submitted_by_email: orig.submitted_by_email,
         submitted_by_name: orig.submitted_by_name,
-        attachments: null,
+        attachments: attachments ?? null,
         slug: newSlug,
         status: 'PENDING',
-        attachments: attachments ?? null,
       })
       .select('id, slug')
       .single()
