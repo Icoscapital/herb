@@ -6,7 +6,7 @@ const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function POST(req: NextRequest) {
   try {
-    const { run_id, feedback_text, excluded_companies } = await req.json()
+    const { run_id, feedback_text, excluded_companies, attachments } = await req.json()
     if (!run_id || !feedback_text?.trim()) {
       return NextResponse.json({ error: 'run_id and feedback_text required' }, { status: 400 })
     }
@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
         attachments: null,
         slug: newSlug,
         status: 'PENDING',
+        attachments: attachments ?? null,
       })
       .select('id, slug')
       .single()

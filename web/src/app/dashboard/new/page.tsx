@@ -7,7 +7,13 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-type Attachment = { name: string; size: number; url: string; path: string }
+type Attachment = { name: string; size: number; url: string; path: string; fileType?: string }
+
+const FILE_SLOTS = [
+  { key: 'pitchbook',    label: 'PitchBook export', hint: '.xlsx from PitchBook',               icon: '📊' },
+  { key: 'company-list', label: 'Company list',     hint: 'Your own list (.xlsx / .csv)',        icon: '📋' },
+  { key: 'check-sites',  label: 'Check sites',      hint: 'Portfolios / sites to scrape (.csv)', icon: '🌐' },
+] as const
 
 const EXAMPLES = [
   'Sustainable packaging startups in Europe, Series A, bio-based or recycled materials',
@@ -19,10 +25,12 @@ export default function NewMandatePage() {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
+  const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const slotRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const textRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
 
@@ -31,22 +39,28 @@ export default function NewMandatePage() {
     el.style.height = Math.min(el.scrollHeight, 400) + 'px'
   }
 
-  const upload = useCallback(async (list: FileList | null) => {
+  const upload = useCallback(async (list: FileList | null, slotType?: string) => {
     if (!list || list.length === 0) return
-    setUploading(true)
+    if (slotType) setUploadingSlot(slotType); else setUploading(true)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/login'); return }
     const added: Attachment[] = []
     for (const f of Array.from(list)) {
       const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const path = `mandates/${session.user.id}/${Date.now()}-${safe}`
+      const prefix = slotType ? `${slotType}-` : ''
+      const path = `mandates/${session.user.id}/${Date.now()}-${prefix}${safe}`
       const { error: e } = await supabase.storage.from('herb-uploads').upload(path, f)
       if (e) { setError(`Could not upload ${f.name}`); continue }
       const { data: { publicUrl } } = supabase.storage.from('herb-uploads').getPublicUrl(path)
-      added.push({ name: f.name, size: f.size, url: publicUrl, path })
+      added.push({ name: f.name, size: f.size, url: publicUrl, path, fileType: slotType })
     }
-    setFiles(p => [...p, ...added])
-    setUploading(false)
+    // For slot uploads: replace any previous file of that slot type
+    if (slotType) {
+      setFiles(p => [...p.filter(f => f.fileType !== slotType), ...added])
+    } else {
+      setFiles(p => [...p, ...added])
+    }
+    if (slotType) setUploadingSlot(null); else setUploading(false)
     if (fileRef.current) fileRef.current.value = ''
   }, [router])
 
@@ -117,15 +131,49 @@ export default function NewMandatePage() {
               style={{ minHeight: '160px', height: '160px', background: 'transparent', color: 'var(--text)', caretColor: 'var(--teal)' }}
               autoFocus />
 
-            {files.length > 0 && (
+            {/* Labeled data file slots */}
+            <div className="px-4 pb-3 pt-1 grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              {FILE_SLOTS.map(slot => {
+                const uploaded = files.find(f => f.fileType === slot.key)
+                const isUp = uploadingSlot === slot.key
+                return (
+                  <div key={slot.key}>
+                    <input type="file" accept=".xlsx,.xls,.csv" className="hidden"
+                      ref={el => { slotRefs.current[slot.key] = el }}
+                      onChange={e => { const f = e.target.files; if (f) upload(f, slot.key); e.target.value = '' }} />
+                    {uploaded ? (
+                      <div className="flex items-center gap-1.5 text-xs px-2.5 py-2 rounded-xl"
+                        style={{ background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>
+                        <span>{slot.icon}</span>
+                        <span className="truncate flex-1 font-medium" title={uploaded.name}>{uploaded.name}</span>
+                        <button onClick={() => remove(uploaded.path)} style={{ opacity: 0.6 }}>×</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => slotRefs.current[slot.key]?.click()} disabled={isUp || submitting}
+                        className="w-full flex flex-col items-center gap-0.5 px-2 py-2.5 rounded-xl text-xs transition-all"
+                        style={{ background: 'var(--bg)', border: '1px dashed var(--border)', color: 'var(--subtle)', cursor: 'pointer' }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--teal)'}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                        <span className="text-base">{isUp ? '⏳' : slot.icon}</span>
+                        <span className="font-medium" style={{ color: 'var(--muted)' }}>{slot.label}</span>
+                        <span style={{ fontSize: '10px' }}>{slot.hint}</span>
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* General attachments (PDFs, briefs) + non-slot uploads */}
+            {files.filter(f => !f.fileType).length > 0 && (
               <div className="px-4 pb-3 flex flex-wrap gap-2">
-                {files.map(f => (
+                {files.filter(f => !f.fileType).map(f => (
                   <div key={f.path} className="flex items-center gap-2 text-xs rounded-lg px-3 py-1.5"
                     style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
-                    <span>&#128206;</span>
+                    <span>📎</span>
                     <span className="max-w-[140px] truncate font-medium" style={{ color: 'var(--text)' }}>{f.name}</span>
                     <span>{fmt(f.size)}</span>
-                    <button onClick={() => remove(f.path)} style={{ color: 'var(--subtle)' }}>&#10005;</button>
+                    <button onClick={() => remove(f.path)} style={{ color: 'var(--subtle)' }}>✕</button>
                   </div>
                 ))}
               </div>
@@ -135,14 +183,14 @@ export default function NewMandatePage() {
               style={{ borderTop: '1px solid var(--border)' }}>
               <div className="flex items-center gap-1.5">
                 <input ref={fileRef} type="file" multiple className="hidden"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.pptx,.ppt"
+                  accept=".pdf,.doc,.docx,.txt,.pptx,.ppt"
                   onChange={e => upload(e.target.files)} />
                 <button onClick={() => fileRef.current?.click()} disabled={uploading || submitting}
-                  title="Attach files (PDF, Excel, Word, CSV)"
+                  title="Attach brief / PDF / Word doc"
                   className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-light transition-all"
-                  style={{ color: 'var(--subtle)' }}>+</button>
+                  style={{ color: 'var(--subtle)' }}>📎</button>
                 <span className="text-xs" style={{ color: 'var(--subtle)' }}>
-                  {uploading ? 'Uploading…' : 'Attach files for context'}
+                  {uploading ? 'Uploading…' : 'Brief or context doc'}
                 </span>
               </div>
               <button onClick={submit} disabled={!ready}

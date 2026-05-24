@@ -2,10 +2,17 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+
+type FileSlot = { type: 'pitchbook' | 'company-list' | 'check-sites'; name: string; url: string; path: string; size: number }
+const FILE_SLOTS: { key: FileSlot['type']; label: string; hint: string; icon: string }[] = [
+  { key: 'pitchbook',    label: 'PitchBook export', hint: '.xlsx export from PitchBook',        icon: '📊' },
+  { key: 'company-list', label: 'Company list',     hint: 'Your own list of companies (.xlsx/.csv)', icon: '📋' },
+  { key: 'check-sites',  label: 'Check sites',      hint: 'Sites/portfolios to search (.xlsx/.csv)', icon: '🌐' },
+]
 
 type Company = {
   id: string; name: string; website: string | null
@@ -135,6 +142,10 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const [submitting, setSubmitting] = useState(false)
   const [feedbackDone, setFeedbackDone] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
+  // File upload for round 2
+  const [uploadedFiles, setUploadedFiles] = useState<FileSlot[]>([])
+  const [uploadingSlot, setUploadingSlot] = useState<FileSlot['type'] | null>(null)
+  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const router = useRouter()
 
   useEffect(() => {
@@ -160,6 +171,28 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     })
   }
 
+  const uploadFile = useCallback(async (slotType: FileSlot['type'], file: File) => {
+    setUploadingSlot(slotType)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const path = `mandates/${session.user.id}/${Date.now()}-${slotType}-${safe}`
+    const { error: e } = await supabase.storage.from('herb-uploads').upload(path, file)
+    if (!e) {
+      const { data: { publicUrl } } = supabase.storage.from('herb-uploads').getPublicUrl(path)
+      setUploadedFiles(prev => [
+        ...prev.filter(f => f.type !== slotType),  // replace if re-uploading same slot
+        { type: slotType, name: file.name, url: publicUrl, path, size: file.size },
+      ])
+    }
+    setUploadingSlot(null)
+  }, [])
+
+  const removeFile = async (slot: FileSlot) => {
+    setUploadedFiles(prev => prev.filter(f => f.path !== slot.path))
+    await supabase.storage.from('herb-uploads').remove([slot.path])
+  }
+
   const submitFeedback = async () => {
     if (!feedbackText.trim() && excluded.size === 0) return
     setSubmitting(true)
@@ -172,6 +205,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
           run_id: params.id,
           feedback_text: feedbackText,
           excluded_companies: Array.from(excluded),
+          attachments: uploadedFiles.length ? uploadedFiles.map(f => ({ type: f.type, name: f.name, url: f.url })) : null,
         }),
       })
       const json = await res.json()
@@ -268,7 +302,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
             {/* Column headers */}
             <div className="grid px-4 py-2.5 text-xs font-medium uppercase tracking-wider"
               style={{
-                gridTemplateColumns: '2fr 1.4fr 52px 90px 90px 80px',
+                gridTemplateColumns: '2fr 1.4fr 52px 90px 90px 80px 72px',
                 gap: '12px',
                 color: 'var(--subtle)',
                 borderBottom: '1px solid var(--border)',
@@ -279,6 +313,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
               <span>Stage</span>
               <span>Pipedrive</span>
               <span>Thesis fit</span>
+              <span>Round 2</span>
             </div>
 
             {/* Rows */}
@@ -294,7 +329,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                 <div key={co.id}
                   className="grid px-4 items-center transition-colors"
                   style={{
-                    gridTemplateColumns: '2fr 1.4fr 52px 90px 90px 80px',
+                    gridTemplateColumns: '2fr 1.4fr 52px 90px 90px 80px 72px',
                     gap: '12px',
                     borderBottom: i < pageCompanies.length - 1 ? '1px solid var(--border)' : 'none',
                     opacity: isExcluded ? 0.35 : 1,
@@ -377,22 +412,26 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                           style={{ color: fitColor(co.score) }}>
                           {fit}%
                         </span>
-                        {/* Exclude toggle on hover */}
-                        <button
-                          onClick={() => toggleExclude(co.name)}
-                          title={isExcluded ? 'Re-include' : 'Exclude from round 2'}
-                          className="ml-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity rounded px-1"
-                          style={{
-                            color: isExcluded ? '#c0392b' : 'var(--subtle)',
-                            background: isExcluded ? '#fdf2f1' : 'transparent',
-                            border: `1px solid ${isExcluded ? '#e74c3c' : 'transparent'}`,
-                          }}>
-                          {isExcluded ? '✕' : '×'}
-                        </button>
                       </>
                     ) : (
                       <span style={{ color: 'var(--subtle)' }}>—</span>
                     )}
+                  </div>
+
+                  {/* Exclude toggle — always visible */}
+                  <div>
+                    <button
+                      onClick={() => toggleExclude(co.name)}
+                      title={isExcluded ? 'Re-include in round 2' : 'Exclude from round 2'}
+                      className="text-xs px-2.5 py-1 rounded-lg transition-all"
+                      style={{
+                        background: isExcluded ? '#fdf2f1' : 'var(--bg)',
+                        color: isExcluded ? '#c0392b' : 'var(--subtle)',
+                        border: `1px solid ${isExcluded ? '#e74c3c' : 'var(--border)'}`,
+                        fontWeight: isExcluded ? 600 : 400,
+                      }}>
+                      {isExcluded ? '✕ Out' : 'Exclude'}
+                    </button>
                   </div>
                 </div>
               )
@@ -466,6 +505,49 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
               onFocus={e => e.currentTarget.style.borderColor = 'var(--teal)'}
               onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
             />
+
+            {/* Labeled file upload slots */}
+            <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              {FILE_SLOTS.map(slot => {
+                const uploaded = uploadedFiles.find(f => f.type === slot.key)
+                const isUploading = uploadingSlot === slot.key
+                return (
+                  <div key={slot.key}>
+                    <input
+                      type="file" accept=".xlsx,.xls,.csv"
+                      className="hidden"
+                      ref={el => { fileRefs.current[slot.key] = el }}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(slot.key, f); e.target.value = '' }}
+                    />
+                    {uploaded ? (
+                      <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl"
+                        style={{ background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>
+                        <span className="flex-shrink-0">{slot.icon}</span>
+                        <span className="truncate flex-1 font-medium" title={uploaded.name}>{uploaded.name}</span>
+                        <button onClick={() => removeFile(uploaded)}
+                          style={{ color: 'var(--teal)', opacity: 0.6, flexShrink: 0 }}>×</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => fileRefs.current[slot.key]?.click()}
+                        disabled={isUploading}
+                        className="w-full flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-xs transition-all"
+                        style={{
+                          background: 'var(--bg)', border: '1px dashed var(--border)',
+                          color: 'var(--subtle)', cursor: 'pointer',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--teal)'}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                      >
+                        <span>{isUploading ? '⏳' : slot.icon}</span>
+                        <span className="font-medium" style={{ color: 'var(--muted)' }}>{slot.label}</span>
+                        <span style={{ color: 'var(--subtle)', fontSize: '10px' }}>{slot.hint}</span>
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
 
             {feedbackError && (
               <p className="text-xs mt-2" style={{ color: '#c0392b' }}>⚠ {feedbackError}</p>
