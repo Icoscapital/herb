@@ -3,9 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-// herb-cloud CCR routine ID
-const TRIGGER_ID = 'trig_01Mm732xFajRbfbWukQtGkqG'
+const GH_PAT = process.env.GITHUB_PAT!
+const GH_REPO = 'Icoscapital/herb'
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,42 +28,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Run is ${run.status}, not PENDING` }, { status: 409 })
     }
 
-    // Try to trigger the CCR routine immediately via claude.ai API
-    // Falls back gracefully — the hourly tick will pick up PENDING runs regardless
-    const apiKey = process.env.ANTHROPIC_API_KEY
-    if (apiKey) {
-      try {
-        // CCR routines are managed by claude.ai — try both auth styles
-        const triggerRes = await fetch(
-          `https://claude.ai/api/v1/code/triggers/${TRIGGER_ID}/run`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'anthropic-version': '2023-06-01',
-              'anthropic-beta': 'claude-code-20250219',
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify({}),
-          }
-        )
-        if (triggerRes.ok) {
-          const body = await triggerRes.json()
-          console.log('[run-mandate] CCR triggered immediately:', triggerRes.status)
-          return NextResponse.json({ ok: true, triggered: true, detail: body })
-        }
-        const errBody = await triggerRes.text()
-        console.warn('[run-mandate] CCR trigger attempt failed:', triggerRes.status, errBody.slice(0, 200))
-      } catch (triggerErr: any) {
-        console.warn('[run-mandate] CCR trigger fetch error (non-fatal):', triggerErr?.message)
-      }
+    if (!GH_PAT) {
+      return NextResponse.json({ error: 'GITHUB_PAT not configured' }, { status: 500 })
     }
 
-    // Could not trigger immediately — run stays PENDING, hourly CCR will pick it up
+    // Trigger the GitHub Actions workflow via repository_dispatch
+    const dispatchRes = await fetch(
+      `https://api.github.com/repos/${GH_REPO}/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${GH_PAT}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'herb-vercel',
+        },
+        body: JSON.stringify({
+          event_type: 'run-web-mandate',
+          client_payload: { run_id },
+        }),
+      }
+    )
+
+    if (!dispatchRes.ok) {
+      const errBody = await dispatchRes.text()
+      console.error('[run-mandate] GitHub dispatch failed:', dispatchRes.status, errBody)
+      return NextResponse.json({
+        ok: false,
+        queued: true,
+        message: `Could not start immediately (${dispatchRes.status}), run will execute on next hourly tick.`,
+      })
+    }
+
+    // GitHub returns 204 No Content on success
+    console.log('[run-mandate] GitHub dispatch succeeded for run_id:', run_id)
     return NextResponse.json({
       ok: true,
-      queued: true,
-      message: 'Queued — search will start on the next hourly tick.',
+      triggered: true,
+      message: 'Search started — GitHub Actions is spinning up (~30s)',
     })
   } catch (err: any) {
     console.error('[run-mandate] error:', err)
