@@ -30,6 +30,7 @@ const PD_USER = parseInt(process.env.USER_PIPEDRIVE_ID || '5523', 10)
 const PD_IM_OPTION = parseInt(process.env.USER_INVESTMENT_MANAGER_OPTION_ID || '423', 10)
 const PD_PIPELINE = parseInt(process.env.DEFAULT_PIPELINE_ID || '9', 10)
 const PD_STAGE = parseInt(process.env.DEFAULT_STAGE_ID || '141', 10)
+const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || ''
 
 // Custom field hash keys (from scripts/schema_constants.py)
 const FIELD_INVESTMENT_MANAGER = '68533ca253cf72116f283dd6b4f33694495ed511'
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
     // 1. Fetch the company row
     const { data: co, error: fetchErr } = await sb
       .from('herb_longlist')
-      .select('id, name, website, description, notes, run_id, stage, geography')
+      .select('id, name, website, description, notes, run_id, stage, geography, score')
       .eq('id', company_id)
       .single()
     if (fetchErr || !co) {
@@ -172,13 +173,26 @@ export async function POST(req: NextRequest) {
     // 6. Stamp note so the UI persists the state on refresh
     await stampNote(sb, co.id, co.notes, `Pipedrive: New | Deal #${dealId}`)
 
+    // 7. Generate Icos thesis assessment via Anthropic and post it as a deal note.
+    //    Non-fatal: if anything fails we still return success on the deal creation.
+    let assessmentNote: string | null = null
+    try {
+      assessmentNote = await generateThesisAssessment(co)
+      if (assessmentNote) {
+        await pdPost('/notes', { content: assessmentNote, deal_id: dealId })
+      }
+    } catch (noteErr: any) {
+      console.warn('[push-to-pipedrive] assessment note skipped:', noteErr?.message ?? noteErr)
+    }
+
     return NextResponse.json({
       ok: true,
       status: 'created',
       deal_id: dealId,
       deal_url: dealUrl(dealId),
       org_id: orgId,
-      message: `Deal created for ${co.name}`,
+      assessment_attached: assessmentNote != null,
+      message: `Deal created for ${co.name}${assessmentNote ? ' (with thesis note)' : ''}`,
     })
   } catch (err: any) {
     console.error('[push-to-pipedrive] error:', err)
@@ -197,4 +211,84 @@ async function stampNote(
   const cleaned = (currentNotes ?? '').replace(/Pipedrive:\s*[^|]*\|?\s*/i, '').trim()
   const newNotes = cleaned ? `${marker} | ${cleaned}` : marker
   await sb.from('herb_longlist').update({ notes: newNotes }).eq('id', companyId)
+}
+
+/**
+ * Generate a short Icos-thesis fit assessment via the Anthropic API and return
+ * it formatted as Pipedrive HTML (Pipedrive notes render basic HTML).
+ *
+ * Falls back to `null` if the key is missing, the API call fails, or the
+ * response is empty. Callers must handle null.
+ */
+async function generateThesisAssessment(co: {
+  name: string
+  description: string | null
+  geography: string | null
+  stage: string | null
+  score: number | null
+  notes: string | null
+  website: string | null
+}): Promise<string | null> {
+  if (!ANTHROPIC_KEY) return null
+
+  const system = `You are an Icos Capital investment analyst. Icos invests in European deep-tech startups (Series A-B) across four core verticals:
+- Food systems (alt proteins, food ingredients, ag biotech)
+- Chemicals & materials (biochemicals, circular materials, water treatment)
+- Sustainable industry (industrial AI, supply chain, energy efficiency, Industry 4.0)
+- Decarbonisation (carbon capture, sequestration, utilization)
+
+LP strategics include Nouryon, Bühler, FrieslandCampina — solutions relevant to those partners get extra weight.
+
+Given a candidate company, write a SHORT 2-3 sentence assessment for the deal record. Cover:
+1. One sentence on what they do (concrete, not marketing fluff)
+2. One sentence on thesis fit / why now for Icos (which vertical, what strategic angle)
+3. (Optional) one sentence on key risk or unknown
+
+Plain prose only. No headers, no bullet points, no preamble like "This company...". Write directly.`
+
+  const userContent = [
+    `Company: ${co.name}`,
+    co.website && `Website: ${co.website}`,
+    co.geography && `Geography: ${co.geography}`,
+    co.stage && `Stage: ${co.stage}`,
+    co.score != null && `Icos Fit score (pre-computed): ${co.score}/10`,
+    co.description && `Description: ${co.description}`,
+    co.notes && `Notes from search: ${co.notes}`,
+  ].filter(Boolean).join('\n')
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5',
+      max_tokens: 300,
+      system,
+      messages: [{ role: 'user', content: userContent }],
+    }),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`Anthropic ${res.status}: ${errText.slice(0, 200)}`)
+  }
+
+  const json = await res.json()
+  const text: string = json?.content?.[0]?.text?.trim() ?? ''
+  if (!text) return null
+
+  // Wrap as Pipedrive-friendly HTML with a header so the user can tell what it is.
+  const scoreLine = co.score != null ? ` · Icos Fit ${co.score}/10` : ''
+  return `<p><b>Icos thesis assessment${scoreLine}</b></p><p>${escapeHtml(text)}</p><p><i>— Auto-generated by Herb when pushed from the dashboard.</i></p>`
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }
