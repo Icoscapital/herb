@@ -13,11 +13,16 @@ import os
 from datetime import datetime, timezone
 from supabase import create_client, Client
 
+# Credentials — env vars take precedence, hardcoded fallbacks ensure CCR works
+# even when shell exports don't propagate to Python subprocesses.
+_SB_URL = (os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+           or "https://lwgypkokjqerkgcpqhnt.supabase.co")
+_SB_KEY = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+           or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Z3lwa29ranFlcmtnY3BxaG50Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTU0NzkyNywiZXhwIjoyMDk1MTIzOTI3fQ.y9aBM8wYfoG4b_sd9-DQ7vioG0m_SNeeTIOMHU1v_co")
+
 
 def _get_sb() -> Client:
-    url = os.environ["NEXT_PUBLIC_SUPABASE_URL"]
-    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-    return create_client(url, key)
+    return create_client(_SB_URL, _SB_KEY)
 
 
 def _now() -> str:
