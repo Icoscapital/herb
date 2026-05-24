@@ -208,7 +208,8 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   }
 
   const uploadFiles = useCallback(async (slotKey: string, fileList: FileList) => {
-    if (!fileList.length) return
+    const fileArr = Array.from(fileList)  // Capture before any await — FileList is cleared when input.value resets
+    if (!fileArr.length) return
     setUploadingSlot(slotKey)
     setUploadError(null)
     try {
@@ -216,7 +217,6 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
       if (!session) return
       const slotType = slotKey as FileSlot['type']
       const isGlobal = slotKey === 'check-sites'
-      const fileArr = Array.from(fileList)
       for (let i = 0; i < fileArr.length; i++) {
         const file = fileArr[i]
         const fd = new FormData()

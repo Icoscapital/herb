@@ -41,12 +41,12 @@ export default function NewMandatePage() {
 
   const upload = useCallback(async (list: FileList | null, slotType?: string) => {
     if (!list || list.length === 0) return
+    const arr = Array.from(list)  // Capture before any await — FileList is cleared when input.value resets
     if (slotType) { setUploadingSlot(slotType); setSlotError(null) } else setUploading(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
       const added: Attachment[] = []
-      const arr = Array.from(list)
       for (let i = 0; i < arr.length; i++) {
         const f = arr[i]
         const fd = new FormData()
