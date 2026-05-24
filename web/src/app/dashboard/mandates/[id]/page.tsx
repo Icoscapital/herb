@@ -28,6 +28,7 @@ type Run = {
   submitted_by_name: string | null; submitted_by_email: string | null
   result_count: number | null
   current_round: number | null
+  slug: string | null
 }
 
 const PAGE_SIZE = 10
@@ -161,6 +162,8 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const [editMode, setEditMode] = useState(false)
   const [editText, setEditText] = useState('')
   const [editSaving, setEditSaving] = useState(false)
+  // Earlier rounds of the same mandate lineage (slug base match, lower current_round)
+  const [previousRounds, setPreviousRounds] = useState<Array<{ id: string; current_round: number | null; result_count: number | null; status: string; created_at: string }>>([])
   const editRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
 
@@ -171,6 +174,25 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
       const { data: r } = await supabase.from('herb_runs').select('*').eq('id', params.id).single()
       if (!r) { router.push('/dashboard'); return }
       setRun(r)
+
+      // Fetch earlier rounds in the same lineage (same slug base, lower current_round)
+      try {
+        const baseSlug = (r.slug as string | null)?.replace(/-rd+$/, '') ?? null
+        const thisRound = r.current_round ?? 1
+        if (baseSlug) {
+          const { data: siblings } = await supabase
+            .from('herb_runs')
+            .select('id,slug,current_round,result_count,status,created_at')
+            .or(`slug.eq.${baseSlug},slug.like.${baseSlug}-r%`)
+            .neq('id', r.id)
+            .order('current_round', { ascending: true })
+          const earlier = (siblings ?? []).filter(s => (s.current_round ?? 1) < thisRound)
+          setPreviousRounds(earlier)
+        }
+      } catch {
+        // non-fatal
+      }
+
       const { data: c } = await supabase.from('herb_longlist').select('*')
         .eq('run_id', params.id).order('score', { ascending: false })
       setCompanies(c ?? [])
@@ -468,6 +490,20 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
             {editMode ? '✕ cancel' : '✎ edit'}
           </button>
         </div>
+
+        {/* Previous rounds */}
+        {previousRounds.length > 0 && (
+          <div className="flex items-center gap-2 mb-6 text-xs flex-wrap">
+            <span style={{ color: 'var(--subtle)' }}>Previous rounds:</span>
+            {previousRounds.map(pr => (
+              <a key={pr.id} href={`/dashboard/mandates/${pr.id}`}
+                className="px-2.5 py-1 rounded-full transition-all hover:shadow-sm"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
+                R{pr.current_round ?? 1} · {pr.result_count ?? 0} companies
+              </a>
+            ))}
+          </div>
+        )}
 
         {/* Edit panel */}
         {editMode && (
