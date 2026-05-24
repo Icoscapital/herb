@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     const triggerRes = await fetch(
-      `https://api.anthropic.com/api/claude-code/triggers/${TRIGGER_ID}/runs`,
+      `https://api.anthropic.com/v1/code/triggers/${TRIGGER_ID}/run`,
       {
         method: 'POST',
         headers: {
