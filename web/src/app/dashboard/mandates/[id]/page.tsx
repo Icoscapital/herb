@@ -186,12 +186,18 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
         fd.append('file', file)
         fd.append('slotType', slotKey)
         fd.append('index', String(i))
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          body: fd,
-        })
-        const json = await res.json()
+        let json: any
+        try {
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            body: fd,
+          })
+          json = await res.json()
+        } catch (fetchErr: any) {
+          setUploadError(`Upload failed: ${fetchErr?.message ?? 'network error'}`)
+          continue
+        }
         if (!json.ok) {
           setUploadError(`Could not upload ${file.name}: ${json.error}`)
         } else {
