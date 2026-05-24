@@ -7,8 +7,8 @@ const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 export async function POST(req: NextRequest) {
   try {
     const { run_id, feedback_text, excluded_companies, attachments } = await req.json()
-    if (!run_id || !feedback_text?.trim()) {
-      return NextResponse.json({ error: 'run_id and feedback_text required' }, { status: 400 })
+    if (!run_id) {
+      return NextResponse.json({ error: 'run_id required' }, { status: 400 })
     }
 
     const sb = createClient(SB_URL, SB_KEY)
@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
       ? `Exclude from results: ${excluded_companies.join(', ')}. `
       : ''
     const origInstructions = orig.special_instructions ? `Previous instructions: ${orig.special_instructions}. ` : ''
-    const round2Instructions = `${origInstructions}${excludeClause}Round 2 feedback: ${feedback_text.trim()}`
+    const feedbackClause = feedback_text?.trim() ? `Round 2 feedback: ${feedback_text.trim()}` : ''
+    const round2Instructions = `${origInstructions}${excludeClause}${feedbackClause}`.trim() || null
 
     // Determine round number from existing slug
     const slugBase = orig.slug.replace(/-r\d+$/, '')  // strip existing -r2, -r3 suffix
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
     const { data: newRun, error: insertErr } = await sb
       .from('herb_runs')
       .insert({
+        user_id: orig.user_id,
         theme: orig.theme,
         geography: orig.geography,
         stage: orig.stage,
@@ -51,6 +53,8 @@ export async function POST(req: NextRequest) {
         attachments: attachments ?? null,
         slug: newSlug,
         status: 'PENDING',
+        current_round: nextRound,
+        created_at: new Date().toISOString(),
       })
       .select('id, slug')
       .single()
