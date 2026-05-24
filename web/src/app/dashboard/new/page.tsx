@@ -53,12 +53,7 @@ export default function NewMandatePage() {
       const { data: { publicUrl } } = supabase.storage.from('herb-uploads').getPublicUrl(path)
       added.push({ name: f.name, size: f.size, url: publicUrl, path, fileType: slotType })
     }
-    // For slot uploads: replace any previous file of that slot type
-    if (slotType) {
-      setFiles(p => [...p.filter(f => f.fileType !== slotType), ...added])
-    } else {
-      setFiles(p => [...p, ...added])
-    }
+    setFiles(p => [...p, ...added])
     if (slotType) setUploadingSlot(null); else setUploading(false)
     if (fileRef.current) fileRef.current.value = ''
   }, [router])
@@ -133,37 +128,43 @@ export default function NewMandatePage() {
             {/* Labeled data file slots */}
             <div className="px-4 pb-3 pt-1 grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               {FILE_SLOTS.map(slot => {
-                const uploaded = files.find(f => f.fileType === slot.key)
+                const slotFiles = files.filter(f => f.fileType === slot.key)
                 const isUp = uploadingSlot === slot.key
                 return (
-                  <div key={slot.key}>
+                  <div key={slot.key} className="flex flex-col gap-1">
                     <input
                       id={`new-file-${slot.key}`}
-                      type="file" accept=".xlsx,.xls,.csv"
+                      type="file" accept=".xlsx,.xls,.csv" multiple
                       style={{ display: 'none' }}
                       onChange={e => { const f = e.target.files; if (f) upload(f, slot.key); e.target.value = '' }}
                     />
-                    {uploaded ? (
-                      <div className="flex items-center gap-1.5 text-xs px-2.5 py-2 rounded-xl"
+                    {slotFiles.map(sf => (
+                      <div key={sf.path} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl"
                         style={{ background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>
-                        <span>{slot.icon}</span>
-                        <span className="truncate flex-1 font-medium" title={uploaded.name}>{uploaded.name}</span>
-                        <button onClick={() => remove(uploaded.path)} style={{ opacity: 0.6 }}>×</button>
+                        <span className="flex-shrink-0">{slot.icon}</span>
+                        <span className="truncate flex-1 font-medium" title={sf.name}>{sf.name}</span>
+                        <button onClick={() => remove(sf.path)} style={{ opacity: 0.6 }}>×</button>
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => (document.getElementById(`new-file-${slot.key}`) as HTMLInputElement | null)?.click()}
-                        disabled={isUp || submitting}
-                        className="w-full flex flex-col items-center gap-0.5 px-2 py-2.5 rounded-xl text-xs transition-all"
-                        style={{ background: 'var(--bg)', border: '1px dashed var(--border)', color: 'var(--subtle)', cursor: 'pointer' }}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--teal)'}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
-                        <span className="text-base">{isUp ? '⏳' : slot.icon}</span>
-                        <span className="font-medium" style={{ color: 'var(--muted)' }}>{slot.label}</span>
-                        <span style={{ fontSize: '10px' }}>{slot.hint}</span>
-                      </button>
-                    )}
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => (document.getElementById(`new-file-${slot.key}`) as HTMLInputElement | null)?.click()}
+                      disabled={isUp || submitting}
+                      className="w-full flex flex-col items-center gap-0.5 px-2 rounded-xl text-xs transition-all"
+                      style={{
+                        background: 'var(--bg)', border: '1px dashed var(--border)',
+                        color: 'var(--subtle)', cursor: 'pointer',
+                        paddingTop: slotFiles.length > 0 ? '5px' : '10px',
+                        paddingBottom: slotFiles.length > 0 ? '5px' : '10px',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--teal)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                      <span className="text-base">{isUp ? '⏳' : slot.icon}</span>
+                      <span className="font-medium" style={{ color: 'var(--muted)' }}>
+                        {slotFiles.length > 0 ? '+ add more' : slot.label}
+                      </span>
+                      {slotFiles.length === 0 && <span style={{ fontSize: '10px' }}>{slot.hint}</span>}
+                    </button>
                   </div>
                 )
               })}

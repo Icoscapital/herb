@@ -170,21 +170,21 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     })
   }
 
-  const uploadFile = useCallback(async (slotKey: string, file: File) => {
+  const uploadFiles = useCallback(async (slotKey: string, fileList: FileList) => {
+    if (!fileList.length) return
     setUploadingSlot(slotKey)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const path = `mandates/${session.user.id}/${Date.now()}-${slotKey}-${safe}`
-      const { error: e } = await supabase.storage.from('herb-uploads').upload(path, file)
-      if (!e) {
-        const { data: { publicUrl } } = supabase.storage.from('herb-uploads').getPublicUrl(path)
-        const slotType = slotKey as FileSlot['type']
-        setUploadedFiles(prev => [
-          ...prev.filter(f => f.type !== slotType),
-          { type: slotType, name: file.name, url: publicUrl, path, size: file.size },
-        ])
+      const slotType = slotKey as FileSlot['type']
+      for (const file of Array.from(fileList)) {
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+        const path = `mandates/${session.user.id}/${Date.now()}-${slotKey}-${safe}`
+        const { error: e } = await supabase.storage.from('herb-uploads').upload(path, file)
+        if (!e) {
+          const { data: { publicUrl } } = supabase.storage.from('herb-uploads').getPublicUrl(path)
+          setUploadedFiles(prev => [...prev, { type: slotType, name: file.name, url: publicUrl, path, size: file.size }])
+        }
       }
     } finally {
       setUploadingSlot(null)
@@ -513,53 +513,61 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
             <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               {FILE_SLOTS.map(slot => {
                 const inputId = `r2-file-${slot.key}`
-                const uploaded = uploadedFiles.find(f => f.type === slot.key)
+                const slotFiles = uploadedFiles.filter(f => f.type === slot.key)
                 const isUploading = uploadingSlot === slot.key
                 return (
-                  <div key={slot.key}>
+                  <div key={slot.key} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <input
                       id={inputId}
                       type="file"
                       accept=".xlsx,.xls,.csv"
+                      multiple
                       style={{ display: 'none' }}
                       onChange={e => {
-                        const f = e.target.files?.[0]
-                        if (f) uploadFile(slot.key, f)
+                        const f = e.target.files
+                        if (f && f.length > 0) uploadFiles(slot.key, f)
                         e.target.value = ''
                       }}
                     />
-                    {uploaded ? (
-                      <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl"
-                        style={{ background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>
+                    {slotFiles.map(sf => (
+                      <div key={sf.path} style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        fontSize: '12px', padding: '6px 10px', borderRadius: '10px',
+                        background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)',
+                      }}>
                         <span style={{ flexShrink: 0 }}>{slot.icon}</span>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, fontWeight: 500 }}
-                          title={uploaded.name}>{uploaded.name}</span>
-                        <button onClick={() => removeFile(uploaded)}
+                          title={sf.name}>{sf.name}</span>
+                        <button onClick={() => removeFile(sf)}
                           style={{ color: 'var(--teal)', opacity: 0.7, flexShrink: 0, lineHeight: 1 }}>×</button>
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={isUploading}
-                        onClick={() => {
-                          const el = document.getElementById(inputId) as HTMLInputElement | null
-                          el?.click()
-                        }}
-                        style={{
-                          width: '100%', display: 'flex', flexDirection: 'column',
-                          alignItems: 'center', gap: '3px', padding: '10px 8px',
-                          borderRadius: '12px', fontSize: '12px', cursor: 'pointer',
-                          background: 'var(--bg)', border: '1px dashed var(--border)',
-                          color: 'var(--subtle)', transition: 'border-color 0.15s',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--teal)')}
-                        onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-                      >
-                        <span style={{ fontSize: '16px' }}>{isUploading ? '⏳' : slot.icon}</span>
-                        <span style={{ fontWeight: 500, color: 'var(--muted)' }}>{slot.label}</span>
+                    ))}
+                    <button
+                      type="button"
+                      disabled={isUploading}
+                      onClick={() => {
+                        const el = document.getElementById(inputId) as HTMLInputElement | null
+                        el?.click()
+                      }}
+                      style={{
+                        width: '100%', display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', gap: '3px',
+                        padding: slotFiles.length > 0 ? '6px 8px' : '10px 8px',
+                        borderRadius: '12px', fontSize: '12px', cursor: 'pointer',
+                        background: 'var(--bg)', border: '1px dashed var(--border)',
+                        color: 'var(--subtle)', transition: 'border-color 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--teal)')}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                    >
+                      <span style={{ fontSize: '16px' }}>{isUploading ? '⏳' : slot.icon}</span>
+                      <span style={{ fontWeight: 500, color: 'var(--muted)' }}>
+                        {slotFiles.length > 0 ? '+ add more' : slot.label}
+                      </span>
+                      {slotFiles.length === 0 && (
                         <span style={{ fontSize: '10px', color: 'var(--subtle)', textAlign: 'center' }}>{slot.hint}</span>
-                      </button>
-                    )}
+                      )}
+                    </button>
                   </div>
                 )
               })}
