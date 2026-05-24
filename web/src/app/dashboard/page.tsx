@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -67,6 +67,10 @@ export default function LogPage() {
   const [downloading, setDownloading] = useState<string | null>(null)
   const [triggering, setTriggering] = useState<string | null>(null)
   const [triggerMsg, setTriggerMsg] = useState<{ id: string; text: string; ok: boolean } | null>(null)
+  const [editingRun, setEditingRun] = useState<string | null>(null)  // run_id being edited inline
+  const [editText, setEditText] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  const editRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
 
   const load = useCallback(async () => {
@@ -85,6 +89,46 @@ export default function LogPage() {
       load().then(() => setLoading(false))
     })
   }, [router, load])
+
+  const openInlineEdit = (run: Run) => {
+    const txt = [run.theme, run.special_instructions].filter(Boolean).join('
+')
+    setEditText(txt)
+    setEditingRun(run.id)
+    setTimeout(() => {
+      if (editRef.current) {
+        editRef.current.focus()
+        editRef.current.style.height = 'auto'
+        editRef.current.style.height = Math.min(editRef.current.scrollHeight, 200) + 'px'
+      }
+    }, 50)
+  }
+
+  const saveAndRun = useCallback(async (runId: string) => {
+    if (!editText.trim()) return
+    setEditSaving(true)
+    const lines = editText.trim().split('
+')
+    const theme = lines[0].trim()
+    const special_instructions = lines.slice(1).join('
+').trim() || null
+    try {
+      const { error } = await supabase.from('herb_runs').update({ theme, special_instructions }).eq('id', runId)
+      if (error) { alert('Could not save: ' + error.message); return }
+      setRuns(prev => prev.map(r => r.id === runId ? { ...r, theme, special_instructions } : r))
+      setEditingRun(null)
+      // trigger immediately
+      setTriggering(runId)
+      try {
+        const res = await fetch('/api/run-mandate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ run_id: runId }) })
+        const json = await res.json()
+        setTriggerMsg({ id: runId, text: json.message || (json.ok ? 'Search started' : 'Queued'), ok: true })
+        setTimeout(load, 2000)
+      } finally { setTriggering(null) }
+    } finally {
+      setEditSaving(false)
+    }
+  }, [editText])
 
   const triggerRun = useCallback(async (runId: string) => {
     setTriggering(runId)
@@ -317,29 +361,38 @@ export default function LogPage() {
                     )}
                   </span>
 
-                  {/* Actions: Run (PENDING) or Download (done) */}
+                  {/* Actions: Run + Edit (PENDING) or Download (done) */}
                   <span className="flex justify-end items-center gap-1">
                     {run.status === 'PENDING' && (
-                      <button
-                        onClick={async e => {
-                          e.preventDefault(); e.stopPropagation()
-                          triggerRun(run.id)
-                        }}
-                        disabled={triggering === run.id}
-                        title="Run now (don't wait for hourly tick)"
-                        className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all"
-                        style={{
-                          background: triggering === run.id ? 'var(--teal-light)' : 'var(--teal)',
-                          color: triggering === run.id ? 'var(--teal)' : '#fff',
-                          opacity: triggering === run.id ? 0.7 : 1,
-                          minWidth: '52px',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        {triggering === run.id
-                          ? <div className="loading-spinner" style={{ width: '10px', height: '10px', borderTopColor: 'var(--teal)' }} />
-                          : '▶ Run'}
-                      </button>
+                      <>
+                        <button
+                          onClick={e => { e.preventDefault(); e.stopPropagation(); if (editingRun === run.id) setEditingRun(null); else openInlineEdit(run) }}
+                          title="Edit search text before running"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-all"
+                          style={{ color: editingRun === run.id ? 'var(--teal)' : 'var(--subtle)', background: editingRun === run.id ? 'var(--teal-light)' : 'transparent' }}
+                        >✎</button>
+                        <button
+                          onClick={async e => {
+                            e.preventDefault(); e.stopPropagation()
+                            if (editingRun === run.id) saveAndRun(run.id)
+                            else triggerRun(run.id)
+                          }}
+                          disabled={triggering === run.id || editSaving}
+                          title={editingRun === run.id ? 'Save changes and run' : 'Run now'}
+                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all"
+                          style={{
+                            background: triggering === run.id ? 'var(--teal-light)' : 'var(--teal)',
+                            color: triggering === run.id ? 'var(--teal)' : '#fff',
+                            opacity: triggering === run.id ? 0.7 : 1,
+                            minWidth: '52px',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {triggering === run.id || editSaving
+                            ? <div className="loading-spinner" style={{ width: '10px', height: '10px', borderTopColor: 'var(--teal)' }} />
+                            : editingRun === run.id ? '▶ Save & run' : '▶ Run'}
+                        </button>
+                      </>
                     )}
                     {done && (
                       <button
@@ -362,6 +415,24 @@ export default function LogPage() {
                 </div>
               )
 
+              const editOpen = editingRun === run.id
+              const editPanel = editOpen && (
+                <div style={{ borderTop: '1px solid var(--border)', padding: '12px 16px', background: 'var(--bg)' }}>
+                  <textarea
+                    ref={editRef}
+                    value={editText}
+                    onChange={e => { setEditText(e.target.value); const el = e.target; el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 200) + 'px' }}
+                    onClick={e => e.preventDefault()}
+                    className="w-full text-sm resize-none outline-none rounded-xl px-3 py-2.5"
+                    style={{ minHeight: '72px', background: 'var(--surface)', border: '1.5px solid var(--teal)', color: 'var(--text)', fontFamily: 'inherit', caretColor: 'var(--teal)' }}
+                    placeholder="Describe what you're looking for…"
+                  />
+                  <p className="text-xs mt-1.5" style={{ color: 'var(--subtle)' }}>
+                    First line = search title · extra lines = special instructions
+                  </p>
+                </div>
+              )
+
               return done
                 ? <Link key={run.id} href={`/dashboard/mandates/${run.id}`} className="block"
                     style={{ display: 'block' }}
@@ -369,7 +440,7 @@ export default function LogPage() {
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                     {row}
                   </Link>
-                : <div key={run.id}>{row}</div>
+                : <div key={run.id}>{row}{editPanel}</div>
             })}
           </div>
         )}
