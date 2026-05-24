@@ -60,7 +60,10 @@ Pass `additional_companies` as pre-seeded candidates into Phase 2 (merge before 
 
 ## STEP 3 — Phase 2 search
 
-Read `references/search-playbook.md` for source list and query patterns. Read `references/field-spec.md` for the Level 1 column schema.
+**Read each reference file ONCE at the start of this step and rely on memory afterward — do NOT re-read.** Each re-read costs ~2k tokens.
+
+- `references/search-playbook.md` — source list and query patterns
+- `references/field-spec.md` — Level 1 column schema
 
 | Phase 2 parameter | Value |
 |---|---|
@@ -73,9 +76,14 @@ Read `references/search-playbook.md` for source list and query patterns. Read `r
 **DEEP mode (default):** sources 1–10 + VC Roster expanded (`references/vc-roster.xlsx` "VCs (deep)" sheet) + attachment files.
 **STANDARD mode:** sources 1–5 + VC Roster focused ("VCs" sheet) + attachment files.
 
-Spawn one sub-agent per source via the Task tool (`subagent_type=general-purpose`, model=`haiku`). Each sub-agent's prompt MUST end with:
+Spawn one sub-agent per source via the Task tool (`subagent_type=general-purpose`, model=`haiku`). Use this **compact template** for every sub-agent's prompt — only `{source_name}` and `{query_pattern}` change between sources:
 
-> Return a pipe-delimited table only. One row per company. Columns: Company | Domain | HQ Country | Stage | Raised | Last Round | Investors | Tech (1 line) | Sectors served | Source URL | Why Now. Empty cell = Unknown. No prose, no headers, no preamble. If you find nothing, return exactly: `[source name] | no results`.
+```
+Search {source_name} for companies matching: theme={theme}, geography={geography}, stage={stage}. {query_pattern}
+OUTPUT FORMAT (strict): pipe-delimited table, one row per company. Columns: Company|Domain|HQ Country|Stage|Raised|Last Round|Investors|Tech (1 line)|Sectors served|Source URL|Why Now. Empty cell = Unknown. No prose, no headers, no preamble. If no results: "{source_name} | no results".
+```
+
+Keep each sub-agent prompt under 200 tokens. Do not paste the full mandate text into sub-agents — they only need theme/geography/stage.
 
 Collect all rows. Then:
 
@@ -84,6 +92,8 @@ Collect all rows. Then:
 3. **Pipedrive cross-check**: for each unique company, call `PipedriveClient.search_organizations(name)` in batches of 5. Extract only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open deal — [stage] / Won / Lost — [date].
 4. **Pre-screen** (per `field-spec.md`): tag Pass/Fail. Companies tagged Open/Won/Lost stay on the list but are NOT eligible for icos-fit-eval.
 5. **Icos Fit eval** on Pass rows only (per `references/field-spec.md` Level 2 columns).
+
+> **Token discipline (important):** After dedup in step 2 completes, work only with the deduplicated list for steps 3–5 and onward. Do NOT reference, re-list, or re-paste the raw pipe-delimited tables from individual sub-agents anywhere later in the conversation. If you need to recheck a row, look it up in the dedup output. Saves ~20-30k tokens that would otherwise persist for the rest of the run.
 
 Call `update_progress(m['id'], <message>)` at each checkpoint so the dashboard stays live.
 

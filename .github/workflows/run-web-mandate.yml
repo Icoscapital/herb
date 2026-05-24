@@ -56,6 +56,6 @@ jobs:
           # in STEP 0.5 and takes the web fast-path natively (no system-prompt
           # override needed — overrides like that trip prompt-injection detection).
           claude -p "$(cat web_mandate_prompt.md)" \
-            --allowedTools Bash,Read,Write,Glob,Grep,Task \
+            --allowedTools Bash,Read,Write,Task \
             --model claude-sonnet-4-6 \
             --max-turns 120
