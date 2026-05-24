@@ -350,7 +350,12 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   {/* Company */}
-                  <div className="flex items-center gap-2.5 min-w-0 py-2">
+                  <div
+                    className="flex items-center gap-2.5 min-w-0 py-2"
+                    style={{ cursor: co.website ? 'pointer' : 'default' }}
+                    onClick={() => co.website && window.open(co.website, '_blank', 'noopener,noreferrer')}
+                    title={co.website ?? undefined}
+                  >
                     {/* Avatar */}
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
                       style={{ background: av.bg, color: av.fg, letterSpacing: '0.02em' }}>
@@ -358,14 +363,12 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>
+                        <span className="text-sm font-semibold truncate"
+                          style={{ color: 'var(--text)', textDecoration: co.website ? 'underline' : 'none', textDecorationColor: 'var(--border)', textUnderlineOffset: '3px' }}>
                           {co.name}
                         </span>
                         {co.website && (
-                          <a href={co.website} target="_blank" rel="noopener noreferrer"
-                            className="flex-shrink-0 text-xs"
-                            style={{ color: 'var(--subtle)' }}
-                            title={co.website}>↗</a>
+                          <span className="flex-shrink-0 text-xs" style={{ color: 'var(--subtle)' }}>↗</span>
                         )}
                       </div>
                       {co.description && (
