@@ -1,0 +1,159 @@
+[
+  {
+    "name": "Asperitas",
+    "hq_country": "Netherlands",
+    "source": "Crunchbase"
+  },
+  {
+    "name": "Immers Cloud",
+    "hq_country": "Europe",
+    "source": "Crunchbase"
+  },
+  {
+    "name": "Iceotope",
+    "hq_country": "UK",
+    "domain": "iceotope.com",
+    "stage": "Series B",
+    "raised": "$26M",
+    "last_round": "2025",
+    "investors": "Two Seas Capital, Barclays Climate Ventures",
+    "source": "Crunchbase, LinkedIn"
+  },
+  {
+    "name": "MegaCool Technologies",
+    "hq_country": "Belgium",
+    "source": "Crunchbase"
+  },
+  {
+    "name": "Accelsius",
+    "hq_country": "Unknown",
+    "source": "Crunchbase"
+  },
+  {
+    "name": "LiquidStack",
+    "hq_country": "Unknown",
+    "source": "Crunchbase"
+  },
+  {
+    "name": "JETCOOL Technologies",
+    "hq_country": "Unknown",
+    "source": "Crunchbase"
+  },
+  {
+    "name": "LiquidCool Solutions",
+    "hq_country": "Unknown",
+    "source": "Crunchbase"
+  },
+  {
+    "name": "Corintis",
+    "domain": "corintis.ch",
+    "hq_country": "Switzerland",
+    "stage": "Series A",
+    "raised": "\u20ac20M",
+    "last_round": "2025",
+    "source": "X/Twitter"
+  },
+  {
+    "name": "DCX Liquid Cooling",
+    "domain": "dcxliquidcool.com",
+    "hq_country": "Germany",
+    "source": "X/Twitter, LinkedIn, Broad search"
+  },
+  {
+    "name": "Immersion4",
+    "hq_country": "UK",
+    "source": "LinkedIn"
+  },
+  {
+    "name": "Chilldyne",
+    "hq_country": "Austria",
+    "source": "LinkedIn"
+  },
+  {
+    "name": "Heatflow ApS",
+    "hq_country": "Denmark",
+    "source": "LinkedIn"
+  },
+  {
+    "name": "Thermosphr",
+    "hq_country": "Germany",
+    "source": "LinkedIn"
+  },
+  {
+    "name": "PeaSoup.Cloud",
+    "hq_country": "UK",
+    "source": "LinkedIn"
+  },
+  {
+    "name": "Incooling",
+    "hq_country": "Netherlands",
+    "source": "Conferences"
+  },
+  {
+    "name": "Apheros",
+    "domain": "apheros.io",
+    "hq_country": "Switzerland",
+    "stage": "Pre-Seed",
+    "raised": "\u20ac1.65M",
+    "last_round": "2024",
+    "investors": "Founderful",
+    "source": "Startup news"
+  },
+  {
+    "name": "Submer",
+    "domain": "submer.tech",
+    "hq_country": "Spain",
+    "stage": "Growth",
+    "raised": "$55.5M",
+    "last_round": "2024",
+    "investors": "M&G",
+    "source": "Startup news"
+  },
+  {
+    "name": "AI Green Bytes",
+    "domain": "aigreenby.no",
+    "hq_country": "Norway",
+    "source": "Broad search"
+  },
+  {
+    "name": "Nexalus",
+    "domain": "nexalus.ie",
+    "hq_country": "Ireland",
+    "stage": "Series A",
+    "raised": "$20M",
+    "last_round": "2023",
+    "investors": "Bosch Ventures",
+    "notes": "Acquired by Flex Nov 2024",
+    "source": "Broad search"
+  },
+  {
+    "name": "Midas Immersion Cooling",
+    "hq_country": "Europe",
+    "source": "Databases"
+  },
+  {
+    "name": "ZutaCore",
+    "domain": "zutacore.com",
+    "hq_country": "Poland",
+    "source": "Coolant manufacturers"
+  },
+  {
+    "name": "Oleon (Qloe)",
+    "domain": "oleon.com",
+    "hq_country": "Unknown",
+    "notes": "Plant-based coolant launched Nov 2024",
+    "source": "Coolant manufacturers"
+  },
+  {
+    "name": "Iceheart",
+    "hq_country": "Sweden",
+    "notes": "Founded 2022, PCM thermal storage",
+    "source": "Coolant manufacturers"
+  },
+  {
+    "name": "PCM Technology",
+    "domain": "pcmtechnology.eu",
+    "hq_country": "Unknown",
+    "source": "Coolant manufacturers"
+  }
+]
