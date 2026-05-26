@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
     if (fetchErr || !run) {
       return NextResponse.json({ error: 'Run not found' }, { status: 404 })
     }
-    if (run.status !== 'PENDING') {
-      return NextResponse.json({ error: `Run is ${run.status}, not PENDING` }, { status: 409 })
+    if (run.status !== 'PENDING' && run.status !== 'ERROR') {
+      return NextResponse.json({ error: `Run is ${run.status} — only PENDING or ERROR runs can be re-triggered` }, { status: 409 })
     }
 
     if (!GH_PAT) {

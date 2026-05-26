@@ -390,9 +390,9 @@ export default function LogPage() {
                     )}
                   </span>
 
-                  {/* Actions: Run + Edit (PENDING) or Download (done) */}
+                  {/* Actions: Run + Edit (PENDING / ERROR) or Download (done) */}
                   <span className="flex justify-end items-center gap-1">
-                    {run.status === 'PENDING' && (
+                    {(run.status === 'PENDING' || run.status === 'ERROR') && (
                       <>
                         <button
                           onClick={e => { e.preventDefault(); e.stopPropagation(); if (editingRun === run.id) setEditingRun(null); else openInlineEdit(run) }}
