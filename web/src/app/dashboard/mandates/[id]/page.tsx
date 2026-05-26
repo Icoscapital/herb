@@ -655,7 +655,11 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                   <div
                     className="flex items-center gap-2.5 min-w-0 py-2"
                     style={{ cursor: co.website ? 'pointer' : 'default' }}
-                    onClick={() => co.website && window.open(co.website, '_blank', 'noopener,noreferrer')}
+                    onClick={() => {
+                      if (!co.website) return
+                      const url = co.website.startsWith('http') ? co.website : `https://${co.website}`
+                      window.open(url, '_blank', 'noopener,noreferrer')
+                    }}
                     title={co.website ?? undefined}
                   >
                     {/* Avatar */}
