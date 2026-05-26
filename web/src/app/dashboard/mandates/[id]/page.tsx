@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import * as XLSX from 'xlsx'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -452,13 +453,11 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     setDownloading(true)
     const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'score', 'source', 'notes'] as const
     const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Score', 'Source', 'Notes']
-    const rows = companies.map(c => cols.map(k => `"${String(c[k] ?? '').replace(/"/g, '""')}"`).join(','))
-    const csv = '﻿' + [headers.join(','), ...rows].join('\n')
-    const a = Object.assign(document.createElement('a'), {
-      href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })),
-      download: `herb-${run.theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.csv`,
-    })
-    document.body.appendChild(a); a.click(); document.body.removeChild(a)
+    const rows = companies.map(c => cols.map(k => c[k] ?? ''))
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Longlist')
+    XLSX.writeFile(wb, `herb-${run.theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.xlsx`)
     setDownloading(false)
   }
 
@@ -490,7 +489,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
             style={{ background: 'var(--teal-light)', color: 'var(--teal)', border: '1px solid var(--teal)' }}>
             {downloading
               ? <><span className="loading-spinner" style={{ width: '13px', height: '13px' }} /> Downloading…</>
-              : <>↓ CSV ({companies.length})</>}
+              : <>↓ Excel ({companies.length})</>}
           </button>
         )}
       </header>

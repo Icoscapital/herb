@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import * as XLSX from 'xlsx'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -72,19 +73,17 @@ const STATUS_CFG: Record<string, { label: string; dotColor: string; textColor: s
   COMPLETED: { label: 'Completed',    dotColor: 'var(--teal)', textColor: 'var(--teal)', bgColor: 'var(--teal-light)', pulse: false },
 }
 
-async function downloadCSV(runId: string, theme: string) {
+async function downloadXLSX(runId: string, theme: string) {
   const { data } = await supabase
     .from('herb_longlist').select('*').eq('run_id', runId).order('score', { ascending: false })
   if (!data || data.length === 0) { alert('No results to download yet.'); return }
   const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'score', 'source', 'notes'] as const
   const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Score', 'Source', 'Notes']
-  const rows = data.map((c: any) => cols.map(k => `"${String(c[k] ?? '').replace(/"/g, '""')}"`).join(','))
-  const csv = '﻿' + [headers.join(','), ...rows].join('\n')
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })),
-    download: `herb-${theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.csv`,
-  })
-  document.body.appendChild(a); a.click(); document.body.removeChild(a)
+  const rows = data.map((c: any) => cols.map(k => c[k] ?? ''))
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Longlist')
+  XLSX.writeFile(wb, `herb-${theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.xlsx`)
 }
 
 export default function LogPage() {
@@ -428,7 +427,7 @@ export default function LogPage() {
                         onClick={async e => {
                           e.preventDefault(); e.stopPropagation()
                           setDownloading(run.id)
-                          await downloadCSV(run.id, run.theme)
+                          await downloadXLSX(run.id, run.theme)
                           setDownloading(null)
                         }}
                         title="Download CSV"
