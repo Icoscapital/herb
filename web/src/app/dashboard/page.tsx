@@ -109,7 +109,23 @@ export default function LogPage() {
   const [editingRun, setEditingRun] = useState<string | null>(null)  // run_id being edited inline
   const [editText, setEditText] = useState('')
   const [editSaving, setEditSaving] = useState(false)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const editRef = useRef<HTMLTextAreaElement>(null)
+
+  const toggleExpand = (id: string) => setExpandedRows(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
+
+  // Returns all earlier rounds for a given run (same slug base, lower round number)
+  const getPreviousRounds = (run: Run): Run[] => {
+    const base = slugBase(run.slug, run.id)
+    const thisRound = run.current_round ?? 1
+    return runs
+      .filter(r => r.id !== run.id && slugBase(r.slug, r.id) === base && (r.current_round ?? 1) < thisRound)
+      .sort((a, b) => (b.current_round ?? 1) - (a.current_round ?? 1))
+  }
   const router = useRouter()
 
   const load = useCallback(async () => {
@@ -315,7 +331,8 @@ export default function LogPage() {
 
             {/* Column headers */}
             <div className="grid px-5 py-2 text-xs font-medium uppercase tracking-wider"
-              style={{ gridTemplateColumns: '12px 1fr 130px 80px 130px 68px', color: 'var(--subtle)', borderBottom: '1px solid var(--border)', gap: '16px' }}>
+              style={{ gridTemplateColumns: '28px 12px 1fr 130px 80px 130px 68px', color: 'var(--subtle)', borderBottom: '1px solid var(--border)', gap: '12px' }}>
+              <span />
               <span />
               <span>Search</span>
               <span>Submitted by</span>
@@ -329,15 +346,35 @@ export default function LogPage() {
               const done = run.status === 'DONE' || run.status === 'EMAILED'
               const active = run.status === 'SEARCHING' || run.status === 'PENDING'
               const name = run.submitted_by_name ?? run.submitted_by_email?.split('@')[0] ?? '—'
+              const prevRounds = getPreviousRounds(run)
+              const hasPrev = prevRounds.length > 0
+              const isExpanded = expandedRows.has(run.id)
 
               const row = (
                 <div className="grid px-5 py-4 items-center transition-colors"
                   style={{
-                    gridTemplateColumns: '12px 1fr 130px 80px 130px 68px',
-                    gap: '16px',
-                    borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none',
+                    gridTemplateColumns: '28px 12px 1fr 130px 80px 130px 68px',
+                    gap: '12px',
                     cursor: done ? 'pointer' : 'default',
                   }}>
+
+                  {/* Expand chevron — only shown when previous rounds exist */}
+                  <span className="flex justify-center">
+                    {hasPrev ? (
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); toggleExpand(run.id) }}
+                        title={isExpanded ? 'Hide previous rounds' : `Show ${prevRounds.length} previous round${prevRounds.length > 1 ? 's' : ''}`}
+                        className="w-6 h-6 rounded-md flex items-center justify-center transition-all text-xs font-bold"
+                        style={{
+                          color: isExpanded ? 'var(--teal)' : 'var(--subtle)',
+                          background: isExpanded ? 'var(--teal-light)' : 'transparent',
+                          transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.15s, color 0.15s, background 0.15s',
+                        }}>
+                        ›
+                      </button>
+                    ) : <span />}
+                  </span>
 
                   {/* Status dot */}
                   <span className="flex justify-center">
@@ -473,14 +510,89 @@ export default function LogPage() {
                 </div>
               )
 
+              // Previous rounds sub-panel
+              const prevPanel = hasPrev && isExpanded && (
+                <div style={{ borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
+                  {prevRounds.map((pr, pi) => {
+                    const prDone = pr.status === 'DONE' || pr.status === 'EMAILED' || pr.status === 'COMPLETED'
+                    const prCfg = STATUS_CFG[pr.status] ?? STATUS_CFG.PENDING
+                    const inner = (
+                      <div className="grid items-center px-5 py-2.5"
+                        style={{
+                          gridTemplateColumns: '28px 12px 1fr 130px 80px 130px 68px',
+                          gap: '12px',
+                          borderBottom: pi < prevRounds.length - 1 ? '1px solid var(--border)' : 'none',
+                        }}>
+                        <span />
+                        <span className="flex justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: prCfg.dotColor }} />
+                        </span>
+                        <div className="min-w-0">
+                          <span className="text-xs font-medium" style={{ color: 'var(--muted)' }}>
+                            Round {pr.current_round ?? 1}
+                          </span>
+                          {pr.special_instructions && (
+                            <p className="text-xs truncate mt-0.5" style={{ color: 'var(--subtle)' }}
+                              title={pr.special_instructions}>
+                              {pr.special_instructions.slice(0, 60)}{pr.special_instructions.length > 60 ? '…' : ''}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs truncate" style={{ color: 'var(--subtle)' }}>
+                          {pr.submitted_by_name ?? pr.submitted_by_email?.split('@')[0] ?? '—'}
+                        </span>
+                        <span className="text-xs" style={{ color: 'var(--subtle)' }}>{timeAgo(pr.created_at)}</span>
+                        <span className="text-xs">
+                          {prDone ? (
+                            <span className="px-2 py-0.5 rounded-full"
+                              style={{ background: 'var(--teal-light)', color: 'var(--teal)' }}>
+                              {pr.result_count ?? '—'} companies
+                            </span>
+                          ) : pr.status === 'ERROR' ? (
+                            <span style={{ color: '#c0392b' }}>Failed</span>
+                          ) : (
+                            <span style={{ color: 'var(--subtle)' }}>{prCfg.label}</span>
+                          )}
+                        </span>
+                        <span />
+                      </div>
+                    )
+                    return prDone
+                      ? <Link key={pr.id} href={`/dashboard/mandates/${pr.id}`}
+                          className="block transition-colors"
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                          {inner}
+                        </Link>
+                      : <div key={pr.id}>{inner}</div>
+                  })}
+                </div>
+              )
+
+              const hasBorderBottom = i < filtered.length - 1 || isExpanded
+              const mainRowEl = (
+                <div style={{ borderBottom: hasBorderBottom ? '1px solid var(--border)' : 'none' }}>
+                  {row}
+                </div>
+              )
+
               return done
-                ? <Link key={run.id} href={`/dashboard/mandates/${run.id}`} className="block"
-                    style={{ display: 'block' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                    {row}
-                  </Link>
-                : <div key={run.id}>{row}{editPanel}</div>
+                ? <div key={run.id}>
+                    <Link href={`/dashboard/mandates/${run.id}`} className="block"
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                      {mainRowEl}
+                    </Link>
+                    {prevPanel}
+                    {!isExpanded && i < filtered.length - 1 && <div style={{ borderBottom: '1px solid var(--border)' }} />}
+                  </div>
+                : <div key={run.id}>
+                    <div style={{ borderBottom: (editOpen || isExpanded || i < filtered.length - 1) ? '1px solid var(--border)' : 'none' }}>
+                      {row}
+                    </div>
+                    {editPanel}
+                    {prevPanel}
+                  </div>
             })}
           </div>
         )}
