@@ -97,12 +97,16 @@ def update_progress(run_id: str, message: str) -> None:
 
 def store_results(run_id: str, companies: list) -> None:
     """
-    Bulk-insert company rows into herb_longlist.
+    Replace all herb_longlist rows for this run with the new results.
 
+    Deletes any existing rows first so re-runs don't produce duplicates.
     Each company dict should contain (all optional except name):
       name, description, website, linkedin, stage, geography,
       score (float 0-10), source, notes
     """
+    sb = _get_sb()
+    # Clear any results from a previous attempt (idempotent re-runs)
+    sb.table("herb_longlist").delete().eq("run_id", run_id).execute()
     if not companies:
         return
     rows = [
@@ -122,7 +126,7 @@ def store_results(run_id: str, companies: list) -> None:
         if c.get("name")
     ]
     if rows:
-        _get_sb().table("herb_longlist").insert(rows).execute()
+        sb.table("herb_longlist").insert(rows).execute()
 
 
 def mark_done(run_id: str, result_count: int, duration_seconds: int) -> None:
