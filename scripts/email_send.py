@@ -106,7 +106,8 @@ def send_email(to_address: str, subject: str, body_text: str,
             )
 
         resp.raise_for_status()
-        return resp.json()
+        # Graph sendMail returns 202 Accepted with an empty body — don't parse JSON
+        return resp.json() if resp.content else None
 
     # Use safe_api_call wrapper
     try:
