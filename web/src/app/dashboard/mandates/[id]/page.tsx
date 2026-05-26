@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import * as XLSX from 'xlsx'
+import * as XLSX from 'xlsx-js-style'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -453,8 +453,20 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     setDownloading(true)
     const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'score', 'source', 'notes'] as const
     const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Score', 'Source', 'Notes']
+    const colWidths = [25, 60, 35, 35, 14, 14, 8, 20, 60]
     const rows = companies.map(c => cols.map(k => c[k] ?? ''))
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    // Column widths
+    ws['!cols'] = colWidths.map(w => ({ wch: w }))
+    // Freeze top row
+    ws['!freeze'] = { xSplit: 0, ySplit: 1 }
+    // Auto-filter
+    ws['!autofilter'] = { ref: `A1:I1` }
+    // Bold + navy headers
+    for (let c = 0; c < headers.length; c++) {
+      const cell = XLSX.utils.encode_cell({ r: 0, c })
+      if (ws[cell]) ws[cell].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '1A2B4A' } } }
+    }
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Longlist')
     XLSX.writeFile(wb, `herb-${run.theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.xlsx`)
@@ -896,7 +908,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                 <div>
                   <p className="text-sm font-semibold" style={{ color: 'var(--teal)' }}>Search completed</p>
                   <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
-                    This search has been marked as complete. Download the final CSV above.
+                    This search has been marked as complete. Download the final Excel above.
                   </p>
                 </div>
               </div>

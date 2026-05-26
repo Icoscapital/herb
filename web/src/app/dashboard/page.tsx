@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import * as XLSX from 'xlsx'
+import * as XLSX from 'xlsx-js-style'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -79,8 +79,20 @@ async function downloadXLSX(runId: string, theme: string) {
   if (!data || data.length === 0) { alert('No results to download yet.'); return }
   const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'score', 'source', 'notes'] as const
   const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Score', 'Source', 'Notes']
+  const colWidths = [25, 60, 35, 35, 14, 14, 8, 20, 60]
   const rows = data.map((c: any) => cols.map(k => c[k] ?? ''))
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+  // Column widths
+  ws['!cols'] = colWidths.map(w => ({ wch: w }))
+  // Freeze top row
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 }
+  // Auto-filter on header row
+  ws['!autofilter'] = { ref: `A1:I1` }
+  // Bold headers
+  for (let c = 0; c < headers.length; c++) {
+    const cell = XLSX.utils.encode_cell({ r: 0, c })
+    if (ws[cell]) ws[cell].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '1A2B4A' } } }
+  }
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Longlist')
   XLSX.writeFile(wb, `herb-${theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.xlsx`)
@@ -430,7 +442,7 @@ export default function LogPage() {
                           await downloadXLSX(run.id, run.theme)
                           setDownloading(null)
                         }}
-                        title="Download CSV"
+                        title="Download Excel"
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-all font-medium"
                         style={{ color: 'var(--teal)', background: downloading === run.id ? 'var(--teal-light)' : 'transparent' }}
                       >
