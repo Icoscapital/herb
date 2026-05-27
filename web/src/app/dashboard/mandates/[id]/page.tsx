@@ -649,6 +649,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
               const tags = deriveTags(co)
               const av = avatarColor(co.name)
               const fit = co.score !== null ? Math.round(co.score * 10) : null
+              const url = validUrl(co.website)
               const pipedrive = co.notes?.match(/Pipedrive:\s*([^|]+)/)?.[1]?.trim() ?? 'New'
               const dealIdMatch = co.notes?.match(/Deal\s*#(\d+)/i)
               const pdDealId = dealIdMatch ? parseInt(dealIdMatch[1], 10) : null
@@ -680,41 +681,36 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                       style={{ background: av.bg, color: av.fg, letterSpacing: '0.02em' }}>
                       {initials(co.name)}
                     </div>
-                    {(() => {
-                      const url = validUrl(co.website)
-                      return (
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          {url ? (
-                            <a
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={e => e.stopPropagation()}
-                              className="text-sm font-semibold truncate"
-                              style={{ color: 'var(--text)', textDecoration: 'underline', textDecorationColor: 'var(--border)', textUnderlineOffset: '3px' }}
-                              title={url}
-                            >
-                              {co.name}
-                            </a>
-                          ) : (
-                            <span className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>
-                              {co.name}
-                            </span>
-                          )}
-                          {url && (
-                            <span className="flex-shrink-0 text-xs" style={{ color: 'var(--subtle)' }}>↗</span>
-                          )}
-                        </div>
-                        {co.description && (
-                          <p className="text-xs truncate mt-0.5" style={{ color: 'var(--muted)' }}
-                            title={co.description}>
-                            {co.description.slice(0, 70)}{co.description.length > 70 ? '…' : ''}
-                          </p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        {url ? (
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="text-sm font-semibold truncate"
+                            style={{ color: 'var(--text)', textDecoration: 'underline', textDecorationColor: 'var(--border)', textUnderlineOffset: '3px' }}
+                            title={url}
+                          >
+                            {co.name}
+                          </a>
+                        ) : (
+                          <span className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>
+                            {co.name}
+                          </span>
+                        )}
+                        {url && (
+                          <span className="flex-shrink-0 text-xs" style={{ color: 'var(--subtle)' }}>↗</span>
                         )}
                       </div>
-                      )
-                    })()}
+                      {co.description && (
+                        <p className="text-xs truncate mt-0.5" style={{ color: 'var(--muted)' }}
+                          title={co.description}>
+                          {co.description.slice(0, 70)}{co.description.length > 70 ? '…' : ''}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Tags */}
