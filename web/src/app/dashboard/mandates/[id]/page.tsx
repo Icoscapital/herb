@@ -123,6 +123,17 @@ function fitColor(score: number | null): string {
   return '#999'
 }
 
+// Return a usable URL or null. Strips "Unknown", whitespace, junk values.
+function validUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const s = raw.trim()
+  if (!s || s.toLowerCase() === 'unknown' || s.toLowerCase() === 'n/a' || s === '-' || s === '—') return null
+  if (s.startsWith('http://') || s.startsWith('https://')) return s
+  // Looks like a bare domain (contains a dot, no spaces)
+  if (s.includes('.') && !s.includes(' ')) return `https://${s}`
+  return null
+}
+
 function timeAgo(iso: string) {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
   if (s < 60) return 'just now'
@@ -669,36 +680,41 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                       style={{ background: av.bg, color: av.fg, letterSpacing: '0.02em' }}>
                       {initials(co.name)}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        {co.website ? (
-                          <a
-                            href={co.website.startsWith('http') ? co.website : `https://${co.website}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            className="text-sm font-semibold truncate"
-                            style={{ color: 'var(--text)', textDecoration: 'underline', textDecorationColor: 'var(--border)', textUnderlineOffset: '3px' }}
-                            title={co.website}
-                          >
-                            {co.name}
-                          </a>
-                        ) : (
-                          <span className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>
-                            {co.name}
-                          </span>
-                        )}
-                        {co.website && (
-                          <span className="flex-shrink-0 text-xs" style={{ color: 'var(--subtle)' }}>↗</span>
+                    {(() => {
+                      const url = validUrl(co.website)
+                      return (
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          {url ? (
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="text-sm font-semibold truncate"
+                              style={{ color: 'var(--text)', textDecoration: 'underline', textDecorationColor: 'var(--border)', textUnderlineOffset: '3px' }}
+                              title={url}
+                            >
+                              {co.name}
+                            </a>
+                          ) : (
+                            <span className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>
+                              {co.name}
+                            </span>
+                          )}
+                          {url && (
+                            <span className="flex-shrink-0 text-xs" style={{ color: 'var(--subtle)' }}>↗</span>
+                          )}
+                        </div>
+                        {co.description && (
+                          <p className="text-xs truncate mt-0.5" style={{ color: 'var(--muted)' }}
+                            title={co.description}>
+                            {co.description.slice(0, 70)}{co.description.length > 70 ? '…' : ''}
+                          </p>
                         )}
                       </div>
-                      {co.description && (
-                        <p className="text-xs truncate mt-0.5" style={{ color: 'var(--muted)' }}
-                          title={co.description}>
-                          {co.description.slice(0, 70)}{co.description.length > 70 ? '…' : ''}
-                        </p>
-                      )}
-                    </div>
+                      )
+                    })()}
                   </div>
 
                   {/* Tags */}

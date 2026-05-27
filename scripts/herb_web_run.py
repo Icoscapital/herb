@@ -109,18 +109,25 @@ def store_results(run_id: str, companies: list) -> None:
     sb.table("herb_longlist").delete().eq("run_id", run_id).execute()
     if not companies:
         return
+    def _clean(val: str | None) -> str:
+        """Return empty string for None, 'Unknown', 'N/A', '-' placeholders."""
+        if not val:
+            return ""
+        s = str(val).strip()
+        return "" if s.lower() in ("unknown", "n/a", "-", "—", "none") else s
+
     rows = [
         {
             "run_id": run_id,
             "name": c.get("name", ""),
-            "description": c.get("description") or "",
-            "website": c.get("website") or "",
-            "linkedin": c.get("linkedin") or "",
-            "stage": c.get("stage") or "",
-            "geography": c.get("geography") or "",
+            "description": _clean(c.get("description")),
+            "website": _clean(c.get("website")),
+            "linkedin": _clean(c.get("linkedin")),
+            "stage": _clean(c.get("stage")),
+            "geography": _clean(c.get("geography")),
             "score": c.get("score"),
-            "source": c.get("source") or "",
-            "notes": c.get("notes") or "",
+            "source": _clean(c.get("source")),
+            "notes": _clean(c.get("notes")),
         }
         for c in companies
         if c.get("name")
