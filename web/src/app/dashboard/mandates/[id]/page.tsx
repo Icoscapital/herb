@@ -649,7 +649,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
               const tags = deriveTags(co)
               const av = avatarColor(co.name)
               const fit = co.score !== null ? Math.round(co.score * 10) : null
-              const url = validUrl(co.website)
+              const url = validUrl(co.website) ?? validUrl(co.linkedin)
               const pipedrive = co.notes?.match(/Pipedrive:\s*([^|]+)/)?.[1]?.trim() ?? 'New'
               const dealIdMatch = co.notes?.match(/Deal\s*#(\d+)/i)
               const pdDealId = dealIdMatch ? parseInt(dealIdMatch[1], 10) : null

@@ -27,7 +27,7 @@ Config: `subagent_type=general-purpose`, `model=haiku`. Sub-agent prompt templat
 ```
 Search {source} for: theme={theme}, geography={geography}, stage={stage}. {query}
 LIMITS: ≤5 WebSearch calls. On HTTP 429: sleep 30s, retry once; if still 429 output "{source} | rate-limited" and stop.
-OUTPUT (strict): pipe-delimited table. Cols: Company|Domain|HQ Country|Stage|Raised|Last Round|Investors|Tech|Sectors|URL|Why Now. "Unknown" for blanks. No prose, no headers. If none: "{source} | no results".
+OUTPUT (strict): pipe-delimited table. Cols: Company|Domain|HQ Country|Stage|Raised|Last Round|Investors|Tech|Sectors|URL|Why Now. Domain = company's own website (e.g. "acme.com"); derive it from the source page or a quick search — only write "Unknown" if genuinely unfindable. "Unknown" for other blanks. No prose, no headers. If none: "{source} | no results".
 ```
 
 Substitute only `{source}` and `{query}` per source — never paste the full mandate into a sub-agent.
