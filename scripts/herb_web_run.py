@@ -13,15 +13,18 @@ import os
 from datetime import datetime, timezone
 from supabase import create_client, Client
 
-# Credentials — env vars take precedence, hardcoded fallbacks ensure CCR works
-# even when shell exports don't propagate to Python subprocesses.
-_SB_URL = (os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
-           or "https://lwgypkokjqerkgcpqhnt.supabase.co")
-_SB_KEY = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-           or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3Z3lwa29ranFlcmtnY3BxaG50Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTU0NzkyNywiZXhwIjoyMDk1MTIzOTI3fQ.y9aBM8wYfoG4b_sd9-DQ7vioG0m_SNeeTIOMHU1v_co")
+# Credentials MUST come from env vars. No fallbacks — service-role keys
+# must never live in source. GitHub Actions exports these from repo secrets.
+_SB_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL") or os.environ.get("SB_URL")
+_SB_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SB_KEY")
 
 
 def _get_sb() -> Client:
+    if not _SB_URL or not _SB_KEY:
+        raise RuntimeError(
+            "Supabase credentials missing — set NEXT_PUBLIC_SUPABASE_URL "
+            "and SUPABASE_SERVICE_ROLE_KEY in the environment."
+        )
     return create_client(_SB_URL, _SB_KEY)
 
 
