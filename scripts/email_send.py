@@ -14,7 +14,9 @@ from scripts.error_handler import safe_api_call, validate_file_size, APIError
 
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 DEFAULT_MAILBOX = "herb@icoscapital.com"
-MAX_ATTACHMENT_SIZE_MB = 4.0  # Graph API limit
+# Graph API caps the *base64-encoded* attachment at 4MB. Base64 inflates raw
+# bytes by ~33%, so the raw-byte threshold has to be ~3MB to stay under it.
+MAX_ATTACHMENT_SIZE_MB = 3.0
 
 
 def _required(name: str) -> str:
@@ -56,9 +58,8 @@ def send_email(to_address: str, subject: str, body_text: str,
     - Retries on 401 (token expiry)
     - Raises APIError on fatal failures
     """
-    # Validate attachments
+    # Validate attachments — each one against the raw-byte threshold
     if attachments:
-        total_size = sum(att["content_bytes"].__sizeof__() for att in attachments)
         for att in attachments:
             validate_file_size(
                 att["content_bytes"],
@@ -67,52 +68,94 @@ def send_email(to_address: str, subject: str, body_text: str,
             )
 
     def _do_send():
-        token, mailbox = _get_token()
-        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        """Send the message with retry on 401 (token expiry) and 429/503/504
+        (transient backend issues). Honors Retry-After header for 429."""
+        # Up to 4 attempts: initial + 3 retries on transient failures
+        last_resp = None
+        for attempt in range(4):
+            try:
+                token, mailbox = _get_token()
+            except requests.RequestException as e:
+                # Couldn't fetch token — backoff and retry
+                if attempt == 3:
+                    raise APIError(f"Token fetch failed after 4 attempts: {e}")
+                time.sleep(2 ** attempt)
+                continue
 
-        message = {
-            "subject": subject,
-            "body": {"contentType": "Text", "content": body_text},
-            "toRecipients": [{"emailAddress": {"address": to_address}}],
-        }
-        if attachments:
-            message["attachments"] = [
-                {
-                    "@odata.type": "#microsoft.graph.fileAttachment",
-                    "name": att["filename"],
-                    "contentBytes": base64.b64encode(att["content_bytes"]).decode(),
-                }
-                for att in attachments
-            ]
-
-        resp = requests.post(
-            f"{GRAPH_BASE}/users/{mailbox}/sendMail",
-            headers=headers,
-            json={"message": message, "saveToSentItems": True},
-            timeout=60,
-        )
-
-        # 401 = token expired; get fresh token and retry
-        if resp.status_code == 401:
-            sys.stderr.write("Graph API 401 (token expired); retrying with fresh token\n")
-            time.sleep(1)
-            token, mailbox = _get_token()
             headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-            resp = requests.post(
-                f"{GRAPH_BASE}/users/{mailbox}/sendMail",
-                headers=headers,
-                json={"message": message, "saveToSentItems": True},
-                timeout=60,
-            )
+            message = {
+                "subject": subject,
+                "body": {"contentType": "Text", "content": body_text},
+                "toRecipients": [{"emailAddress": {"address": to_address}}],
+            }
+            if attachments:
+                message["attachments"] = [
+                    {
+                        "@odata.type": "#microsoft.graph.fileAttachment",
+                        "name": att["filename"],
+                        "contentBytes": base64.b64encode(att["content_bytes"]).decode(),
+                    }
+                    for att in attachments
+                ]
 
-        resp.raise_for_status()
-        # Graph sendMail returns 202 Accepted with an empty body — don't parse JSON
-        return resp.json() if resp.content else None
+            try:
+                resp = requests.post(
+                    f"{GRAPH_BASE}/users/{mailbox}/sendMail",
+                    headers=headers,
+                    json={"message": message, "saveToSentItems": True},
+                    timeout=60,
+                )
+            except requests.RequestException as e:
+                # Network error — retry with backoff
+                if attempt == 3:
+                    raise APIError(f"Graph sendMail network error after 4 attempts: {e}")
+                sleep_for = 2 ** attempt
+                sys.stderr.write(f"Graph sendMail network error (attempt {attempt + 1}/4): {e}; retry in {sleep_for}s\n")
+                time.sleep(sleep_for)
+                continue
 
-    # Use safe_api_call wrapper
+            last_resp = resp
+
+            # 2xx = success (sendMail returns 202 with empty body)
+            if 200 <= resp.status_code < 300:
+                return resp.json() if resp.content else None
+
+            # 401 = token expired; fetch a fresh token and retry
+            if resp.status_code == 401:
+                if attempt < 3:
+                    sys.stderr.write(f"Graph API 401 (token expired, attempt {attempt + 1}/4); retrying with fresh token\n")
+                    time.sleep(1)
+                    continue
+
+            # 429 = rate limited; honor Retry-After then retry
+            if resp.status_code == 429:
+                retry_after = int(resp.headers.get("Retry-After", "5"))
+                # Cap at 60s — anything longer means we should fail the run
+                retry_after = min(retry_after, 60)
+                if attempt < 3:
+                    sys.stderr.write(f"Graph API 429 (rate limited, attempt {attempt + 1}/4); sleeping {retry_after}s\n")
+                    time.sleep(retry_after)
+                    continue
+
+            # 503 / 504 = transient backend issue; exponential backoff
+            if resp.status_code in (502, 503, 504):
+                if attempt < 3:
+                    sleep_for = 2 ** attempt
+                    sys.stderr.write(f"Graph API {resp.status_code} (transient, attempt {attempt + 1}/4); retry in {sleep_for}s\n")
+                    time.sleep(sleep_for)
+                    continue
+
+            # All other 4xx/5xx codes — don't retry
+            resp.raise_for_status()
+
+        # Out of retries
+        if last_resp is not None:
+            last_resp.raise_for_status()
+        raise APIError(f"Graph sendMail exhausted retries to {to_address}")
+
     try:
-        safe_api_call(_do_send, max_retries=1, log_prefix=f"send_email({to_address})")
-    except APIError as e:
+        return _do_send()
+    except (APIError, requests.HTTPError, requests.RequestException) as e:
         sys.stderr.write(f"ERROR: Failed to send email to {to_address}: {e}\n")
         raise
 

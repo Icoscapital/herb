@@ -35,6 +35,13 @@ jobs:
         run: |
           python -m scripts.git_state pull
 
+      - name: Reap stuck SEARCHING runs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python -m scripts.reap_stuck_runs
+
       - name: Check inbox and route emails
         env:
           GRAPH_TENANT_ID: ${{ secrets.GRAPH_TENANT_ID }}

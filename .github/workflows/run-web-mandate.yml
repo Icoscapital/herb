@@ -4,6 +4,13 @@ on:
   repository_dispatch:
     types: [run-web-mandate]
 
+# Prevent two concurrent workflows for the same run_id (e.g. user double-clicks
+# Run, or a stale ERROR is re-triggered while the previous job is still tearing
+# down). Different run_ids continue to run in parallel.
+concurrency:
+  group: herb-${{ github.event.client_payload.run_id }}
+  cancel-in-progress: false
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -52,10 +59,40 @@ jobs:
 
       - name: Run Herb mandate search
         run: |
-          # RUN_ID is exported as an env var above. routine_prompt.md detects it
-          # in STEP 0.5 and takes the web fast-path natively (no system-prompt
-          # override needed — overrides like that trip prompt-injection detection).
+          # RUN_ID is exported as an env var above. The prompt's STEP 1 reads
+          # it via start_run() and processes the single run end-to-end.
           claude -p "$(cat web_mandate_prompt.md)" \
             --allowedTools Bash,Read,Write,Task,WebSearch,WebFetch \
             --model claude-sonnet-4-5 \
             --max-turns 120
+
+      - name: Verify run reached terminal state
+        if: always()
+        run: |
+          # Belt-and-suspenders: even if Claude returned 0, fail the job if the
+          # row isn't in DONE/EMAILED. Catches "Claude exited silently without
+          # finalizing" — otherwise the dashboard sits forever and we don't notice.
+          python - <<'PY'
+          import os, sys
+          from supabase import create_client
+          sb = create_client(os.environ["NEXT_PUBLIC_SUPABASE_URL"],
+                             os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+          r = sb.table("herb_runs").select("status,error_message,progress").eq("id", os.environ["RUN_ID"]).single().execute()
+          status = r.data.get("status")
+          if status in ("DONE", "EMAILED"):
+              print(f"[verify] run completed successfully: status={status}")
+              sys.exit(0)
+          if status == "ERROR":
+              print(f"[verify] run errored: {r.data.get('error_message')}")
+              sys.exit(1)
+          # Still SEARCHING or PENDING when the job is exiting = Claude returned
+          # without finalizing. Flip to ERROR so the dashboard reflects reality.
+          msg = f"Worker exited without finalizing (status={status}, progress={r.data.get('progress')})"
+          print(f"[verify] {msg}")
+          sb.table("herb_runs").update({
+              "status": "ERROR",
+              "error_message": msg[:500],
+              "progress": "Failed: worker exited mid-run",
+          }).eq("id", os.environ["RUN_ID"]).execute()
+          sys.exit(1)
+          PY

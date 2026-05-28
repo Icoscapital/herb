@@ -24,6 +24,7 @@ from .herb_web_run import (
     store_results,
     update_progress,
     load_attachments,
+    _get_sb,  # for idempotency checks
 )
 from .email_send import send_email
 
@@ -64,11 +65,28 @@ def start_run() -> dict:
 
 
 def finish_run(ctx: dict, companies: list[dict]) -> None:
-    """Store results, mark DONE, email the submitter, mark EMAILED, commit."""
+    """Store results, mark DONE, email the submitter, mark EMAILED, commit.
+
+    Idempotent: if this run is already EMAILED (e.g. workflow was retried
+    after a partial success), we skip the email + commit and just refresh
+    the result count. The submitter doesn't get a second email.
+    """
     run_id = ctx["run_id"]
+
+    # Idempotency check — has this run already been emailed?
+    sb = _get_sb()
+    existing = sb.table("herb_runs").select("status").eq("id", run_id).single().execute()
+    already_emailed = (existing.data or {}).get("status") == "EMAILED"
+
     store_results(run_id, companies)
     duration = int(time.time() - ctx["t_start"])
     mark_done(run_id, len(companies), duration)
+
+    if already_emailed:
+        print(f"[run-web-mandate] run {run_id} was already EMAILED — skipping resend")
+        # Restore EMAILED status (mark_done flipped us back to DONE)
+        sb.table("herb_runs").update({"status": "EMAILED"}).eq("id", run_id).execute()
+        return
 
     first_name = (ctx["submitted_by_name"].split() or ["there"])[0]
     dashboard_url = f"https://herb-tau.vercel.app/dashboard/mandates/{run_id}"
@@ -83,8 +101,21 @@ def finish_run(ctx: dict, companies: list[dict]) -> None:
         "Best,\nHerb"
     )
     if ctx.get("submitted_by_email"):
-        send_email(ctx["submitted_by_email"], subject, body)
-        mark_emailed(run_id)
+        # Atomic transition: only send + mark EMAILED if status is still DONE.
+        # If a concurrent worker beat us to it, the update affects 0 rows and
+        # we skip the email.
+        claim = (
+            sb.table("herb_runs")
+            .update({"status": "EMAILING"})
+            .eq("id", run_id)
+            .eq("status", "DONE")
+            .execute()
+        )
+        if claim.data:
+            send_email(ctx["submitted_by_email"], subject, body)
+            mark_emailed(run_id)
+        else:
+            print(f"[run-web-mandate] concurrent worker already started email for {run_id} — skipping")
     else:
         print("[run-web-mandate] no submitter email — skipping send + EMAILED transition")
 
@@ -96,10 +127,22 @@ def finish_run(ctx: dict, companies: list[dict]) -> None:
 
 
 def fail_run(ctx: dict | None, exc: BaseException) -> None:
-    """Record an error against the run row before the workflow exits."""
+    """Record an error against the run row, then re-raise.
+
+    Re-raising is important: if Claude calls fail_run and then quietly exits
+    `claude -p` returns 0, the GitHub Actions job shows green, and any
+    alerting on failed workflows misses the failure. SystemExit(1) here
+    propagates a non-zero exit code up through the CLI to the runner.
+    """
+    import traceback
+    tb = traceback.format_exc()
     if ctx and ctx.get("run_id"):
         try:
-            mark_error(ctx["run_id"], str(exc))
+            # Store a useful summary (mark_error truncates to 500 chars)
+            mark_error(ctx["run_id"], f"{type(exc).__name__}: {exc}")
         except Exception as inner:
             print(f"[run-web-mandate] mark_error failed: {inner}")
-    print(f"[run-web-mandate] FAILED: {exc}")
+    print(f"[run-web-mandate] FAILED: {type(exc).__name__}: {exc}")
+    print(f"[run-web-mandate] traceback:\n{tb}")
+    # Force a non-zero exit so the GitHub Actions job is marked failed
+    raise SystemExit(1)

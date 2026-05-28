@@ -102,16 +102,22 @@ def store_results(run_id: str, companies: list) -> None:
     """
     Replace all herb_longlist rows for this run with the new results.
 
-    Deletes any existing rows first so re-runs don't produce duplicates.
+    Ordered so the dashboard never sees a zero-row gap during a re-run:
+      1. Snapshot the IDs of existing rows for this run
+      2. Insert the new rows (now the dashboard sees old + new briefly)
+      3. Delete the snapshotted old rows (dashboard now sees only new)
+
+    The brief duplicate window is a small cosmetic issue (rows ordered by
+    score so duplicates appear interleaved); the alternative — a moment of
+    zero rows after a DELETE before an INSERT — caused the dashboard to
+    flash "Results not yet available" mid-rerun.
+
     Each company dict should contain (all optional except name):
       name, description, website, linkedin, stage, geography,
       score (float 0-10), source, notes
     """
     sb = _get_sb()
-    # Clear any results from a previous attempt (idempotent re-runs)
-    sb.table("herb_longlist").delete().eq("run_id", run_id).execute()
-    if not companies:
-        return
+
     def _clean(val: str | None) -> str:
         """Return empty string for None, 'Unknown', 'N/A', '-' placeholders."""
         if not val:
@@ -135,8 +141,18 @@ def store_results(run_id: str, companies: list) -> None:
         for c in companies
         if c.get("name")
     ]
+
+    # 1. Snapshot existing row IDs (so we delete *only* what existed before)
+    existing = sb.table("herb_longlist").select("id").eq("run_id", run_id).execute()
+    existing_ids = [r["id"] for r in (existing.data or [])]
+
+    # 2. Insert the new rows first — dashboard never sees a zero-row gap
     if rows:
         sb.table("herb_longlist").insert(rows).execute()
+
+    # 3. Now delete the previously-existing rows (if any)
+    if existing_ids:
+        sb.table("herb_longlist").delete().in_("id", existing_ids).execute()
 
 
 def mark_done(run_id: str, result_count: int, duration_seconds: int) -> None:

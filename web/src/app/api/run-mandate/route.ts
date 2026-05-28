@@ -27,6 +27,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'GITHUB_PAT not configured' }, { status: 500 })
     }
 
+    // Atomic claim: only one concurrent dispatch can flip this row to SEARCHING.
+    // If a double-click sent two requests, the loser gets back { data: [], error: null }
+    // and we bail out with 409 rather than dispatching a duplicate workflow.
+    // Postgres handles the locking — the workflow's `concurrency` key is the safety net.
+    const { data: claimed, error: claimErr } = await sb
+      .from('herb_runs')
+      .update({
+        status: 'SEARCHING',
+        progress: 'Dispatched — GitHub Actions starting…',
+        last_heartbeat: new Date().toISOString(),
+      })
+      .eq('id', run_id)
+      .in('status', ['PENDING', 'ERROR'])
+      .select('id')
+
+    if (claimErr || !claimed || claimed.length === 0) {
+      // Another request just claimed it (or row vanished). Don't dispatch twice.
+      return NextResponse.json({
+        error: 'Run is already starting — concurrent dispatch prevented',
+      }, { status: 409 })
+    }
+
     // Trigger the GitHub Actions workflow via repository_dispatch
     const dispatchRes = await fetch(
       `https://api.github.com/repos/${GH_REPO}/dispatches`,
@@ -48,24 +70,20 @@ export async function POST(req: NextRequest) {
     if (!dispatchRes.ok) {
       const errBody = await dispatchRes.text()
       console.error('[run-mandate] GitHub dispatch failed:', dispatchRes.status, errBody)
+      // Roll back our SEARCHING claim so the user can retry
+      await sb
+        .from('herb_runs')
+        .update({
+          status: run.status,
+          progress: 'Dispatch failed — please retry',
+        })
+        .eq('id', run_id)
       return NextResponse.json({
         ok: false,
         queued: true,
         message: `Could not start immediately (${dispatchRes.status}), run will execute on next hourly tick.`,
       })
     }
-
-    // GitHub returns 204 No Content on success.
-    // Flip the run to SEARCHING immediately so the UI hides the Run button.
-    // The workflow will keep updating heartbeat/progress and set DONE when finished.
-    await sb
-      .from('herb_runs')
-      .update({
-        status: 'SEARCHING',
-        progress: 'Dispatched — GitHub Actions starting…',
-        last_heartbeat: new Date().toISOString(),
-      })
-      .eq('id', run_id)
 
     console.log('[run-mandate] GitHub dispatch succeeded for run_id:', run_id)
     return NextResponse.json({
