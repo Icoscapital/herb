@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireRunOwner, serviceClient } from '@/lib/api-auth'
 
-const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const GH_PAT = process.env.GITHUB_PAT!
 const GH_REPO = 'Icoscapital/herb'
 
@@ -13,17 +11,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'run_id required' }, { status: 400 })
     }
 
-    // Verify the run exists and is PENDING
-    const sb = createClient(SB_URL, SB_KEY)
-    const { data: run, error: fetchErr } = await sb
-      .from('herb_runs')
-      .select('id, status, theme')
-      .eq('id', run_id)
-      .single()
-
-    if (fetchErr || !run) {
-      return NextResponse.json({ error: 'Run not found' }, { status: 404 })
+    // Verify caller is authenticated AND owns this run
+    const owner = await requireRunOwner(req, run_id, 'id, status, theme, user_id')
+    if (!owner) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const { run } = owner
+    const sb = serviceClient()
+
     if (run.status !== 'PENDING' && run.status !== 'ERROR') {
       return NextResponse.json({ error: `Run is ${run.status} — only PENDING or ERROR runs can be re-triggered` }, { status: 409 })
     }

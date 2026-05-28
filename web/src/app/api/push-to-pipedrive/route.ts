@@ -20,10 +20,8 @@
  *  { ok: false, error: string }
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { requireUser, serviceClient } from '@/lib/api-auth'
 
-const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const PD_TOKEN = process.env.PIPEDRIVE_TOKEN!
 const PD_DOMAIN = process.env.PIPEDRIVE_DOMAIN || 'icoscapital'
 const PD_USER = parseInt(process.env.USER_PIPEDRIVE_ID || '5523', 10)
@@ -76,7 +74,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'PIPEDRIVE_TOKEN not configured' }, { status: 500 })
     }
 
-    const sb = createClient(SB_URL, SB_KEY)
+    // Auth: caller must be signed in and own the run this company belongs to
+    const userId = await requireUser(req)
+    if (!userId) {
+      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const sb = serviceClient()
 
     // 1. Fetch the company row
     const { data: co, error: fetchErr } = await sb
@@ -86,6 +90,17 @@ export async function POST(req: NextRequest) {
       .single()
     if (fetchErr || !co) {
       return NextResponse.json({ ok: false, error: 'company not found' }, { status: 404 })
+    }
+
+    // Verify the user owns the parent run
+    const { data: parentRun } = await sb
+      .from('herb_runs')
+      .select('user_id')
+      .eq('id', co.run_id)
+      .single()
+    if (parentRun?.user_id && parentRun.user_id !== userId) {
+      console.error(`[push-to-pipedrive] user ${userId} attempted push for company ${company_id} in run owned by ${parentRun.user_id}`)
+      return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 })
     }
 
     // 2. Search for existing org by name

@@ -10,8 +10,8 @@ const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function GET(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get('secret')
-  const expected = process.env.MIGRATE_SECRET ?? 'herb-migrate-2026'
-  if (secret !== expected) {
+  const expected = process.env.MIGRATE_SECRET
+  if (!expected || secret !== expected) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

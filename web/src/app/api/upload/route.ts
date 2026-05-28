@@ -3,49 +3,36 @@ import { createClient } from '@supabase/supabase-js'
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 function serviceClient() {
   return createClient(SB_URL, SB_SERVICE)
 }
 
-/** Decode JWT payload to get user ID — no API call, no env-var dependency. */
-function getUserIdFromJwt(token: string): string | null {
-  try {
-    // Handle both standard base64 and base64url encoding
-    const b64 = token.split('.')[1]
-      ?.replace(/-/g, '+')
-      .replace(/_/g, '/')
-    if (!b64) return null
-    // Pad to multiple of 4
-    const padded = b64 + '='.repeat((4 - b64.length % 4) % 4)
-    const payload = JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'))
-    if (payload.exp && payload.exp < Date.now() / 1000) {
-      console.error('[upload] JWT expired at', new Date(payload.exp * 1000).toISOString())
-      return null
-    }
-    return (payload.sub as string) ?? null
-  } catch (err) {
-    console.error('[upload] JWT decode error:', err)
-    return null
-  }
-}
-
-function verifyUser(req: NextRequest): string | null {
+/**
+ * Verify the bearer token against Supabase Auth (signature + expiry checked
+ * server-side) and return the authenticated user's id. Previously this route
+ * just base64-decoded the JWT payload — which any caller could forge.
+ */
+async function verifyUser(req: NextRequest): Promise<string | null> {
   const authHeader = req.headers.get('authorization')
   if (!authHeader) {
     console.error('[upload] Missing Authorization header')
     return null
   }
-  const token = authHeader.replace(/^Bearer\s+/i, '')
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim()
   if (!token) {
-    console.error('[upload] Empty token after Bearer prefix')
+    console.error('[upload] Empty bearer token')
     return null
   }
-  const userId = getUserIdFromJwt(token)
-  if (!userId) {
-    console.error('[upload] Could not extract user ID from token')
+  // Use the anon-key client to validate the user's JWT against Supabase.
+  const authClient = createClient(SB_URL, SB_ANON)
+  const { data, error } = await authClient.auth.getUser(token)
+  if (error || !data?.user) {
+    console.error('[upload] JWT validation failed:', error?.message ?? 'no user')
+    return null
   }
-  return userId
+  return data.user.id
 }
 
 /**
@@ -89,7 +76,7 @@ async function persistFileRecord(params: {
 //              runId (optional), isGlobal (optional, 'true'/'false')
 export async function POST(req: NextRequest) {
   try {
-    const userId = verifyUser(req)
+    const userId = await verifyUser(req)
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const form = await req.formData()
@@ -145,7 +132,7 @@ export async function POST(req: NextRequest) {
 // DELETE /api/upload  — remove a file by path, body: { path }
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = verifyUser(req)
+    const userId = await verifyUser(req)
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { path } = await req.json()

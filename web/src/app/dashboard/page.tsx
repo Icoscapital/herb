@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import * as XLSX from 'xlsx-js-style'
 import { supabase } from '@/lib/supabase'
+import { authedFetch } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -172,7 +173,7 @@ export default function LogPage() {
       // trigger immediately
       setTriggering(runId)
       try {
-        const res = await fetch('/api/run-mandate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ run_id: runId }) })
+        const res = await authedFetch('/api/run-mandate', { method: 'POST', body: JSON.stringify({ run_id: runId }) })
         const json = await res.json()
         setTriggerMsg({ id: runId, text: json.message || (json.ok ? 'Search started' : 'Queued'), ok: true })
         setTimeout(load, 2000)
@@ -186,9 +187,8 @@ export default function LogPage() {
     setTriggering(runId)
     setTriggerMsg(null)
     try {
-      const res = await fetch('/api/run-mandate', {
+      const res = await authedFetch('/api/run-mandate', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ run_id: runId }),
       })
       const json = await res.json()

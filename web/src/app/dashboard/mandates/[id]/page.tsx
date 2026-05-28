@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import * as XLSX from 'xlsx-js-style'
 import { supabase } from '@/lib/supabase'
+import { authedFetch } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -256,9 +257,8 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     setPushingPd(companyId)
     setPdToast(null)
     try {
-      const res = await fetch('/api/push-to-pipedrive', {
+      const res = await authedFetch('/api/push-to-pipedrive', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ company_id: companyId }),
       })
       const json = await res.json()
@@ -342,9 +342,8 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     setSubmitting(true)
     setFeedbackError(null)
     try {
-      const res = await fetch('/api/feedback', {
+      const res = await authedFetch('/api/feedback', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           run_id: params.id,
           feedback_text: showInstructionEditor ? '' : feedbackText,
@@ -388,7 +387,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
         setRun(r => r ? { ...r, theme, special_instructions } : r)
         setEditMode(false)
         // Re-queue the run
-        fetch('/api/run-mandate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ run_id: params.id }) }).catch(() => {})
+        authedFetch('/api/run-mandate', { method: 'POST', body: JSON.stringify({ run_id: params.id }) }).catch(() => {})
       } else {
         // Create a fresh new run and go back to dashboard
         const { data: { session } } = await supabase.auth.getSession()

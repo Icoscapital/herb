@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
+import { requireRunOwner, serviceClient } from '@/lib/api-auth'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,18 +8,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'run_id required' }, { status: 400 })
     }
 
-    const sb = createClient(SB_URL, SB_KEY)
-
-    // Fetch the original run
-    const { data: orig, error: fetchErr } = await sb
-      .from('herb_runs')
-      .select('*')
-      .eq('id', run_id)
-      .single()
-
-    if (fetchErr || !orig) {
-      return NextResponse.json({ error: 'Original run not found' }, { status: 404 })
+    // Verify caller is authenticated AND owns the original run
+    const owner = await requireRunOwner(req, run_id, '*')
+    if (!owner) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const orig = owner.run
+    const sb = serviceClient()
 
     // Build the special instructions for the next round
     let round2Instructions: string | null
