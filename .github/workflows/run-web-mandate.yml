@@ -63,7 +63,7 @@ jobs:
           # it via start_run() and processes the single run end-to-end.
           claude -p "$(cat web_mandate_prompt.md)" \
             --allowedTools Bash,Read,Write,Task,WebSearch,WebFetch \
-            --model claude-sonnet-4-5 \
+            --model claude-sonnet-4-6 \
             --max-turns 120
 
       - name: Verify run reached terminal state
