@@ -40,11 +40,16 @@ In EU_ONLY mode the region is always **EU** regardless of geography.
    Append verified funds to the roster working-set for source 2 (dedup by domain against
    vc-roster.xlsx). This is how Herb keeps finding NEW funds, especially in JP/US.
 1. **Crunchbase** — `site:crunchbase.com "{theme keyword}" "{geography}" "Series A"` + variants
-2. **VC portfolios** — read `references/vc-roster.xlsx`. Use the **"VCs (deep)"** sheet in
-   COMPREHENSIVE mode, the **"VCs"** sheet in EU_ONLY mode. **Filter rows by the Region column**
-   to the mandate's region set (EU_ONLY → Region==EU; COMPREHENSIVE → the geography's regions, or
-   all three if global). In COMPREHENSIVE mode also add the funds discovered in source 0. For each
-   fund fetch the Portfolio URL and extract companies — READ the page to capture each company's own website.
+2. **VC portfolios** — the fund working-set depends on mode:
+   - **EU_ONLY**: read `references/vc-roster.xlsx`, **"VCs"** sheet, filtered to Region==EU. That's all.
+   - **COMPREHENSIVE**: union of (a) `references/vc-roster.xlsx` **"VCs (deep)"** sheet filtered by
+     Region to the mandate's regions, (b) the PitchBook universe slice — run
+     `python -m scripts.vc_filter --keywords "{theme keywords, comma-separated}" --regions {EU,JP,US per mandate} --top 50`
+     (5,070-fund universe in `references/vc-universe.xlsx`; the script returns the ~50 most
+     theme-relevant active funds as `Investor | Region | HQ | Website | Inv5y` — do NOT read the
+     xlsx directly), and (c) the funds discovered in source 0. Dedup the union by website domain.
+   For each fund fetch its portfolio page (universe rows give the homepage — append/find "portfolio"
+   or "companies") and extract companies — READ the page to capture each company's own website.
 3. **X / Twitter** — `site:x.com "{theme keyword}" "raised" "{geography}" 2025` + variants
 4. **LinkedIn** — `site:linkedin.com/company "{theme keyword}" "{geography}"`
 5. **Conferences / competitions** — EU: `EIC Accelerator`, `Hello Tomorrow`, `Bits & Pretzels`,
