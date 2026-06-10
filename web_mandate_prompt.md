@@ -95,6 +95,11 @@ One fund per row. Omit any fund whose portfolio URL you cannot verify. If none: 
 
 Then dedup discovered funds by domain against vc-roster.xlsx and merge into the source-2 working set.
 
+**Model routing (3 tiers):** search/discovery/website-finder sub-agents → **Haiku** (bounded
+extraction, cheapest); you the orchestrator → **Sonnet** (the search protocol, dedup, Pipedrive,
+write-up); Icos-fit scoring (STEP 2 step 5) → **Opus** (the one reasoning-heavy judgment call that
+decides top picks). Do not move search onto Opus — it 5×'s cost for no quality gain on bounded extraction.
+
 Search sub-agent config: `subagent_type=general-purpose`, `model=haiku`. Sub-agent prompt template (substitute `{source}`, `{theme}`, `{geography}`, `{stage}`, `{query}` from the source list above):
 
 ```
@@ -138,7 +143,30 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    be left blank.
 3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date].
 4. Pre-screen — for each row check the gate inline below. Open/Won/Lost rows stay but skip icos-fit-eval.
-5. Icos Fit score (0-10) on Pass-Pre-screen rows only; write into the `score` field. Open/Won/Lost rows get score=None.
+5. **Icos Fit scoring — run on Opus for sharper judgment.** This is the ONE step that
+   uses Opus; search sub-agents stay on Haiku and you (the orchestrator) stay on Sonnet.
+   Score ONLY Pass-Pre-screen rows (Open/Won/Lost and pre-screen-Fail rows get
+   `score=None` and are skipped). Dispatch scoring sub-agents —
+   `subagent_type=general-purpose`, **`model=opus`** — in batches of ~6 companies each
+   (low-volume, reasoning-heavy; Opus changes which companies surface as top picks, so
+   it's worth it here). Give each agent the row's {name, sector, stage, business model,
+   technology, HQ, funding, why-now} plus this rubric:
+
+   ```
+   Score each company 0–10 for Icos Capital ICF investment fit.
+   Thesis sectors: food/nutrition, specialty chemicals, advanced materials, industry AI, CCUS/industrial-climate.
+   Strategic LPs to weigh: Nouryon (specialty chemicals), Bühler (food/grain processing), FrieslandCampina (dairy/nutrition).
+   FAVOR: clear B2B model; Series A/B; defensible/proprietary technology; strong EU presence or EU relevance;
+     a concrete recent "why now" signal; relevance to at least one LP.
+   PENALIZE: pharma/therapeutics-ONLY with no industrial OR food application (a company doing BOTH pharma AND
+     food/industrial is fine — only penalize pharma-only); pure B2C; no defensible tech; no LP relevance.
+   A measurable climate/CO2 claim is a PLUS, never a gate — do not down-score solely for missing climate data.
+   OUTPUT (strict): pipe-delimited, no prose, no header. One row per company:
+   Company | Score(0-10 integer) | One-line rationale | Top critical diligence question
+   ```
+   Merge each `Score` into the row's `score` field (0–10). Append the rationale and critical
+   question to the row's `notes` as `Fit: <rationale> | Q: <question>`, preserving any
+   Pipedrive tag already in `notes`.
 
 > **Token discipline:** After step 2 dedup, DROP the raw pipe-delimited tables from your working memory. Work only with the deduped list for steps 3–5. Saves ~20-30k tokens of accumulated context.
 
