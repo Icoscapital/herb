@@ -99,8 +99,9 @@ LIMITS: ≤5 WebSearch calls total. On HTTP 429 sleep 30s, retry once; if still 
 OUTPUT (strict): pipe-delimited table. Cols: Company|Domain|HQ Country|Stage|Raised|Last Round|Investors|Tech|Sectors|URL|Why Now.
 DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a blank, so when unsure write "Unknown"):
 - Domain = the company's OWN primary website as a single bare domain (e.g. "acme.com"). No protocol, no path, no "www.". Exactly ONE domain — no parentheses, "also/likely/maybe/?", or comma-separated alternatives.
-- DO NOT GUESS THE DOMAIN FROM THE COMPANY NAME. Inventing "acmebio.com" because the company is "Acme Bio" is the #1 cause of wrong links. The domain must come from an actual source you saw, not from transforming the name.
-- VERIFY it belongs to THIS company before recording it. Acceptable only if EITHER (a) an authoritative source explicitly lists it as the company's website — the funding announcement's link to the company, the company's Crunchbase "Website" field, or the "Website" link on its LinkedIn company page — OR (b) you opened the site and its homepage names this same company and matches its sector/description. If you did neither, write "Unknown".
+- DO NOT GUESS THE DOMAIN FROM THE COMPANY NAME. Inventing "acmebio.com" for "Acme Bio", or "solivis.co.kr" for a Korean "Solivis", is the #1 cause of wrong links. The domain must come from an actual source, not from transforming the name + a guessed TLD.
+- TO FIND THE WEBSITE, ALWAYS RUN A QUICK SEARCH — don't leave it blank and don't guess. Search `"{company name}" official website` (add the sector and HQ country when the name is short/common, e.g. `"Solivis" perovskite solar Korea`), then take the official homepage from the results. A quick search almost always yields the right site; leaving a findable company blank (as happened with Genomines) is a miss.
+- VERIFY it belongs to THIS company before recording it. Acceptable only if EITHER (a) an authoritative source explicitly lists it as the company's website — the funding announcement's link, the Crunchbase "Website" field, or the "Website" link on its LinkedIn company page — OR (b) you opened the site and its homepage names this same company and matches its sector/HQ. If you did neither, write "Unknown".
 - NAME-COLLISION GUARD: several companies can share a name. Before recording a domain confirm it matches on HQ country + sector + what the company does. If you can't tell which company the site belongs to, write "Unknown" — never attach a same-named other company's site.
 - NEVER substitute a parent company, subsidiary directory, university department/person page, accelerator/VC portfolio page, LinkedIn, Crunchbase, or a news article as the website. A LANXESS brand with no own site → "Unknown", NOT "lanxess.com".
 - If the source page is LinkedIn or a VC/portfolio listing, READ it to extract the real website link (usually present) — don't record the LinkedIn/portfolio URL itself.
@@ -111,14 +112,18 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
 
 1. Merge raw rows with `ctx['additional_companies']`.
 2. Dedup by domain (fuzzy >85% on name where domain is missing); merge source tags.
-   **Website sanity pass (do this for every kept row):** the `website` must be the
-   company's OWN homepage. Set it to blank/Unknown if it is: a name-derived guess
-   you can't confirm, a parent/subsidiary/university/accelerator/VC-portfolio page,
-   a LinkedIn/Crunchbase/news URL, or a same-named different company (check it
-   matches the row's HQ country + sector). For high-value rows (Pre-screen Pass)
-   where the domain is missing or doubtful, do ONE quick confirmation
-   (WebFetch the candidate, or the company's LinkedIn "Website" field) before
-   keeping it. A blank is better than a wrong link.
+   **Website resolution + sanity pass (do this for every kept row):** the `website`
+   must be the company's OWN homepage. First flag every row whose domain is missing,
+   looks name-derived (name + guessed TLD like `.co.kr`/`.tech`), or could be a
+   same-named different company (doesn't match the row's HQ country + sector).
+   For each flagged row run a quick `"{company}" {sector} {HQ country} official
+   website` search and set the verified official homepage. If more than ~8 rows are
+   flagged, dispatch website-finder sub-agents (model=haiku) in batches of 3 — each
+   takes a chunk and returns `Company | verified domain | Unknown` — to respect the
+   WebSearch rate cap. Drop (blank) only domains that are clearly a
+   parent/subsidiary/university/accelerator/VC-portfolio/LinkedIn/Crunchbase/news
+   page, or that the search can't confirm. A blank is better than a wrong link, but
+   a findable company should NOT be left blank.
 3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date].
 4. Pre-screen — for each row check the gate inline below. Open/Won/Lost rows stay but skip icos-fit-eval.
 5. Icos Fit score (0-10) on Pass-Pre-screen rows only; write into the `score` field. Open/Won/Lost rows get score=None.
