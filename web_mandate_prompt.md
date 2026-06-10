@@ -114,16 +114,23 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
 2. Dedup by domain (fuzzy >85% on name where domain is missing); merge source tags.
    **Website resolution + sanity pass (do this for every kept row):** the `website`
    must be the company's OWN homepage. First flag every row whose domain is missing,
-   looks name-derived (name + guessed TLD like `.co.kr`/`.tech`), or could be a
-   same-named different company (doesn't match the row's HQ country + sector).
-   For each flagged row run a quick `"{company}" {sector} {HQ country} official
-   website` search and set the verified official homepage. If more than ~8 rows are
-   flagged, dispatch website-finder sub-agents (model=haiku) in batches of 3 — each
-   takes a chunk and returns `Company | verified domain | Unknown` — to respect the
-   WebSearch rate cap. Drop (blank) only domains that are clearly a
-   parent/subsidiary/university/accelerator/VC-portfolio/LinkedIn/Crunchbase/news
-   page, or that the search can't confirm. A blank is better than a wrong link, but
-   a findable company should NOT be left blank.
+   looks name-derived (name + a guessed/sector-flavored TLD like `.co.kr`/`.tech`/
+   `.bio`/`.eco`/`.ai`), or could be a same-named different company (doesn't match
+   the row's HQ country + sector). For each flagged row run a quick
+   `"{company}" {sector} {HQ country} official website` search and set the verified
+   official homepage. If more than ~8 rows are flagged, dispatch website-finder
+   sub-agents (model=haiku) in batches of 3 — each takes a chunk and returns
+   `Company | verified domain | Unknown` — to respect the WebSearch rate cap.
+   **TLD-variant tiebreaker:** when a company resolves to several variants
+   (`fermeate.com` vs `fermeate.bio`), the canonical one is whichever the company
+   ITSELF points to — the link in its LinkedIn/Crunchbase "Website" field, or the
+   target the others redirect to when opened. Don't assume a sector-flavored TLD
+   (`.bio`/`.eco`/`.tech`) is right just because the company is in that space —
+   confirm against the company's own canonical link (it's usually the `.com`).
+   Drop (blank) only domains that are clearly a parent/subsidiary/university/
+   accelerator/VC-portfolio/LinkedIn/Crunchbase/news page, or that the search can't
+   confirm. A blank is better than a wrong link, but a findable company should NOT
+   be left blank.
 3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date].
 4. Pre-screen — for each row check the gate inline below. Open/Won/Lost rows stay but skip icos-fit-eval.
 5. Icos Fit score (0-10) on Pass-Pre-screen rows only; write into the `score` field. Open/Won/Lost rows get score=None.
