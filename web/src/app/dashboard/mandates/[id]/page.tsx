@@ -124,14 +124,18 @@ function fitColor(score: number | null): string {
   return '#999'
 }
 
-// Return a usable URL or null. Strips "Unknown", whitespace, junk values.
+// Return a usable URL or null. Strips "Unknown", whitespace, junk values, and
+// messy agent output like "planetary.bio (also ...)" or "acme.com, acme.io"
+// (resilience for rows stored before the backend normalizer landed).
 function validUrl(raw: string | null | undefined): string | null {
   if (!raw) return null
-  const s = raw.trim()
-  if (!s || s.toLowerCase() === 'unknown' || s.toLowerCase() === 'n/a' || s === '-' || s === '—') return null
-  if (s.startsWith('http://') || s.startsWith('https://')) return s
-  // Looks like a bare domain (contains a dot, no spaces)
-  if (s.includes('.') && !s.includes(' ')) return `https://${s}`
+  const head = raw.split('(')[0].trim().replace(/[,;/]+$/, '')
+  const placeholders = ['', 'unknown', 'n/a', 'na', 'none', 'tbd', '-', '—', '?']
+  if (placeholders.includes(head.toLowerCase())) return null
+  const token = head.split(/[\s,]+/)[0].replace(/^["'<]+|["'>]+$/g, '')
+  if (token.toLowerCase().startsWith('http://') || token.toLowerCase().startsWith('https://')) return token
+  // Looks like a bare domain (contains a dot + TLD, no spaces)
+  if (/^[a-z0-9.\-/_:]+\.[a-z]{2,}/i.test(token)) return `https://${token}`
   return null
 }
 

@@ -10,6 +10,7 @@ Used by routine_prompt.md STEP 1B to:
   - Record result_count, duration_seconds, error_message on the run row
 """
 import os
+import re
 from datetime import datetime, timezone
 from supabase import create_client, Client
 
@@ -118,20 +119,49 @@ def store_results(run_id: str, companies: list) -> None:
     """
     sb = _get_sb()
 
+    _PLACEHOLDERS = ("", "unknown", "n/a", "na", "n.a.", "-", "—", "none", "tbd", "?")
+
     def _clean(val: str | None) -> str:
         """Return empty string for None, 'Unknown', 'N/A', '-' placeholders."""
         if not val:
             return ""
         s = str(val).strip()
-        return "" if s.lower() in ("unknown", "n/a", "-", "—", "none") else s
+        return "" if s.lower() in _PLACEHOLDERS else s
+
+    def _clean_url(val: str | None) -> str:
+        """
+        Normalize a website/LinkedIn value to a single clean domain or "".
+
+        Agents frequently emit messy values that the old _clean let through and
+        the frontend then silently dropped, leaving a blank link:
+          "planetary.bio (also planetarygroup.ch, planetary.ag)" -> "planetary.bio"
+          "Unknown (arsenalebioyards.com likely)"                -> ""  (guessed -> don't link a maybe)
+          "acme.com, www.acme.io"                                -> "acme.com"
+          "https://acme.com/about"                               -> "https://acme.com/about"
+        Take the text before any parenthetical aside, then the first candidate
+        token. A bare placeholder before the paren means the real value was only
+        a guess — we return "" rather than link to an unverified domain.
+        """
+        if not val:
+            return ""
+        head = str(val).split("(")[0].strip().rstrip(",;/ ")
+        if head.lower() in _PLACEHOLDERS:
+            return ""
+        token = head.replace(",", " ").split()[0].strip().strip("<>\"'")
+        if token.lower().startswith(("http://", "https://")):
+            return token
+        # bare domain: must contain a dot, a valid TLD-ish tail, and no spaces
+        if "." in token and " " not in token and re.match(r"^[a-z0-9.\-/_:]+\.[a-z]{2,}", token, re.I):
+            return token
+        return ""
 
     rows = [
         {
             "run_id": run_id,
             "name": c.get("name", ""),
             "description": _clean(c.get("description")),
-            "website": _clean(c.get("website")),
-            "linkedin": _clean(c.get("linkedin")),
+            "website": _clean_url(c.get("website")),
+            "linkedin": _clean_url(c.get("linkedin")),
             "stage": _clean(c.get("stage")),
             "geography": _clean(c.get("geography")),
             "score": c.get("score"),
