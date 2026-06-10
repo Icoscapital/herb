@@ -97,18 +97,28 @@ Search {source} for: theme={theme}, geography={geography}, stage={stage}.
 QUERIES: {query}
 LIMITS: ≤5 WebSearch calls total. On HTTP 429 sleep 30s, retry once; if still 429 output "{source} | rate-limited" and stop.
 OUTPUT (strict): pipe-delimited table. Cols: Company|Domain|HQ Country|Stage|Raised|Last Round|Investors|Tech|Sectors|URL|Why Now.
-DOMAIN RULES (the dashboard links this column — get it exactly right):
-- Domain = the company's OWN primary website as a single bare domain (e.g. "acme.com"). No protocol, no path, no "www.".
-- Write EXACTLY ONE domain. No parentheses, no "also/likely/maybe/?", no comma-separated alternatives. If torn between candidates, pick the single most official one.
-- It must be the company's OWN site. NEVER substitute a parent company, subsidiary directory, university department/person page, LinkedIn, Crunchbase, or news article as the website. Example: a LANXESS brand with no own site → write "Unknown", NOT "lanxess.com".
-- If the source page is LinkedIn or a VC portfolio, READ it to extract the real website (it's almost always listed).
-- Only write "Unknown" if you genuinely checked and cannot find the company's own site. "Unknown" for other blanks. No prose, no headers. If none found: "{source} | no results".
+DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a blank, so when unsure write "Unknown"):
+- Domain = the company's OWN primary website as a single bare domain (e.g. "acme.com"). No protocol, no path, no "www.". Exactly ONE domain — no parentheses, "also/likely/maybe/?", or comma-separated alternatives.
+- DO NOT GUESS THE DOMAIN FROM THE COMPANY NAME. Inventing "acmebio.com" because the company is "Acme Bio" is the #1 cause of wrong links. The domain must come from an actual source you saw, not from transforming the name.
+- VERIFY it belongs to THIS company before recording it. Acceptable only if EITHER (a) an authoritative source explicitly lists it as the company's website — the funding announcement's link to the company, the company's Crunchbase "Website" field, or the "Website" link on its LinkedIn company page — OR (b) you opened the site and its homepage names this same company and matches its sector/description. If you did neither, write "Unknown".
+- NAME-COLLISION GUARD: several companies can share a name. Before recording a domain confirm it matches on HQ country + sector + what the company does. If you can't tell which company the site belongs to, write "Unknown" — never attach a same-named other company's site.
+- NEVER substitute a parent company, subsidiary directory, university department/person page, accelerator/VC portfolio page, LinkedIn, Crunchbase, or a news article as the website. A LANXESS brand with no own site → "Unknown", NOT "lanxess.com".
+- If the source page is LinkedIn or a VC/portfolio listing, READ it to extract the real website link (usually present) — don't record the LinkedIn/portfolio URL itself.
+- "Unknown" for any blank you couldn't verify. No prose, no headers. If none found: "{source} | no results".
 ```
 
 ### After collecting all batches
 
 1. Merge raw rows with `ctx['additional_companies']`.
 2. Dedup by domain (fuzzy >85% on name where domain is missing); merge source tags.
+   **Website sanity pass (do this for every kept row):** the `website` must be the
+   company's OWN homepage. Set it to blank/Unknown if it is: a name-derived guess
+   you can't confirm, a parent/subsidiary/university/accelerator/VC-portfolio page,
+   a LinkedIn/Crunchbase/news URL, or a same-named different company (check it
+   matches the row's HQ country + sector). For high-value rows (Pre-screen Pass)
+   where the domain is missing or doubtful, do ONE quick confirmation
+   (WebFetch the candidate, or the company's LinkedIn "Website" field) before
+   keeping it. A blank is better than a wrong link.
 3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date].
 4. Pre-screen — for each row check the gate inline below. Open/Won/Lost rows stay but skip icos-fit-eval.
 5. Icos Fit score (0-10) on Pass-Pre-screen rows only; write into the `score` field. Open/Won/Lost rows get score=None.
