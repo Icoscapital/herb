@@ -13,13 +13,26 @@ ctx = start_run()  # fetches run, marks SEARCHING, loads attachments
 
 **DO NOT** read `references/search-playbook.md` or `references/field-spec.md` into your main context — those are 2.8k tokens that would persist across every turn. The sub-agent prompts below carry all the search guidance they need. The pre-screen gate is inlined here.
 
+### Search mode — `ctx['search_mode']` (THIS decides scope; read it first)
+
+- **COMPREHENSIVE** (also accept legacy value `DEEP`): the substantial search.
+  Regions = the mandate's geography, defaulting to **EU + JP + US** when geography
+  is Global/blank. Run **Source 0 (VC-fund discovery)** and **ALL sources**, using
+  the **"VCs (deep)"** roster sheet. This is "everything we discussed."
+- **EU_ONLY** (also accept legacy value `STANDARD`): the lighter, Europe-only run
+  that reproduces the prior shortlist. Region = **EU only**. **SKIP Source 0** (no
+  VC discovery). Use ONLY the curated European shortlist — the **"VCs"** sheet
+  filtered to **Region == EU**. Run **only core sources 1–5** (Crunchbase, VC
+  portfolios, X, LinkedIn, conferences), Europe-focused. Do NOT run tech-transfer,
+  co-investor snowball, non-English, EU-grants, press, or accelerator expansions.
+
 ### Geography → regions
 Map `{geography}` to a region set used by sources 0 and 2:
 - "Europe"/EU country → **EU**; "Japan"/"Asia" → **JP**; "USA"/"US"/"North America" → **US**;
   "Global"/blank/multi → **EU+JP+US** (all three).
-Sourcing must be COMPREHENSIVE across the mandate's regions — do not default to Europe-only.
+In EU_ONLY mode the region is always **EU** regardless of geography.
 
-### Sources (STANDARD = 0–6; DEEP = all)
+### Sources (EU_ONLY = 1–5, Europe, no Source 0; COMPREHENSIVE = all incl. Source 0)
 
 0. **VC-fund discovery** — find relevant funds we don't already have, then screen them.
    Dispatch one discovery sub-agent PER region in the mandate's region set. It finds VC + CVC
@@ -27,10 +40,11 @@ Sourcing must be COMPREHENSIVE across the mandate's regions — do not default t
    Append verified funds to the roster working-set for source 2 (dedup by domain against
    vc-roster.xlsx). This is how Herb keeps finding NEW funds, especially in JP/US.
 1. **Crunchbase** — `site:crunchbase.com "{theme keyword}" "{geography}" "Series A"` + variants
-2. **VC portfolios** — read `references/vc-roster.xlsx`. Use the **"VCs (deep)"** sheet for DEEP,
-   **"VCs"** for STANDARD. **Filter rows to the mandate's region set** (Region column: EU/JP/US;
-   if global, use all). Add the funds discovered in source 0. For each fund fetch the Portfolio
-   URL and extract companies — READ the page to capture each company's own website.
+2. **VC portfolios** — read `references/vc-roster.xlsx`. Use the **"VCs (deep)"** sheet in
+   COMPREHENSIVE mode, the **"VCs"** sheet in EU_ONLY mode. **Filter rows by the Region column**
+   to the mandate's region set (EU_ONLY → Region==EU; COMPREHENSIVE → the geography's regions, or
+   all three if global). In COMPREHENSIVE mode also add the funds discovered in source 0. For each
+   fund fetch the Portfolio URL and extract companies — READ the page to capture each company's own website.
 3. **X / Twitter** — `site:x.com "{theme keyword}" "raised" "{geography}" 2025` + variants
 4. **LinkedIn** — `site:linkedin.com/company "{theme keyword}" "{geography}"`
 5. **Conferences / competitions** — EU: `EIC Accelerator`, `Hello Tomorrow`, `Bits & Pretzels`,
@@ -58,11 +72,12 @@ Sourcing must be COMPREHENSIVE across the mandate's regions — do not default t
 ### Sub-agent dispatch — batched, 3 per batch (rate-limit safety)
 
 WebSearch has an org-wide 10k-tok/min cap. Firing many in parallel burns it. Dispatch **3 per batch**,
-wait, next batch. With the expanded source list: STANDARD ≈ 3 batches, DEEP ≈ 5–7 batches (more if the
-mandate spans EU+JP+US, since sources 0/2/5/6/7/8 fan out per region). Runtime budget is fine (360-min job).
+wait, next batch. EU_ONLY ≈ 2–3 batches; COMPREHENSIVE ≈ 5–7 batches (more when the mandate spans
+EU+JP+US, since sources 0/2/5/6/7/8 fan out per region). Runtime budget is fine (360-min job).
 
-**Run source 0 (VC-fund discovery) FIRST**, before source 2, so newly-found funds get screened in the
-same run. Discovery sub-agent (one per region; `subagent_type=general-purpose`, `model=haiku`):
+**COMPREHENSIVE mode only: run source 0 (VC-fund discovery) FIRST**, before source 2, so newly-found
+funds get screened in the same run. Skip entirely in EU_ONLY. Discovery sub-agent (one per region;
+`subagent_type=general-purpose`, `model=haiku`):
 
 ```
 Find venture capital AND corporate venture capital (CVC) funds based in {region} that invest in: {theme}

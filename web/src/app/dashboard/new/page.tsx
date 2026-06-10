@@ -23,6 +23,7 @@ const EXAMPLES = [
 
 export default function NewMandatePage() {
   const [text, setText] = useState('')
+  const [mode, setMode] = useState<'COMPREHENSIVE' | 'EU_ONLY'>('COMPREHENSIVE')
   const [files, setFiles] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
@@ -107,7 +108,8 @@ export default function NewMandatePage() {
       submitted_by_email: session.user.email,
       submitted_by_name: meta?.full_name ?? meta?.name ?? null,
       slug, theme, special_instructions,
-      geography: 'Europe', stage: 'Series A/B', search_mode: 'DEEP',
+      geography: mode === 'EU_ONLY' ? 'Europe' : 'Global',
+      stage: 'Series A/B', search_mode: mode,
       status: 'PENDING', current_round: 1,
       attachments: files.length ? files.map(f => ({ name: f.name, url: f.url })) : null,
       created_at: new Date().toISOString(),
@@ -254,8 +256,32 @@ export default function NewMandatePage() {
               </div>
             )}
 
-            <div className="flex items-center justify-between px-4 py-3"
-              style={{ borderTop: '1px solid var(--border)' }}>
+            {/* Search scope toggle */}
+            <div className="px-4 pt-3 pb-1" style={{ borderTop: '1px solid var(--border)' }}>
+              <div className="flex items-center gap-2">
+                {([
+                  { key: 'COMPREHENSIVE', label: '🌍 Comprehensive', hint: 'EU + Japan + USA · discovers new VC funds · all sources' },
+                  { key: 'EU_ONLY', label: '🇪🇺 European VCs only', hint: 'Europe · curated VC shortlist · faster' },
+                ] as const).map(opt => {
+                  const active = mode === opt.key
+                  return (
+                    <button key={opt.key} type="button" onClick={() => setMode(opt.key)} disabled={submitting}
+                      title={opt.hint}
+                      className="flex-1 text-left px-3 py-2 rounded-xl transition-all"
+                      style={{
+                        background: active ? 'var(--teal-light)' : 'var(--bg)',
+                        border: active ? '1.5px solid var(--teal)' : '1px solid var(--border)',
+                        cursor: submitting ? 'default' : 'pointer',
+                      }}>
+                      <div className="text-sm font-medium" style={{ color: active ? 'var(--teal)' : 'var(--text)' }}>{opt.label}</div>
+                      <div className="text-xs mt-0.5" style={{ color: 'var(--subtle)' }}>{opt.hint}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-1.5">
                 <input ref={fileRef} type="file" multiple className="hidden"
                   accept=".pdf,.doc,.docx,.txt,.pptx,.ppt"

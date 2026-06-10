@@ -538,7 +538,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
           </span>
           <span className="px-2 py-0.5 rounded-full text-xs"
             style={{ background: 'var(--navy-light)', color: 'var(--navy)' }}>
-            {run.search_mode}
+            {{ COMPREHENSIVE: 'Comprehensive', DEEP: 'Comprehensive', EU_ONLY: 'European VCs only', STANDARD: 'European VCs only' }[run.search_mode] ?? run.search_mode}
           </span>
           <button
             onClick={editMode ? () => setEditMode(false) : openEdit}
