@@ -109,7 +109,9 @@ export default function NewMandatePage() {
       submitted_by_name: meta?.full_name ?? meta?.name ?? null,
       slug, theme, special_instructions,
       geography: mode === 'EU_ONLY' ? 'Europe' : 'Global',
-      stage: 'Series A/B', search_mode: mode,
+      // Stored as legacy DEEP/STANDARD to satisfy the herb_runs_search_mode_check
+      // constraint; the prompt + UI treat these as Comprehensive / European-only.
+      stage: 'Series A/B', search_mode: mode === 'EU_ONLY' ? 'STANDARD' : 'DEEP',
       status: 'PENDING', current_round: 1,
       attachments: files.length ? files.map(f => ({ name: f.name, url: f.url })) : null,
       created_at: new Date().toISOString(),
