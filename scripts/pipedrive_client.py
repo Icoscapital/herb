@@ -76,6 +76,25 @@ class PipedriveClient:
         out = self._get(f"/deals/{deal_id}")
         return out.get("data") or {}
 
+    def get_organization(self, org_id: int) -> dict:
+        out = self._get(f"/organizations/{org_id}")
+        return out.get("data") or {}
+
+    def search_deals(self, term: str, limit: int = 20) -> list[dict]:
+        """Full-text deal search across title, notes and custom fields."""
+        out = self._get("/deals/search", term=term,
+                        fields="title,notes,custom_fields", limit=limit)
+        items = (out.get("data") or {}).get("items") or []
+        return [it.get("item", {}) for it in items]
+
+    def search_organizations_fulltext(self, term: str, limit: int = 20) -> list[dict]:
+        """Org search across name, notes and custom fields (unlike
+        search_organizations, which is a name lookup for dedup)."""
+        out = self._get("/organizations/search", term=term,
+                        fields="name,notes,custom_fields", limit=limit)
+        items = (out.get("data") or {}).get("items") or []
+        return [it.get("item", {}) for it in items]
+
     # ---------- create ----------
 
     def create_organization(self, name: str, custom_fields: Optional[dict] = None) -> dict:

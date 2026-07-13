@@ -22,9 +22,10 @@ ctx = start_run()  # fetches run, marks SEARCHING, loads attachments
 - **EU_ONLY** (also accept legacy value `STANDARD`): the lighter, Europe-only run
   that reproduces the prior shortlist. Region = **EU only**. **SKIP Source 0** (no
   VC discovery). Use ONLY the curated European shortlist — the **"VCs"** sheet
-  filtered to **Region == EU**. Run **only core sources 1–5** (Crunchbase, VC
-  portfolios, X, LinkedIn, conferences), Europe-focused. Do NOT run tech-transfer,
-  co-investor snowball, non-English, EU-grants, press, or accelerator expansions.
+  filtered to **Region == EU**. Run **source P (Pipedrive CRM) + core sources 1–5**
+  (Crunchbase, VC portfolios, X, LinkedIn, conferences), Europe-focused. Do NOT run
+  tech-transfer, co-investor snowball, non-English, EU-grants, press, or accelerator
+  expansions.
 
 ### Geography → regions
 Map `{geography}` to a region set used by sources 0 and 2:
@@ -32,7 +33,22 @@ Map `{geography}` to a region set used by sources 0 and 2:
   "Global"/blank/multi → **EU+JP+US** (all three).
 In EU_ONLY mode the region is always **EU** regardless of geography.
 
-### Sources (EU_ONLY = 1–5, Europe, no Source 0; COMPREHENSIVE = all incl. Source 0)
+### Sources (BOTH modes = P + …; EU_ONLY = P + 1–5, Europe, no Source 0; COMPREHENSIVE = all incl. Source 0)
+
+P. **Pipedrive CRM (BOTH modes — run FIRST, before any sub-agent batch)** — mine our own
+   CRM for companies Icos already knows that match the theme:
+   ```
+   python -m scripts.pipedrive_search --keywords "{theme keywords, comma-separated}"
+   ```
+   Pick 3–6 keywords (same ones you use for web queries). Returns one row per company:
+   `Company | Domain | Status | Stage | LostReason | Updated | Description`
+   (or `PIPEDRIVE | no results`). This is plain Python — instant, free, no WebSearch quota.
+   Merge rows into the longlist with source tag "Pipedrive CRM"; the Domain and Description
+   columns come from our own CRM fields, so trust them. Put the returned Status straight
+   into `notes` as the Pipedrive tag (`Pipedrive: Lost — [reason]` etc.) and **skip the
+   step-3 cross-check for these rows** — we already know their status. Past Lost /
+   went-cold deals that fit the new mandate are exactly what this source resurfaces;
+   they follow the normal rules (kept on the longlist, skip icos-fit scoring).
 
 0. **VC-fund discovery** — find relevant funds we don't already have, then screen them.
    Dispatch one discovery sub-agent PER region in the mandate's region set. It finds VC + CVC
@@ -80,7 +96,9 @@ WebSearch has an org-wide 10k-tok/min cap. Firing many in parallel burns it. Dis
 wait, next batch. EU_ONLY ≈ 2–3 batches; COMPREHENSIVE ≈ 5–7 batches (more when the mandate spans
 EU+JP+US, since sources 0/2/5/6/7/8 fan out per region). Runtime budget is fine (360-min job).
 
-**COMPREHENSIVE mode only: run source 0 (VC-fund discovery) FIRST**, before source 2, so newly-found
+**Source P (Pipedrive CRM) runs before everything in both modes** — it's an inline Python call,
+not a sub-agent, so it costs no batch slot. **COMPREHENSIVE mode only: then run source 0
+(VC-fund discovery) FIRST among sub-agents**, before source 2, so newly-found
 funds get screened in the same run. Skip entirely in EU_ONLY. Discovery sub-agent (one per region;
 `subagent_type=general-purpose`, `model=haiku`):
 
