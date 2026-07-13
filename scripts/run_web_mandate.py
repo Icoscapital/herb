@@ -49,6 +49,7 @@ def start_run() -> dict:
         f"Loaded {len(additional)} attachment companies, {len(check_sites)} check-sites",
     )
 
+    seeds = [s.strip() for s in (m.get("seed_companies") or "").split(",") if s.strip()]
     return {
         "run_id":               m["id"],
         "theme":                m["theme"],
@@ -60,12 +61,20 @@ def start_run() -> dict:
         "submitted_by_name":    m.get("submitted_by_name") or "",
         "additional_companies": additional,
         "extra_check_sites":    check_sites,
+        "icos_fit":             m.get("icos_fit", True) is not False,
+        "seed_companies":       seeds,
+        "slug":                 m.get("slug") or "",
+        "current_round":        m.get("current_round") or 1,
+        "watch":                bool(m.get("watch")),
         "t_start":              time.time(),
     }
 
 
-def finish_run(ctx: dict, companies: list[dict]) -> None:
+def finish_run(ctx: dict, companies: list[dict], summary: str | None = None) -> None:
     """Store results, mark DONE, email the submitter, mark EMAILED, commit.
+
+    `summary` — optional extra lines for the email body (e.g. the recall
+    check: "Recall: 2/2 known companies found independently").
 
     Idempotent: if this run is already EMAILED (e.g. workflow was retried
     after a partial success), we skip the email + commit and just refresh
@@ -87,6 +96,15 @@ def finish_run(ctx: dict, companies: list[dict]) -> None:
     except Exception as e:
         print(f"[run-web-mandate] website verification failed (non-fatal): {e}")
 
+    # Cross-mandate memory: tag previously-seen companies, then record this
+    # run's companies. Both non-fatal (herb_seen may not exist yet).
+    try:
+        from .herb_memory import annotate_seen, record_seen
+        companies = annotate_seen(companies)
+        record_seen(run_id, ctx.get("theme", ""), ctx.get("current_round") or 1, companies)
+    except Exception as e:
+        print(f"[run-web-mandate] herb_seen memory skipped (non-fatal): {e}")
+
     store_results(run_id, companies)
     duration = int(time.time() - ctx["t_start"])
     mark_done(run_id, len(companies), duration)
@@ -100,11 +118,13 @@ def finish_run(ctx: dict, companies: list[dict]) -> None:
     first_name = (ctx["submitted_by_name"].split() or ["there"])[0]
     dashboard_url = f"https://herb-tau.vercel.app/dashboard/mandates/{run_id}"
     subject = f"Herb — Results ready: {ctx['theme'][:50]}"
+    summary_block = f"{summary.strip()}\n\n" if summary and summary.strip() else ""
     body = (
         f"Hi {first_name},\n\n"
         "Your Herb search is complete.\n\n"
         f"Theme:   {ctx['theme']}\n"
         f"Results: {len(companies)} companies\n\n"
+        f"{summary_block}"
         "View the full longlist here:\n"
         f"{dashboard_url}\n\n"
         "Best,\nHerb"

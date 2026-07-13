@@ -6,8 +6,14 @@ You are Herb processing **one** web-triggered mandate. `$RUN_ID` is in the env. 
 from scripts.run_web_mandate import start_run, finish_run, fail_run
 ctx = start_run()  # fetches run, marks SEARCHING, loads attachments
 # ctx keys: run_id, theme, geography, stage, search_mode, special_instructions,
-#           submitted_by_email, additional_companies, extra_check_sites
+#           submitted_by_email, additional_companies, extra_check_sites,
+#           icos_fit (bool), seed_companies (list), slug, current_round, watch (bool)
 ```
+
+`ctx['stage']` is a comma-separated list picked via checkboxes (e.g. "Seed, Series A,
+Series B") — treat it as the authoritative stage filter everywhere below.
+`ctx['seed_companies']` are companies the author ALREADY KNOWS fit the thesis —
+they are your quality bar and your expansion seeds (see Source E and the recall check).
 
 ## STEP 2 — Search
 
@@ -49,6 +55,20 @@ P. **Pipedrive CRM (BOTH modes — run FIRST, before any sub-agent batch)** — 
    step-3 cross-check for these rows** — we already know their status. Past Lost /
    went-cold deals that fit the new mandate are exactly what this source resurfaces;
    they follow the normal rules (kept on the longlist, skip icos-fit scoring).
+
+E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).** The named
+   companies *define* the thesis better than keywords. Dispatch one Haiku sub-agent per
+   batch of up to 3 seeds:
+   ```
+   For each company: {seed list with any known context}
+   1) Find its investors (from Crunchbase/news/LinkedIn) — output "SEED-INVESTOR: {fund} | {portfolio URL}"
+   2) Find 3-5 direct competitors / companies repeatedly named alongside it ("alternatives to X",
+      "X competitors", same conference tracks) — output them as normal company rows.
+   3) Note which conferences/awards it appeared at — output "SEED-EVENT: {event}"
+   LIMITS: ≤5 WebSearch calls. Same OUTPUT format + DOMAIN RULES as other sub-agents for company rows.
+   ```
+   Feed SEED-INVESTOR funds into the source-2 working set (dedup by domain) and SEED-EVENT
+   events into source 5's query list. The seeds themselves go on the longlist too.
 
 0. **VC-fund discovery** — find relevant funds we don't already have, then screen them.
    Dispatch one discovery sub-agent PER region in the mandate's region set. It finds VC + CVC
@@ -167,9 +187,26 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    company, so this LLM pass is still the one that prevents wrong links.)
    While you're on a company's LinkedIn page during this pass, capture its employee
    bucket if the row's FTE is still Unknown.
-3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date].
+2b. **Recall check (when seeds given):** every `ctx['seed_companies']` entry MUST be on the
+   deduped list. Count how many the search found *independently* (before you add any
+   manually). Any seed still missing: run one direct lookup for it and add the row.
+   Build a summary string for the email, e.g.
+   `Recall: 2/3 known companies found by the search (Ethos AI required direct lookup — search gap).`
+   A seed the search couldn't find on its own means the queries missed part of the
+   thesis — say so plainly in the summary.
+2c. **Watch-run diff (when `ctx['watch']` is true and `ctx['current_round']` > 1):**
+   ```python
+   from scripts.herb_memory import previous_companies
+   prior = previous_companies(ctx['slug'], ctx['run_id'])
+   ```
+   Drop every deduped row whose normalized domain OR lowercase name is in `prior` —
+   a watch re-run reports ONLY companies new since the previous round. Add the count
+   to the email summary: `Watch: N new companies since the last round.`
+3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date]. Skip rows sourced from "Pipedrive CRM" (status already known).
 4. Pre-screen — for each row check the gate inline below. Open/Won/Lost rows stay but skip icos-fit-eval.
-5. **Icos Fit scoring — run on Opus for sharper judgment.** This is the ONE step that
+5. **Icos Fit scoring — ONLY when `ctx['icos_fit']` is true.** When false, skip this step
+   entirely (every row keeps `score=None`; the author can trigger scoring later from the
+   results page). When true, run on Opus for sharper judgment. This is the ONE step that
    uses Opus; search sub-agents stay on Haiku and you (the orchestrator) stay on Sonnet.
    Score ONLY Pass-Pre-screen rows (Open/Won/Lost and pre-screen-Fail rows get
    `score=None` and are skipped). Dispatch scoring sub-agents —
@@ -193,6 +230,19 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    Merge each `Score` into the row's `score` field (0–10). Append the rationale and critical
    question to the row's `notes` as `Fit: <rationale> | Q: <question>`, preserving any
    Pipedrive tag already in `notes`.
+6. **Deep-dive on top picks (only when step 5 ran).** Take the top 8 rows by score
+   (score ≥ 6 only; fewer is fine). Dispatch deep-dive sub-agents —
+   `subagent_type=general-purpose`, `model=sonnet` — max 3 in parallel, one company each:
+   ```
+   Deep-dive {company} ({domain}) for a VC partner meeting. ≤6 WebSearch calls.
+   Find: (1) founders + relevant background, (2) concrete traction evidence (named
+   customers/pilots/partnerships, revenue signals), (3) investor quality (funds on the
+   cap table, their notable wins), (4) latest round details, (5) 2-3 best source URLs.
+   OUTPUT: plain text ≤160 words, sections "Team:", "Traction:", "Investors:",
+   "Round:", "Sources:". Facts only — write "not found" over invention.
+   ```
+   Put each result into that row's `deep_dive` field (it has a dedicated DB column and
+   shows as an expandable panel on the dashboard).
 
 > **Token discipline:** After step 2 dedup, DROP the raw pipe-delimited tables from your working memory. Work only with the deduped list for steps 3–5. Saves ~20-30k tokens of accumulated context.
 
@@ -200,12 +250,13 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
 
 A company passes pre-screen if **all** of:
 - **Sector** matches one of: Food/Nutrition+, Specialty Chemicals+, Advanced Materials+, Industry AI, CCUS  (not "None")
-- **Funding stage** is Series A or Series B (or Unknown but plausible from context)
+- **Funding stage** is in `ctx['stage']` (a checkbox-selected list, e.g. "Seed, Series A,
+  Series B") — or Unknown but plausible from context
 - **Business model** is B2B or Mixed (not pure B2C)
 - **At least one LP flag** = Yes or Maybe — LPs are: Nouryon (specialty chemicals), Bühler (food/grain), FrieslandCampina (dairy/nutrition)
 - **Maturity (min 10 FTE)** — if FTE is known and below 10 (a count `<10`, or LinkedIn
-  bucket "1-10"/"2-10"): **Fail — too early (<10 FTE)** when the mandate stage is
-  Series A/B. When the mandate explicitly includes Seed/pre-seed, do NOT fail on this —
+  bucket "1-10"/"2-10"): **Fail — too early (<10 FTE)** when `ctx['stage']` contains
+  neither "Pre-seed" nor "Seed". When it does include them, do NOT fail on this —
   tag notes `Early (<10 FTE)` instead. FTE **Unknown never fails** this check (missing
   LinkedIn data must not kill a real company).
 
@@ -217,8 +268,10 @@ Call `update_progress(ctx['run_id'], <message>)` at each checkpoint.
 ## STEP 3 — Finish
 
 ```python
-# companies = list of dicts: {name, description, website, linkedin, stage, geography, score, source, notes}
-finish_run(ctx, companies)  # stores results, marks DONE, emails submitter, marks EMAILED, commits
+# companies = list of dicts: {name, description, website, linkedin, stage, geography, score, source, notes, deep_dive?}
+# summary   = optional email lines: recall check result, watch diff count (omit if neither applies)
+finish_run(ctx, companies, summary=summary)  # verifies websites, records herb_seen memory,
+                                             # stores results, marks DONE, emails, commits
 ```
 
 On any failure: `fail_run(ctx, e)`. `fail_run` will re-raise — do not catch it. Exit after `finish_run` or after `fail_run`. Do not check email, do not look for other runs.

@@ -61,7 +61,14 @@ jobs:
         run: |
           # RUN_ID is exported as an env var above. The prompt's STEP 1 reads
           # it via start_run() and processes the single run end-to-end.
-          claude -p "$(cat web_mandate_prompt.md)" \
+          # task=score (from /api/score-run) runs the lightweight scoring-only
+          # prompt against the existing longlist instead of a full search.
+          if [ "${{ github.event.client_payload.task }}" = "score" ]; then
+            PROMPT=score_only_prompt.md
+          else
+            PROMPT=web_mandate_prompt.md
+          fi
+          claude -p "$(cat $PROMPT)" \
             --allowedTools Bash,Read,Write,Task,WebSearch,WebFetch \
             --model claude-sonnet-4-6 \
             --max-turns 120

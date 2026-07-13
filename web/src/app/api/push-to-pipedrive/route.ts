@@ -188,6 +188,19 @@ export async function POST(req: NextRequest) {
     // 6. Stamp note so the UI persists the state on refresh
     await stampNote(sb, co.id, co.notes, `Pipedrive: New | Deal #${dealId}`)
 
+    // 6b. Cross-mandate memory: mark this company as converted (non-fatal,
+    //     herb_seen may not exist pre-migration). Key = domain else name,
+    //     matching scripts/herb_memory.company_key().
+    try {
+      let key = (co.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].trim()
+      if (!key.includes('.')) key = (co.name || '').toLowerCase().trim()
+      if (key) {
+        await sb.from('herb_seen').update({ last_status: 'pushed_to_pipedrive' }).eq('company_key', key)
+      }
+    } catch (seenErr) {
+      console.warn('[push-to-pipedrive] herb_seen update skipped:', seenErr)
+    }
+
     // 7. Generate Icos thesis assessment via Anthropic and post it as a deal note.
     //    Non-fatal: if anything fails we still return success on the deal creation.
     let assessmentNote: string | null = null

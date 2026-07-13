@@ -111,7 +111,34 @@ export default function LogPage() {
   const [editText, setEditText] = useState('')
   const [editSaving, setEditSaving] = useState(false)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [showInsights, setShowInsights] = useState(false)
+  const [insights, setInsights] = useState<Array<{ source: string; count: number; pushed: number }> | null>(null)
   const editRef = useRef<HTMLTextAreaElement>(null)
+
+  // Per-source stats across all longlists: how many companies each source
+  // produced, and how many were pushed to Pipedrive (notes carry "Deal #").
+  const toggleInsights = async () => {
+    const opening = !showInsights
+    setShowInsights(opening)
+    if (!opening || insights !== null) return
+    const { data } = await supabase.from('herb_longlist').select('source,notes').limit(5000)
+    const agg = new Map<string, { count: number; pushed: number }>()
+    for (const row of data ?? []) {
+      // sources are often "Crunchbase / LinkedIn" merges — credit each tag
+      const tags = (row.source || 'Unknown').split('/').map((s: string) => s.trim()).filter(Boolean)
+      const pushed = /Deal\s*#\d+/i.test(row.notes || '')
+      for (const t of tags.length ? tags : ['Unknown']) {
+        const cur = agg.get(t) ?? { count: 0, pushed: 0 }
+        cur.count += 1
+        if (pushed) cur.pushed += 1
+        agg.set(t, cur)
+      }
+    }
+    setInsights([...agg.entries()]
+      .map(([source, v]) => ({ source, ...v }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 14))
+  }
 
   const toggleExpand = (id: string) => setExpandedRows(prev => {
     const next = new Set(prev)
@@ -277,24 +304,74 @@ export default function LogPage() {
         {/* Title + filters */}
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>Search log</h1>
-          <div className="flex items-center gap-0.5 p-1 rounded-xl"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            {(['all', 'running', 'done', 'error'] as Filter[]).map(f => (
-              <button key={f} onClick={() => setFilter(f)}
-                className="px-3 py-1 rounded-lg text-xs font-medium capitalize transition-all"
-                style={{
-                  background: filter === f ? 'var(--navy-light)' : 'transparent',
-                  color: filter === f ? 'var(--navy)' : 'var(--subtle)',
-                  border: filter === f ? '1px solid #c8d8f0' : '1px solid transparent',
-                }}>
-                {f === 'all' ? `All (${counts.all})` :
-                 f === 'running' ? `Running (${counts.running})` :
-                 f === 'done' ? `Done (${counts.done})` :
-                 `Errors (${counts.error})`}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <button onClick={toggleInsights}
+              className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
+              style={{
+                background: showInsights ? 'var(--teal-light)' : 'var(--surface)',
+                color: showInsights ? 'var(--teal)' : 'var(--subtle)',
+                border: showInsights ? '1px solid var(--teal)' : '1px solid var(--border)',
+              }}>
+              📊 Source insights
+            </button>
+            <div className="flex items-center gap-0.5 p-1 rounded-xl"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              {(['all', 'running', 'done', 'error'] as Filter[]).map(f => (
+                <button key={f} onClick={() => setFilter(f)}
+                  className="px-3 py-1 rounded-lg text-xs font-medium capitalize transition-all"
+                  style={{
+                    background: filter === f ? 'var(--navy-light)' : 'transparent',
+                    color: filter === f ? 'var(--navy)' : 'var(--subtle)',
+                    border: filter === f ? '1px solid #c8d8f0' : '1px solid transparent',
+                  }}>
+                  {f === 'all' ? `All (${counts.all})` :
+                   f === 'running' ? `Running (${counts.running})` :
+                   f === 'done' ? `Done (${counts.done})` :
+                   `Errors (${counts.error})`}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+
+        {/* Source insights — which sources produce companies, and which convert */}
+        {showInsights && (
+          <div className="mb-5 rounded-2xl px-5 py-4"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
+                Which sources earn their keep
+              </span>
+              <span className="text-xs" style={{ color: 'var(--subtle)' }}>
+                pushed = sent to Pipedrive from a longlist
+              </span>
+            </div>
+            {insights === null ? (
+              <div className="text-xs py-2" style={{ color: 'var(--subtle)' }}>Loading…</div>
+            ) : insights.length === 0 ? (
+              <div className="text-xs py-2" style={{ color: 'var(--subtle)' }}>No longlist data yet.</div>
+            ) : (
+              <div className="grid gap-1.5">
+                {insights.map(s => (
+                  <div key={s.source} className="grid items-center gap-3 text-xs"
+                    style={{ gridTemplateColumns: '170px 1fr 95px 75px' }}>
+                    <span className="truncate font-medium" style={{ color: 'var(--text)' }} title={s.source}>
+                      {s.source}
+                    </span>
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
+                      <div className="h-full rounded-full"
+                        style={{ width: `${Math.max(2, (s.count / insights[0].count) * 100)}%`, background: 'var(--navy)' }} />
+                    </div>
+                    <span style={{ color: 'var(--muted)' }}>{s.count} companies</span>
+                    <span style={{ color: s.pushed > 0 ? 'var(--teal)' : 'var(--subtle)', fontWeight: s.pushed > 0 ? 600 : 400 }}>
+                      {s.pushed > 0 ? `${s.pushed} pushed` : '—'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Trigger feedback toast */}
         {triggerMsg && (

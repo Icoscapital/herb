@@ -22,6 +22,7 @@ type Company = {
   stage: string | null; score: number | null
   linkedin: string | null; notes: string | null
   source: string | null
+  deep_dive?: string | null
 }
 type Run = {
   id: string; theme: string; status: string
@@ -31,6 +32,9 @@ type Run = {
   result_count: number | null
   current_round: number | null
   slug: string | null
+  watch?: boolean
+  icos_fit?: boolean
+  progress?: string | null
 }
 
 const PAGE_SIZE = 10
@@ -178,6 +182,12 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const [addingManual, setAddingManual] = useState(false)
   // Mark complete
   const [completing, setCompleting] = useState(false)
+  // Score Icos Fit later (runs whose scoring was skipped at submission)
+  const [scoringState, setScoringState] = useState<'idle' | 'requesting' | 'queued'>('idle')
+  // Watch mode toggle
+  const [watchSaving, setWatchSaving] = useState(false)
+  // Deep-dive expanded rows
+  const [expandedDd, setExpandedDd] = useState<Set<string>>(new Set())
   // Edit & re-run
   const [editMode, setEditMode] = useState(false)
   const [editText, setEditText] = useState('')
@@ -415,6 +425,48 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     }
   }
 
+  const requestScoring = async () => {
+    setScoringState('requesting')
+    try {
+      const res = await authedFetch('/api/score-run', {
+        method: 'POST',
+        body: JSON.stringify({ run_id: params.id }),
+      })
+      const json = await res.json()
+      if (json.ok) {
+        setScoringState('queued')
+        setRun(r => r ? { ...r, progress: 'Icos Fit scoring queued…' } : r)
+      } else {
+        alert(json.error || 'Could not start scoring')
+        setScoringState('idle')
+      }
+    } catch (e: any) {
+      alert(String(e?.message ?? e))
+      setScoringState('idle')
+    }
+  }
+
+  const toggleWatch = async () => {
+    if (!run) return
+    setWatchSaving(true)
+    const next = !(run as any).watch
+    const { error } = await supabase.from('herb_runs').update({ watch: next }).eq('id', params.id)
+    if (error) {
+      alert('Could not update watch (has the 20260713 migration been applied?): ' + error.message)
+    } else {
+      setRun(r => r ? { ...r, watch: next } as any : r)
+    }
+    setWatchSaving(false)
+  }
+
+  const toggleDd = (id: string) => {
+    setExpandedDd(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
   const markComplete = async () => {
     if (!run) return
     setCompleting(true)
@@ -465,9 +517,9 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const download = async () => {
     if (!run || companies.length === 0) return
     setDownloading(true)
-    const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'score', 'source', 'notes'] as const
-    const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Score', 'Source', 'Notes']
-    const colWidths = [25, 60, 35, 35, 14, 14, 8, 20, 60]
+    const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'score', 'source', 'notes', 'deep_dive'] as const
+    const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Score', 'Source', 'Notes', 'Deep Dive']
+    const colWidths = [25, 60, 35, 35, 14, 14, 8, 20, 60, 80]
     const rows = companies.map(c => cols.map(k => c[k] ?? ''))
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
     // Column widths
@@ -475,7 +527,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     // Freeze top row
     ws['!freeze'] = { xSplit: 0, ySplit: 1 }
     // Auto-filter
-    ws['!autofilter'] = { ref: `A1:I1` }
+    ws['!autofilter'] = { ref: `A1:J1` }
     // Bold + navy headers
     for (let c = 0; c < headers.length; c++) {
       const cell = XLSX.utils.encode_cell({ r: 0, c })
@@ -550,6 +602,44 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
           >
             {editMode ? '✕ cancel' : '✎ edit'}
           </button>
+          {/* Score Icos Fit — only for completed runs with unscored companies */}
+          {['DONE', 'EMAILED', 'COMPLETED'].includes(run.status) && companies.length > 0
+            && companies.every(c => c.score === null) && (
+            <button
+              onClick={requestScoring}
+              disabled={scoringState !== 'idle'}
+              title="Run Icos Fit scoring (0–10) on this longlist"
+              className="flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full transition-all"
+              style={{
+                border: '1px solid var(--teal)', color: 'var(--teal)',
+                background: scoringState === 'queued' ? 'var(--teal-light)' : 'transparent',
+                cursor: scoringState === 'idle' ? 'pointer' : 'default',
+              }}
+            >
+              {scoringState === 'idle' ? '★ Score Icos Fit'
+                : scoringState === 'requesting' ? 'Starting…'
+                : '✓ Scoring queued (~few min)'}
+            </button>
+          )}
+          {/* Watch toggle — monthly re-run with only-new-companies diff */}
+          {['DONE', 'EMAILED', 'COMPLETED'].includes(run.status) && (
+            <button
+              onClick={toggleWatch}
+              disabled={watchSaving}
+              title={(run as any).watch
+                ? 'Watching: re-runs monthly, emails only NEW companies. Click to stop.'
+                : 'Watch this search: re-run monthly, email only NEW companies'}
+              className="flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full transition-all"
+              style={{
+                border: (run as any).watch ? '1.5px solid var(--teal)' : '1px solid var(--border)',
+                color: (run as any).watch ? 'var(--teal)' : 'var(--muted)',
+                background: (run as any).watch ? 'var(--teal-light)' : 'transparent',
+                fontWeight: (run as any).watch ? 600 : 400,
+              }}
+            >
+              {watchSaving ? '…' : (run as any).watch ? '👁 Watching' : '👁 Watch monthly'}
+            </button>
+          )}
         </div>
 
         {/* Pipedrive push toast */}
@@ -663,12 +753,13 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
               const alreadyLinked = pdDealId !== null || isLost || pdStatusLower.includes('open') || pdStatusLower.includes('won')
 
               return (
-                <div key={co.id}
+                <div key={co.id}>
+                <div
                   className="grid px-4 items-center transition-colors"
                   style={{
                     gridTemplateColumns: '2fr 1.4fr 52px 90px 90px 80px 72px',
                     gap: '12px',
-                    borderBottom: i < pageCompanies.length - 1 ? '1px solid var(--border)' : 'none',
+                    borderBottom: (i < pageCompanies.length - 1 && !expandedDd.has(co.id)) ? '1px solid var(--border)' : 'none',
                     opacity: isExcluded ? 0.35 : 1,
                     transition: 'opacity 0.15s, background 0.1s',
                     minHeight: '56px',
@@ -712,6 +803,15 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                           title={co.description}>
                           {co.description.slice(0, 70)}{co.description.length > 70 ? '…' : ''}
                         </p>
+                      )}
+                      {co.deep_dive && (
+                        <button
+                          onClick={e => { e.stopPropagation(); toggleDd(co.id) }}
+                          className="text-xs mt-0.5 transition-all"
+                          style={{ color: 'var(--teal)', fontWeight: 500, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+                        >
+                          {expandedDd.has(co.id) ? '▾ Hide deep dive' : '▸ Deep dive'}
+                        </button>
                       )}
                     </div>
                   </div>
@@ -813,6 +913,18 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
                       {isExcluded ? '✕ Out' : 'Exclude'}
                     </button>
                   </div>
+                </div>
+
+                {/* Deep-dive expansion panel */}
+                {co.deep_dive && expandedDd.has(co.id) && (
+                  <div className="px-4 pb-3"
+                    style={{ borderBottom: i < pageCompanies.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    <div className="text-xs rounded-xl px-4 py-3 whitespace-pre-wrap leading-relaxed"
+                      style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', marginLeft: '42px' }}>
+                      {co.deep_dive}
+                    </div>
+                  </div>
+                )}
                 </div>
               )
             })}

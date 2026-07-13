@@ -21,9 +21,14 @@ const EXAMPLES = [
   'Alt-protein using fermentation, not yet in our pipeline, global',
 ]
 
+const STAGE_OPTIONS = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C+'] as const
+
 export default function NewMandatePage() {
   const [text, setText] = useState('')
   const [mode, setMode] = useState<'COMPREHENSIVE' | 'EU_ONLY'>('COMPREHENSIVE')
+  const [stages, setStages] = useState<string[]>(['Series A', 'Series B'])
+  const [icosFit, setIcosFit] = useState(true)
+  const [seedText, setSeedText] = useState('')
   const [files, setFiles] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
@@ -111,10 +116,15 @@ export default function NewMandatePage() {
       geography: mode === 'EU_ONLY' ? 'Europe' : 'Global',
       // Stored as legacy DEEP/STANDARD to satisfy the herb_runs_search_mode_check
       // constraint; the prompt + UI treat these as Comprehensive / European-only.
-      stage: 'Series A/B', search_mode: mode === 'EU_ONLY' ? 'STANDARD' : 'DEEP',
+      stage: stages.length ? stages.join(', ') : 'Series A/B',
+      search_mode: mode === 'EU_ONLY' ? 'STANDARD' : 'DEEP',
       status: 'PENDING', current_round: 1,
       attachments: files.length ? files.map(f => ({ name: f.name, url: f.url })) : null,
       created_at: new Date().toISOString(),
+      // Only include the new columns when they deviate from defaults, so the
+      // insert keeps working until the 20260713 migration is applied.
+      ...(icosFit ? {} : { icos_fit: false }),
+      ...(seedText.trim() ? { seed_companies: seedText.trim() } : {}),
     }).select('id').single()
     if (e) { setError('Could not submit: ' + e.message); setSubmitting(false); return }
 
@@ -281,6 +291,64 @@ export default function NewMandatePage() {
                   )
                 })}
               </div>
+            </div>
+
+            {/* Stage chips */}
+            <div className="px-4 pt-3 pb-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-medium" style={{ color: 'var(--subtle)' }}>Stage</span>
+                {STAGE_OPTIONS.map(s => {
+                  const on = stages.includes(s)
+                  return (
+                    <button key={s} type="button" disabled={submitting}
+                      onClick={() => setStages(prev => on ? prev.filter(x => x !== s) : [...prev, s])}
+                      className="text-xs px-2.5 py-1 rounded-full transition-all"
+                      style={{
+                        background: on ? 'var(--teal-light)' : 'var(--bg)',
+                        border: on ? '1.5px solid var(--teal)' : '1px solid var(--border)',
+                        color: on ? 'var(--teal)' : 'var(--muted)',
+                        fontWeight: on ? 600 : 400,
+                        cursor: submitting ? 'default' : 'pointer',
+                      }}>
+                      {on ? '✓ ' : ''}{s}
+                    </button>
+                  )
+                })}
+                {stages.length === 0 && (
+                  <span className="text-xs" style={{ color: '#b7600a' }}>none selected — defaults to Series A/B</span>
+                )}
+              </div>
+            </div>
+
+            {/* Seed companies — known examples that define the thesis */}
+            <div className="px-4 pt-2 pb-1">
+              <input
+                value={seedText}
+                onChange={e => setSeedText(e.target.value)}
+                disabled={submitting}
+                placeholder="Companies you already know that fit (comma-separated, e.g. Vernaio, Ethos AI) — optional but sharpens the search"
+                className="w-full text-xs px-3 py-2 rounded-xl outline-none transition-all"
+                style={{
+                  background: 'var(--bg)',
+                  border: seedText.trim() ? '1.5px solid var(--teal)' : '1px solid var(--border)',
+                  color: 'var(--text)', caretColor: 'var(--teal)',
+                }}
+              />
+            </div>
+
+            {/* Icos Fit toggle */}
+            <div className="px-4 pt-2 pb-1">
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none" style={{ color: 'var(--muted)' }}>
+                <input type="checkbox" checked={icosFit} disabled={submitting}
+                  onChange={e => setIcosFit(e.target.checked)}
+                  style={{ accentColor: 'var(--teal)' }} />
+                <span style={{ fontWeight: 500, color: icosFit ? 'var(--teal)' : 'var(--muted)' }}>
+                  Score Icos Fit (0–10)
+                </span>
+                <span style={{ color: 'var(--subtle)' }}>
+                  — thesis-fit scoring of every screened company. Skip for a faster raw longlist; you can score later from the results page.
+                </span>
+              </label>
             </div>
 
             <div className="flex items-center justify-between px-4 py-3">

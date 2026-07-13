@@ -53,6 +53,10 @@ export async function POST(req: NextRequest) {
         status: 'PENDING',
         current_round: nextRound,
         created_at: new Date().toISOString(),
+        // Inherit v2 options when present (tolerates pre-migration rows)
+        ...(orig.icos_fit === false ? { icos_fit: false } : {}),
+        ...(orig.seed_companies ? { seed_companies: orig.seed_companies } : {}),
+        ...(orig.watch ? { watch: true } : {}),
       })
       .select('id, slug')
       .single()
@@ -87,6 +91,23 @@ export async function POST(req: NextRequest) {
     } catch (fileErr) {
       // Non-fatal — herb_files may not exist yet
       console.warn('[feedback] herb_files copy error (non-fatal):', fileErr)
+    }
+
+    // Cross-mandate memory: record the author's explicit rejections so future
+    // runs know these were seen AND excluded. Non-fatal pre-migration.
+    if (excluded_companies?.length) {
+      try {
+        const keys = excluded_companies.map((n: string) => n.toLowerCase().trim()).filter(Boolean)
+        if (keys.length) {
+          await sb.from('herb_seen').update({ last_status: 'excluded' }).in('company_key', keys)
+          // also match rows keyed by domain whose *name* matches
+          for (const n of excluded_companies) {
+            await sb.from('herb_seen').update({ last_status: 'excluded' }).ilike('name', n.trim())
+          }
+        }
+      } catch (seenErr) {
+        console.warn('[feedback] herb_seen exclusion update skipped:', seenErr)
+      }
     }
 
     return NextResponse.json({ ok: true, new_run_id: newRun.id, slug: newRun.slug })

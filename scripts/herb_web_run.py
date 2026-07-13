@@ -57,12 +57,11 @@ def get_mandate_by_id(run_id: str) -> list:
     Returns a list (possibly empty) for symmetry with get_pending_mandates().
     """
     sb = _get_sb()
+    # select("*") so optional v2 columns (icos_fit, seed_companies, watch)
+    # flow through when present without breaking pre-migration databases.
     result = (
         sb.table("herb_runs")
-        .select(
-            "id,theme,geography,stage,search_mode,special_instructions,"
-            "submitted_by_email,submitted_by_name,attachments,created_at,slug,status"
-        )
+        .select("*")
         .eq("id", run_id)
         .limit(1)
         .execute()
@@ -155,6 +154,10 @@ def store_results(run_id: str, companies: list) -> None:
             return token
         return ""
 
+    # Include deep_dive only when at least one company has it (pre-migration
+    # databases lack the column). PostgREST bulk inserts need uniform keys,
+    # so it's all rows or none.
+    any_deep_dive = any(c.get("deep_dive") for c in companies)
     rows = [
         {
             "run_id": run_id,
@@ -167,6 +170,7 @@ def store_results(run_id: str, companies: list) -> None:
             "score": c.get("score"),
             "source": _clean(c.get("source")),
             "notes": _clean(c.get("notes")),
+            **({"deep_dive": _clean(c.get("deep_dive"))} if any_deep_dive else {}),
         }
         for c in companies
         if c.get("name")

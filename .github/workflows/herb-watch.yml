@@ -1,0 +1,31 @@
+name: Herb Watch Tick (monthly)
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'   # 1st of every month, 06:00 UTC
+  workflow_dispatch: {}    # manual trigger for testing
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL:  ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GH_PAT:                    ${{ secrets.GH_PAT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: pip install -q -r requirements.txt
+
+      - name: Re-run watched mandates
+        run: python -m scripts.watch_tick
