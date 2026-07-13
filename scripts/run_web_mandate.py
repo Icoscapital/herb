@@ -78,6 +78,15 @@ def finish_run(ctx: dict, companies: list[dict]) -> None:
     existing = sb.table("herb_runs").select("status").eq("id", run_id).single().execute()
     already_emailed = (existing.data or {}).get("status") == "EMAILED"
 
+    # Deterministic website check: open every URL, blank dead ones, note
+    # suspicious ones, follow redirects to the canonical domain. Non-fatal.
+    try:
+        update_progress(run_id, f"Verifying {len(companies)} websites")
+        from .verify_websites import verify_companies
+        companies = verify_companies(companies)
+    except Exception as e:
+        print(f"[run-web-mandate] website verification failed (non-fatal): {e}")
+
     store_results(run_id, companies)
     duration = int(time.time() - ctx["t_start"])
     mark_done(run_id, len(companies), duration)

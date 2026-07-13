@@ -124,7 +124,10 @@ Search sub-agent config: `subagent_type=general-purpose`, `model=haiku`. Sub-age
 Search {source} for: theme={theme}, geography={geography}, stage={stage}.
 QUERIES: {query}
 LIMITS: ≤5 WebSearch calls total. On HTTP 429 sleep 30s, retry once; if still 429 output "{source} | rate-limited" and stop.
-OUTPUT (strict): pipe-delimited table. Cols: Company|Domain|HQ Country|Stage|Raised|Last Round|Investors|Tech|Sectors|URL|Why Now.
+OUTPUT (strict): pipe-delimited table. Cols: Company|Domain|HQ Country|FTE|Stage|Raised|Last Round|Investors|Tech|Sectors|URL|Why Now.
+FTE = employee count or LinkedIn bucket exactly as shown ("12", "11-50", "51-200") on the page you're
+already reading — LinkedIn shows it in the company header, Crunchbase in the About box. Do NOT spend
+extra searches on it; "Unknown" if the page doesn't show it.
 DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a blank, so when unsure write "Unknown"):
 - Domain = the company's OWN primary website as a single bare domain (e.g. "acme.com"). No protocol, no path, no "www.". Exactly ONE domain — no parentheses, "also/likely/maybe/?", or comma-separated alternatives.
 - DO NOT GUESS THE DOMAIN FROM THE COMPANY NAME. Inventing "acmebio.com" for "Acme Bio", or "solivis.co.kr" for a Korean "Solivis", is the #1 cause of wrong links. The domain must come from an actual source, not from transforming the name + a guessed TLD.
@@ -158,7 +161,12 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    Drop (blank) only domains that are clearly a parent/subsidiary/university/
    accelerator/VC-portfolio/LinkedIn/Crunchbase/news page, or that the search can't
    confirm. A blank is better than a wrong link, but a findable company should NOT
-   be left blank.
+   be left blank. (A deterministic HTTP check also runs inside `finish_run` — it
+   opens every stored website, blanks unreachable ones and follows redirects to the
+   canonical domain — but it can't catch a *live* site that belongs to the wrong
+   company, so this LLM pass is still the one that prevents wrong links.)
+   While you're on a company's LinkedIn page during this pass, capture its employee
+   bucket if the row's FTE is still Unknown.
 3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date].
 4. Pre-screen — for each row check the gate inline below. Open/Won/Lost rows stay but skip icos-fit-eval.
 5. **Icos Fit scoring — run on Opus for sharper judgment.** This is the ONE step that
@@ -167,7 +175,7 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    `score=None` and are skipped). Dispatch scoring sub-agents —
    `subagent_type=general-purpose`, **`model=opus`** — in batches of ~6 companies each
    (low-volume, reasoning-heavy; Opus changes which companies surface as top picks, so
-   it's worth it here). Give each agent the row's {name, sector, stage, business model,
+   it's worth it here). Give each agent the row's {name, sector, stage, FTE, business model,
    technology, HQ, funding, why-now} plus this rubric:
 
    ```
@@ -195,8 +203,14 @@ A company passes pre-screen if **all** of:
 - **Funding stage** is Series A or Series B (or Unknown but plausible from context)
 - **Business model** is B2B or Mixed (not pure B2C)
 - **At least one LP flag** = Yes or Maybe — LPs are: Nouryon (specialty chemicals), Bühler (food/grain), FrieslandCampina (dairy/nutrition)
+- **Maturity (min 10 FTE)** — if FTE is known and below 10 (a count `<10`, or LinkedIn
+  bucket "1-10"/"2-10"): **Fail — too early (<10 FTE)** when the mandate stage is
+  Series A/B. When the mandate explicitly includes Seed/pre-seed, do NOT fail on this —
+  tag notes `Early (<10 FTE)` instead. FTE **Unknown never fails** this check (missing
+  LinkedIn data must not kill a real company).
 
 Companies that fail the gate stay on the longlist but with notes "Pre-screen: Fail — [reason]" and are NOT scored.
+For every row where FTE is known, prepend `FTE: <value>` to its `notes` so headcount shows on the dashboard and Excel.
 
 Call `update_progress(ctx['run_id'], <message>)` at each checkpoint.
 
