@@ -1,0 +1,4762 @@
+{
+ "passed": [
+  {
+   "name": "Rebus Biosystems",
+   "domain": "rebusbio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Biomanufacturing",
+   "sectors": "Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Onego Bio",
+   "domain": "onego.bio",
+   "hq": "Finland",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Precision fermentation for egg proteins",
+   "sectors": "Alternative protein, Biotech",
+   "why_now": "Egg protein production without poultry farming",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Perfect Day",
+   "domain": "perfectday.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Precision fermentation for milk proteins",
+   "sectors": "Alternative protein, Dairy",
+   "why_now": "Commercial-scale precision fermentation viability",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Unibio",
+   "domain": "unibio.dk",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Biotech fermentation",
+   "sectors": "Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Imagindairy",
+   "domain": "imagindairy.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Precision fermentation for dairy proteins",
+   "sectors": "Alternative protein, Dairy, Biotech",
+   "why_now": "Cost-effective animal-free dairy proteins",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Shiru",
+   "domain": "shiru.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "AI-driven protein discovery and development",
+   "sectors": "Biotech, Alternative protein",
+   "why_now": "AI/bioinformatics-powered protein engineering",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "String Bio",
+   "domain": "stringbio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Gas fermentation for sustainable ingredients",
+   "sectors": "Biotech, Alternative protein",
+   "why_now": "Advanced gas fermentation technology",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Formo",
+   "domain": "formo.bio",
+   "hq": "Germany",
+   "fte": "Unknown",
+   "stage": "Series B",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Precision fermentation for milk proteins",
+   "sectors": "Biotech, Dairy, Alternative protein",
+   "why_now": "Milk protein ingredients replacing dairy",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "MycoTechnology",
+   "domain": "mycoiq.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Fungal fermentation for food ingredients",
+   "sectors": "Biotech, Food ingredients",
+   "why_now": "Natural flavor enhancers via mushroom fermentation",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Calysta",
+   "domain": "calysta.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Fermentation and biomanufacturing",
+   "sectors": "Biotech, Alternative protein",
+   "why_now": "Unknown",
+   "sources": [
+    "seed-expansion"
+   ],
+   "source_tag": "seed-expansion",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Vivici",
+   "domain": "vivici.com",
+   "hq": "Netherlands",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "EUR32.5M",
+   "last_round": "Feb 2025",
+   "investors": [],
+   "tech": "Precision fermentation, dairy proteins",
+   "sectors": "Food/Biotech",
+   "why_now": "Launching animal-free dairy proteins",
+   "sources": [
+    "Crunchbase"
+   ],
+   "source_tag": "Crunchbase",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Culture Biosciences",
+   "domain": "culturebiosciences.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Bioreactor platform, fermentation-as-a-service",
+   "sectors": "Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "Crunchbase"
+   ],
+   "source_tag": "Crunchbase",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Debut Biotech",
+   "domain": "debutbiotech.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Microbial fermentation biotech",
+   "sectors": "Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "Crunchbase"
+   ],
+   "source_tag": "Crunchbase",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Sustainable Bioproducts",
+   "domain": "naturesfynd.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "$33M",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Unknown",
+   "sectors": "Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "Crunchbase"
+   ],
+   "source_tag": "Crunchbase",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Motif Ingredients",
+   "domain": "madewithmotif.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "$90M",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Unknown",
+   "sectors": "Biotech, Food",
+   "why_now": "Unknown",
+   "sources": [
+    "Crunchbase"
+   ],
+   "source_tag": "Crunchbase",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Eden Brew",
+   "domain": "edenbrew.com.au",
+   "hq": "Australia",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "$16M",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Precision fermentation dairy",
+   "sectors": "Food/Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "Crunchbase"
+   ],
+   "source_tag": "Crunchbase",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Cauldron Ferm",
+   "domain": "cauldronferm.com",
+   "hq": "Australia",
+   "fte": "Unknown",
+   "stage": "Series A2",
+   "raised": "$13.25M",
+   "last_round": "2025",
+   "investors": [],
+   "tech": "Continuous hyper-fermentation",
+   "sectors": "Biotech, Fermentation",
+   "why_now": "Industrial biotech scaling with proprietary hyper-fermentation",
+   "sources": [
+    "X/Twitter"
+   ],
+   "source_tag": "X/Twitter",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Pacifico Biolabs",
+   "domain": null,
+   "hq": "Germany",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "EUR7M",
+   "last_round": "2024-2025",
+   "investors": [
+    "Stray Dog Capital, TGFS, Sprout & About Ventures, Simon Capital, FoodLabs"
+   ],
+   "tech": "Mycelium fermentation protein",
+   "sectors": "Biotech, Sustainable Protein",
+   "why_now": "Repurposing brewery infrastructure for protein production",
+   "sources": [
+    "X/Twitter"
+   ],
+   "source_tag": "X/Twitter",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Standing Ovation",
+   "domain": "standing-ovation.co",
+   "hq": "France",
+   "fte": "Unknown",
+   "stage": "Series B",
+   "raised": "$34.2M",
+   "last_round": "2026",
+   "investors": [
+    "Bpifrance Ecotechnologies 2, Credit Mutuel Innovation"
+   ],
+   "tech": "Precision fermentation",
+   "sectors": "Biotech, Food",
+   "why_now": "Government-backed scaling for alternative proteins",
+   "sources": [
+    "X/Twitter"
+   ],
+   "source_tag": "X/Twitter",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Liberation Bioindustries",
+   "domain": "liberation.bio",
+   "hq": "United States",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "$60M",
+   "last_round": "2025",
+   "investors": [],
+   "tech": "Fermentation biomanufacturing",
+   "sectors": "Biotech, Industrial Biotech",
+   "why_now": "Building fermentation facilities in US and Saudi Arabia",
+   "sources": [
+    "X/Twitter"
+   ],
+   "source_tag": "X/Twitter",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "C16 Biosciences",
+   "domain": "c16bio.com",
+   "hq": "USA",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "$20M",
+   "last_round": "2020",
+   "investors": [
+    "Breakthrough Energy Ventures, Waldencast, Y Combinator, DCVC, Sound Ventures, AME Cloud Ventures"
+   ],
+   "tech": "Precision fermentation",
+   "sectors": "Sustainable fats/oils, consumer products",
+   "why_now": "Scaling bio-based palm oil alternative",
+   "sources": [
+    "LinkedIn"
+   ],
+   "source_tag": "LinkedIn",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Sennos",
+   "domain": "sennos.com",
+   "hq": "USA",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Precision fermentation, AI sensing",
+   "sectors": "Industrial biotech monitoring",
+   "why_now": "Real-time fermentation analytics platform",
+   "sources": [
+    "LinkedIn"
+   ],
+   "source_tag": "LinkedIn",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Sable Fermentation, Inc.",
+   "domain": "sablefermentation.com",
+   "hq": "USA",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Continuous fermentation tech",
+   "sectors": "Industrial biotech",
+   "why_now": "Continuous fermentation platform",
+   "sources": [
+    "LinkedIn"
+   ],
+   "source_tag": "LinkedIn",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Biosynth",
+   "domain": "biosynth.com",
+   "hq": "Europe",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Bioprocessing",
+   "sectors": "Biotech services",
+   "why_now": "Unknown",
+   "sources": [
+    "LinkedIn"
+   ],
+   "source_tag": "LinkedIn",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "BioNukleo",
+   "domain": "bionukleo.com",
+   "hq": "Germany",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Bioprocessing engineering",
+   "sectors": "Industrial biotech",
+   "why_now": "TU Berlin spin-off",
+   "sources": [
+    "LinkedIn"
+   ],
+   "source_tag": "LinkedIn",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "All G",
+   "domain": "allg.com",
+   "hq": "Australia",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Precision fermentation",
+   "sectors": "Milk proteins",
+   "why_now": "Developing high-value proteins",
+   "sources": [
+    "LinkedIn"
+   ],
+   "source_tag": "LinkedIn",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Melt & Marble",
+   "domain": "meltandmarble.com",
+   "hq": "Sweden",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "EUR7.3M/2.5M",
+   "last_round": "2024",
+   "investors": [
+    "Industrifonden"
+   ],
+   "tech": "Precision fermentation, designer fats",
+   "sectors": "Food/Biotech, Cosmetics",
+   "why_now": "EIC Accelerator March 2024 / scaling for 2026 launches",
+   "sources": [
+    "Conferences EU"
+   ],
+   "source_tag": "Conferences EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Enifer",
+   "domain": "enifer.com",
+   "hq": "Finland",
+   "fte": "Unknown",
+   "stage": "Series B",
+   "raised": "EUR36-60M",
+   "last_round": "2024",
+   "investors": [],
+   "tech": "Mycoprotein (PEKILO), fungal fermentation",
+   "sectors": "Food/Biotech",
+   "why_now": "VTT spin-off; opening first commercial mycoprotein plant 2025",
+   "sources": [
+    "Conferences EU"
+   ],
+   "source_tag": "Conferences EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Esencia Foods",
+   "domain": "esenciafoods.co",
+   "hq": "Germany",
+   "fte": "Unknown",
+   "stage": "Pre-Series",
+   "raised": "EUR50K",
+   "last_round": "2024",
+   "investors": [],
+   "tech": "Mycelium seafood analogues",
+   "sectors": "Food/Biotech",
+   "why_now": "EIT Food 2024 winner",
+   "sources": [
+    "Conferences EU"
+   ],
+   "source_tag": "Conferences EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Clean Food Group",
+   "domain": "cleanfood.group",
+   "hq": "UK",
+   "fte": "Unknown",
+   "stage": "Pre-Series",
+   "raised": "EUR30K",
+   "last_round": "2024",
+   "investors": [],
+   "tech": "Waste bread fermentation, palm oil alternative",
+   "sectors": "Food/Biotech",
+   "why_now": "EIT Food 2024 winner",
+   "sources": [
+    "Conferences EU"
+   ],
+   "source_tag": "Conferences EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "BIOCOLL",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Animal-free collagen, fungal fermentation",
+   "sectors": "Food/Biotech",
+   "why_now": "Slush 2025 participant",
+   "sources": [
+    "Conferences EU"
+   ],
+   "source_tag": "Conferences EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Spiber",
+   "domain": "spiber.inc",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Late-stage",
+   "raised": "$489M total / $65M latest",
+   "last_round": "April 2024",
+   "investors": [
+    "Carlyle"
+   ],
+   "tech": "Microbial-fermentation synthetic biology, Brewed Protein",
+   "sectors": "Biomaterials, textiles",
+   "why_now": "Climate-friendly alternatives; Japan positioning as fermentation biotech hub",
+   "sources": [
+    "Conferences JP"
+   ],
+   "source_tag": "Conferences JP",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Fermeate",
+   "domain": null,
+   "hq": "US (California)",
+   "fte": "Unknown",
+   "stage": "Seed",
+   "raised": "$2M",
+   "last_round": "2026",
+   "investors": [],
+   "tech": "Optogenetic fermentation control",
+   "sectors": "Industrial Biotech",
+   "why_now": "Step-change in precision fermentation economics",
+   "sources": [
+    "Conferences US"
+   ],
+   "source_tag": "Conferences US",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Plantible",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Plant-based protein fermentation",
+   "sectors": "Food/Nutrition",
+   "why_now": "IFT FIRST 2025 Grand Prize winner",
+   "sources": [
+    "Conferences US"
+   ],
+   "source_tag": "Conferences US",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Capro-X",
+   "domain": "capro-x.com",
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Seed",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Unknown",
+   "sectors": "Industrial Biotech",
+   "why_now": "IndieBio NY 2025",
+   "sources": [
+    "Conferences US"
+   ],
+   "source_tag": "Conferences US",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Mothership Materials",
+   "domain": "mothershipmaterials.com",
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Seed",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Unknown",
+   "sectors": "Advanced Materials",
+   "why_now": "IndieBio NY 2025",
+   "sources": [
+    "Conferences US"
+   ],
+   "source_tag": "Conferences US",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Chitose",
+   "domain": "chitose-bio.com",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Continuous fermentation (biopharma, bio jet-fuel, algae)",
+   "sectors": "Biotech, fermentation, biofuels",
+   "why_now": "Japan-based fermentation heritage play",
+   "sources": [
+    "Tech-transfer JP"
+   ],
+   "source_tag": "Tech-transfer JP",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Berkeley Yeast",
+   "domain": "berkeleyyeast.com",
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "$12.1M",
+   "last_round": "May 2023",
+   "investors": [
+    "Anterra Capital, USDA, HHS, NSF, Collab+Currency"
+   ],
+   "tech": "Bioengineered yeast strains for fermentation",
+   "sectors": "Fermentation, Biotech, Alternative Proteins",
+   "why_now": "UC Berkeley spinout; enables continuous fermentation optimization",
+   "sources": [
+    "Tech-transfer US"
+   ],
+   "source_tag": "Tech-transfer US",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "hydroGel",
+   "domain": null,
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Seed",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Polymeric resins for fermentation product purification",
+   "sectors": "Fermentation, Biotech",
+   "why_now": "MIT spinout; purification platform",
+   "sources": [
+    "Tech-transfer US"
+   ],
+   "source_tag": "Tech-transfer US",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Infinite Roots",
+   "domain": "infiniteroots.com",
+   "hq": "Germany",
+   "fte": "Unknown",
+   "stage": "Series B",
+   "raised": "$58M",
+   "last_round": "Jan 2024",
+   "investors": [
+    "EIC-backed"
+   ],
+   "tech": "Mycelium-based protein",
+   "sectors": "Alternative protein",
+   "why_now": "Mycelium scaling as alternative protein solution",
+   "sources": [
+    "Press EU"
+   ],
+   "source_tag": "Press EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Abolis Biotechnologies",
+   "domain": "abolis.fr",
+   "hq": "France",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "EUR35M",
+   "last_round": "Sep 2024",
+   "investors": [],
+   "tech": "Microbial ecosystem engineering for biomanufacturing",
+   "sectors": "Biotech, biomanufacturing",
+   "why_now": "Scaling microbial manufacturing platforms",
+   "sources": [
+    "Press EU"
+   ],
+   "source_tag": "Press EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "The Protein Brewery",
+   "domain": "theproteinbrewery.com",
+   "hq": "Netherlands",
+   "fte": "Unknown",
+   "stage": "Series B",
+   "raised": "EUR30M",
+   "last_round": "Unknown",
+   "investors": [
+    "Invest-NL, Novo Holdings"
+   ],
+   "tech": "Precision fermentation proteins",
+   "sectors": "Alternative protein",
+   "why_now": "Scaling fermentation-based protein production",
+   "sources": [
+    "Press EU"
+   ],
+   "source_tag": "Press EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Again",
+   "domain": "again.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "$43M",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "CO2 conversion to carbon-negative chemicals via biomanufacturing",
+   "sectors": "Climate tech, biomanufacturing",
+   "why_now": "Scaling CO2-to-chemicals transformation",
+   "sources": [
+    "Press EU"
+   ],
+   "source_tag": "Press EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Fermelanta",
+   "domain": "fermelanta.com",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "JPY4.8B/2B",
+   "last_round": "Sep 2025",
+   "investors": [
+    "SMBC Venture Capital, Angel Bridge, Keio Innovation Initiative, Norinchukin Capital, Beyond Next Ventures, Hokuriku Startup Community Fund, Mitsubishi UFJ Capital, Miyako Capital, Universal Materials Incubator"
+   ],
+   "tech": "Synthetic biology; microbial fermentation",
+   "sectors": "Plant compounds; agrochemicals; bioactive ingredients",
+   "why_now": "Pilot plant 2026; Deep Tech government support",
+   "sources": [
+    "Press JP"
+   ],
+   "source_tag": "Press JP",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Helaina",
+   "domain": "myhelaina.com",
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "$20M",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Precision fermentation (milk proteins)",
+   "sectors": "Infant formula",
+   "why_now": "Unknown",
+   "sources": [
+    "Press US"
+   ],
+   "source_tag": "Press US",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Pando Bioscience",
+   "domain": "pando.bio",
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "AI-driven enzyme engineering with high-throughput screening",
+   "sectors": "Biomanufacturing",
+   "why_now": "Accelerates enzyme optimization for fermentation-dependent biopharma",
+   "sources": [
+    "Accelerator alumni"
+   ],
+   "source_tag": "Accelerator alumni",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Ligo Biosciences",
+   "domain": "ligo.bio",
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Deep-learning enzyme design for cost reduction",
+   "sectors": "Industrial biotech, enzyme engineering",
+   "why_now": "AI-powered enzyme engineering for fermentation optimization",
+   "sources": [
+    "Accelerator alumni"
+   ],
+   "source_tag": "Accelerator alumni",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Differential Bio GmbH",
+   "domain": "differential.bio",
+   "hq": "Germany",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Robotic lab automation + AI for microbial growth",
+   "sectors": "Fermentation R&D",
+   "why_now": "Scalable fermentation process development via automation",
+   "sources": [
+    "Accelerator alumni"
+   ],
+   "source_tag": "Accelerator alumni",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Lygos",
+   "domain": "lygos.com",
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Microbial engineering for fermentation",
+   "sectors": "Industrial chemicals",
+   "why_now": "Biological fermentation production of chemicals from sugars",
+   "sources": [
+    "Accelerator alumni"
+   ],
+   "source_tag": "Accelerator alumni",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Bon Vivant",
+   "domain": null,
+   "hq": "France",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "EUR15M",
+   "last_round": "2024-25",
+   "investors": [
+    "Sofinnova Partners, Sparkfood, Captech Sante"
+   ],
+   "tech": "Precision fermentation",
+   "sectors": "Alternative dairy proteins",
+   "why_now": "Alt protein market growth",
+   "sources": [
+    "Non-English EU"
+   ],
+   "source_tag": "Non-English EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "FERMENTALG",
+   "domain": "fermentalg.com",
+   "hq": "France",
+   "fte": "Unknown",
+   "stage": "Series B",
+   "raised": "EUR12M",
+   "last_round": "2024-25",
+   "investors": [],
+   "tech": "Industrial fermentation",
+   "sectors": "Biotech/production",
+   "why_now": "Production scale-up phase",
+   "sources": [
+    "Non-English EU"
+   ],
+   "source_tag": "Non-English EU",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Afyren",
+   "domain": "afyren.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Bio-based chemicals",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Arzeda",
+   "domain": "arzeda.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Protein engineering",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Avantium",
+   "domain": "avantium.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Advanced materials, specialty chemicals",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Biosyntia",
+   "domain": "biosyntia.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners, ECBF"
+   ],
+   "tech": "Synthetic biology",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova/ECBF)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova/ECBF)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Biotalys",
+   "domain": "biotalys.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Biotech solutions",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "CelluComp",
+   "domain": "cellucomp.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Materials science",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "DNA Script",
+   "domain": "dnascript.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners, M Ventures"
+   ],
+   "tech": "Biotechnology manufacturing (DNA synthesis)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova/M Ventures)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova/M Ventures)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Elicit Plant",
+   "domain": "elicit-plant.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Plant-based bioprocessing",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "EnginZyme",
+   "domain": "enginzyme.com",
+   "hq": "Sweden",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners, Industrifonden"
+   ],
+   "tech": "Cell-free biomanufacturing",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova/Industrifonden)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova/Industrifonden)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "GFBiochemicals",
+   "domain": "gfbiochemicals.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Biochemical production",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Meiogenix",
+   "domain": "meiogenix.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Biotech innovation",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "MetGen",
+   "domain": "metgen.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Metabolic engineering (enzymes)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Micropep Technologies",
+   "domain": "micro-pep.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Peptide production",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Microphyt",
+   "domain": "microphyt.eu",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Microalgae solutions",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Novameat",
+   "domain": "novameat.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners, Astanor, Forbion"
+   ],
+   "tech": "Alternative protein (3D printing)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova/Astanor/Forbion)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova/Astanor/Forbion)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "P2 Science",
+   "domain": "p2science.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners, BASF Venture Capital"
+   ],
+   "tech": "Chemical synthesis",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova/BASF VC)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova/BASF VC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Prometheus Materials",
+   "domain": "prometheusmaterials.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Advanced materials (biomineralized cement)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Protera",
+   "domain": "proterabio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Protein engineering (AI)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Qorium",
+   "domain": "qorium.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Biotech platform (cultivated leather)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Synthace",
+   "domain": "synthace.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Bioprocessing automation software",
+   "sectors": "Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Verley",
+   "domain": "verley-food.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Sofinnova Partners"
+   ],
+   "tech": "Food/nutrition innovation",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Sofinnova)"
+   ],
+   "source_tag": "VC-portfolio (Sofinnova)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Heura",
+   "domain": "heurafoods.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "ECBF"
+   ],
+   "tech": "Plant-based food",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (ECBF)"
+   ],
+   "source_tag": "VC-portfolio (ECBF)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "VEGDOG",
+   "domain": "vegdog.de",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "ECBF"
+   ],
+   "tech": "Sustainable pet nutrition",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (ECBF)"
+   ],
+   "source_tag": "VC-portfolio (ECBF)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "NURITAS",
+   "domain": "nuritas.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "ECBF"
+   ],
+   "tech": "Food/Nutrition biotech (AI peptide discovery)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (ECBF)"
+   ],
+   "source_tag": "VC-portfolio (ECBF)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "PROTIX",
+   "domain": "protix.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "ECBF"
+   ],
+   "tech": "Insect protein alternative",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (ECBF)"
+   ],
+   "source_tag": "VC-portfolio (ECBF)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "eeden",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Forbion"
+   ],
+   "tech": "Textile recycling (biotech)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Forbion)"
+   ],
+   "source_tag": "VC-portfolio (Forbion)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Genomines",
+   "domain": "genomines.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Forbion"
+   ],
+   "tech": "Plant biotechnology (phytomining)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Forbion)"
+   ],
+   "source_tag": "VC-portfolio (Forbion)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "SOLASTA Bio",
+   "domain": "solastabio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Forbion"
+   ],
+   "tech": "Synthetic biology (biopesticides)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Forbion)"
+   ],
+   "source_tag": "VC-portfolio (Forbion)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "PACT",
+   "domain": "pact.earth",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Forbion"
+   ],
+   "tech": "Biomaterial platform",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Forbion)"
+   ],
+   "source_tag": "VC-portfolio (Forbion)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Octarine Bio",
+   "domain": "octarinebio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DSM-Firmenich"
+   ],
+   "tech": "Synthetic biology (cannabinoids)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DSM-Firmenich)"
+   ],
+   "source_tag": "VC-portfolio (DSM-Firmenich)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Phynova",
+   "domain": "phynova.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DSM-Firmenich"
+   ],
+   "tech": "Specialty chemicals (plant extracts)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DSM-Firmenich)"
+   ],
+   "source_tag": "VC-portfolio (DSM-Firmenich)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Isobionics",
+   "domain": "isobionics.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DSM-Firmenich"
+   ],
+   "tech": "Fermentation (flavor/fragrance ingredients)",
+   "sectors": "Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DSM-Firmenich)"
+   ],
+   "source_tag": "VC-portfolio (DSM-Firmenich)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Phytolon",
+   "domain": "phytolon.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DSM-Firmenich"
+   ],
+   "tech": "Sustainable ingredients (natural colors)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DSM-Firmenich)"
+   ],
+   "source_tag": "VC-portfolio (DSM-Firmenich)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Incredosugar",
+   "domain": "incredosugar.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DSM-Firmenich"
+   ],
+   "tech": "Food ingredients (sugar reduction)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DSM-Firmenich)"
+   ],
+   "source_tag": "VC-portfolio (DSM-Firmenich)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Chinova Bioworks",
+   "domain": "chinovabioworks.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DSM-Firmenich"
+   ],
+   "tech": "Food technology (mushroom-based preservative)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DSM-Firmenich)"
+   ],
+   "source_tag": "VC-portfolio (DSM-Firmenich)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Planetary",
+   "domain": "planetarygroup.ch",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Bioreactor infrastructure (ocean alkalinity)",
+   "sectors": "Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Micro Harvest",
+   "domain": "microharvest.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Fermentation (single cell protein)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Switch Bioworks",
+   "domain": "switchbioworks.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Seed",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Synthetic biology (gas fermentation)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Reshape",
+   "domain": "reshapebiotech.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Robotics",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Zya",
+   "domain": "zya.co",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Enzyme technology",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Amplifye",
+   "domain": "amplifye.co",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Protein optimization",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Calyxia",
+   "domain": "calyxia.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Green chemistry (microencapsulation)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Modern Meadow",
+   "domain": "modernmeadow.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Biofabrication (biomaterials)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Biofluff",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Seed",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Textile materials (mycelium fiber)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "AmphiStar",
+   "domain": "amphistar.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Qbic Fund"
+   ],
+   "tech": "Biosurfactants",
+   "sectors": "Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Qbic)"
+   ],
+   "source_tag": "VC-portfolio (Qbic)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Rainbow Crops",
+   "domain": "rainbowcrops.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Qbic Fund"
+   ],
+   "tech": "Synthetic biology (crop traits)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Qbic)"
+   ],
+   "source_tag": "VC-portfolio (Qbic)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Obulytix",
+   "domain": "obulytix.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Qbic Fund"
+   ],
+   "tech": "Enzyme technology",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Qbic)"
+   ],
+   "source_tag": "VC-portfolio (Qbic)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Cellevate",
+   "domain": "cellevate.com",
+   "hq": "Sweden",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Industrifonden"
+   ],
+   "tech": "Nanofiber bioprocessing",
+   "sectors": "Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Industrifonden)"
+   ],
+   "source_tag": "VC-portfolio (Industrifonden)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Agteria",
+   "domain": "agteria.com",
+   "hq": "Sweden",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Industrifonden"
+   ],
+   "tech": "Fermentation (feed additive for methane reduction)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Industrifonden)"
+   ],
+   "source_tag": "VC-portfolio (Industrifonden)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Arevo",
+   "domain": "arevo.se",
+   "hq": "Sweden",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Industrifonden"
+   ],
+   "tech": "Plant nutrition (biostimulants)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Industrifonden)"
+   ],
+   "source_tag": "VC-portfolio (Industrifonden)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "AIO",
+   "domain": "aio.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Voima Ventures, Nordic Foodtech VC"
+   ],
+   "tech": "Microbial oils (fermentation)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Voima/Nordic Foodtech)"
+   ],
+   "source_tag": "VC-portfolio (Voima/Nordic Foodtech)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Aisti",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Voima Ventures"
+   ],
+   "tech": "Acoustic materials",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Voima)"
+   ],
+   "source_tag": "VC-portfolio (Voima)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Avenue Biosciences",
+   "domain": "avenuebiosciences.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Voima Ventures"
+   ],
+   "tech": "Synthetic biology",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Voima)"
+   ],
+   "source_tag": "VC-portfolio (Voima)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Cellfion",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Voima Ventures"
+   ],
+   "tech": "Bio-based membranes",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Voima)"
+   ],
+   "source_tag": "VC-portfolio (Voima)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "ArgusEye",
+   "domain": "arguseyesensors.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Voima Ventures"
+   ],
+   "tech": "Bioprocessing monitoring (sensors)",
+   "sectors": "Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Voima)"
+   ],
+   "source_tag": "VC-portfolio (Voima)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Evodia",
+   "domain": "evodiabio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Nordic Foodtech VC"
+   ],
+   "tech": "Fermentation",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Nordic Foodtech VC)"
+   ],
+   "source_tag": "VC-portfolio (Nordic Foodtech VC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Ironic Biotech",
+   "domain": "ironicbiotech.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Nordic Foodtech VC"
+   ],
+   "tech": "Fermentation",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Nordic Foodtech VC)"
+   ],
+   "source_tag": "VC-portfolio (Nordic Foodtech VC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Future Fields",
+   "domain": "futurefields.io",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "$8M",
+   "last_round": "Jun 2025",
+   "investors": [
+    "AgFunder, Amplify Capital, R7 Partners"
+   ],
+   "tech": "Bioprocessing (recombinant protein production)",
+   "sectors": "Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (AgFunder) / Press US"
+   ],
+   "source_tag": "VC-portfolio (AgFunder) / Press US",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "IntegriCulture",
+   "domain": "integriculture.com",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "AgFunder, Untrod, Beyond Next Ventures"
+   ],
+   "tech": "Bioprocessing (cultivated meat)",
+   "sectors": "Bioprocessing, Food",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (AgFunder/Untrod/Beyond Next)"
+   ],
+   "source_tag": "VC-portfolio (AgFunder/Untrod/Beyond Next)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Brightseed",
+   "domain": "brightseedbio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "AgFunder"
+   ],
+   "tech": "Food/Nutrition biotech (AI bioactives discovery)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (AgFunder)"
+   ],
+   "source_tag": "VC-portfolio (AgFunder)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Kula Bio",
+   "domain": "kulabio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "AgFunder"
+   ],
+   "tech": "Industrial biotech (biofertilizer)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (AgFunder)"
+   ],
+   "source_tag": "VC-portfolio (AgFunder)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Layrr",
+   "domain": "layrr.co",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "AgFunder"
+   ],
+   "tech": "Advanced materials",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (AgFunder)"
+   ],
+   "source_tag": "VC-portfolio (AgFunder)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Bota Bio",
+   "domain": "bota.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "BASF Venture Capital"
+   ],
+   "tech": "Industrial biology (synbio manufacturing)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (BASF VC)"
+   ],
+   "source_tag": "VC-portfolio (BASF VC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Equinom",
+   "domain": "equi-nom.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "BASF Venture Capital"
+   ],
+   "tech": "Agricultural biotech (seed breeding)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (BASF VC)"
+   ],
+   "source_tag": "VC-portfolio (BASF VC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Provivi",
+   "domain": "provivi.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "BASF Venture Capital"
+   ],
+   "tech": "Specialty chemicals (biopesticides)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (BASF VC)"
+   ],
+   "source_tag": "VC-portfolio (BASF VC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "BigRep GmbH",
+   "domain": "bigrep.com",
+   "hq": "Germany",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "BASF Venture Capital"
+   ],
+   "tech": "Advanced materials (3D printing)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (BASF VC)"
+   ],
+   "source_tag": "VC-portfolio (BASF VC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Phomera",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "BASF Venture Capital"
+   ],
+   "tech": "Advanced materials",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (BASF VC)"
+   ],
+   "source_tag": "VC-portfolio (BASF VC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Lactips",
+   "domain": "lactips.com",
+   "hq": "France",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "BASF Venture Capital"
+   ],
+   "tech": "Bio-based materials (water-soluble plastic)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (BASF VC)"
+   ],
+   "source_tag": "VC-portfolio (BASF VC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Leaft",
+   "domain": "leaftfoods.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Growth",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Khosla Ventures"
+   ],
+   "tech": "Food/Nutrition biotech (leaf protein)",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Khosla)"
+   ],
+   "source_tag": "VC-portfolio (Khosla)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Pearl Bio",
+   "domain": "pearlbio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Growth",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Khosla Ventures"
+   ],
+   "tech": "Biomaterials (cell-free protein production)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Khosla)"
+   ],
+   "source_tag": "VC-portfolio (Khosla)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Enko",
+   "domain": "enkochem.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Anterra Capital"
+   ],
+   "tech": "Crop protection (AI discovery)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Anterra)"
+   ],
+   "source_tag": "VC-portfolio (Anterra)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "BiomEdit",
+   "domain": "biomedit.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Anterra Capital"
+   ],
+   "tech": "Animal health biotech (microbiome)",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Anterra)"
+   ],
+   "source_tag": "VC-portfolio (Anterra)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Industrial Microbes Inc.",
+   "domain": "imicrobes.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Universal Materials Incubator (UMI)"
+   ],
+   "tech": "Fermentation-based production",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (UMI)"
+   ],
+   "source_tag": "VC-portfolio (UMI)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Green Culture Inc.",
+   "domain": "greenculture.co.jp",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Universal Materials Incubator (UMI)"
+   ],
+   "tech": "Cultivation technology",
+   "sectors": "Biotech, Food",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (UMI)"
+   ],
+   "source_tag": "VC-portfolio (UMI)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "bitBiome Inc.",
+   "domain": "bitbiome.co.jp",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "UMI, UTEC"
+   ],
+   "tech": "Microbial genomics for biomanufacturing",
+   "sectors": "Biotech, Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (UMI/UTEC)"
+   ],
+   "source_tag": "VC-portfolio (UMI/UTEC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "CellFiber Co., Ltd.",
+   "domain": "cellfiber.jp",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "UMI, Untrod"
+   ],
+   "tech": "Cell-based fiber production, mass cell culture",
+   "sectors": "Advanced Materials, Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (UMI/Untrod)"
+   ],
+   "source_tag": "VC-portfolio (UMI/Untrod)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "JEPLAN Inc.",
+   "domain": "jeplan.co.jp",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "UMI"
+   ],
+   "tech": "Material recycling and chemical processing",
+   "sectors": "Specialty Chemicals",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (UMI)"
+   ],
+   "source_tag": "VC-portfolio (UMI)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "EF Polymer K.K.",
+   "domain": "efpolymer.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "UMI, Beyond Next Ventures"
+   ],
+   "tech": "Biodegradable polymers",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (UMI/Beyond Next)"
+   ],
+   "source_tag": "VC-portfolio (UMI/Beyond Next)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Polyuse Inc.",
+   "domain": "polyuse.xyz",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "UMI"
+   ],
+   "tech": "Sustainable polymers (construction)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (UMI)"
+   ],
+   "source_tag": "VC-portfolio (UMI)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Umami Bioworks",
+   "domain": "umamibioworks.com",
+   "hq": "Singapore",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Untrod"
+   ],
+   "tech": "Cell-based seafood production",
+   "sectors": "Synthetic Biology, Food",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Untrod)"
+   ],
+   "source_tag": "VC-portfolio (Untrod)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "JALA Tech",
+   "domain": "jala.tech",
+   "hq": "Singapore",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Untrod"
+   ],
+   "tech": "Aquaculture/shrimp marketplace tech",
+   "sectors": "AgBiotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Untrod)"
+   ],
+   "source_tag": "VC-portfolio (Untrod)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Austrianova",
+   "domain": "austrianova.com",
+   "hq": "Singapore",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Untrod"
+   ],
+   "tech": "Cell and bacteria encapsulation technology",
+   "sectors": "Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Untrod)"
+   ],
+   "source_tag": "VC-portfolio (Untrod)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "ceEntek",
+   "domain": "ceentek.com",
+   "hq": "Singapore",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Untrod"
+   ],
+   "tech": "Carbon nano fiber paste",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Untrod)"
+   ],
+   "source_tag": "VC-portfolio (Untrod)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "SEPPURE",
+   "domain": "seppure.com",
+   "hq": "Singapore",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Untrod"
+   ],
+   "tech": "Nanofiltration membranes",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Untrod)"
+   ],
+   "source_tag": "VC-portfolio (Untrod)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Accelerated Materials",
+   "domain": "acceleratedmaterials.co",
+   "hq": "Singapore",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Untrod"
+   ],
+   "tech": "Nanomaterial synthesis platform",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Untrod)"
+   ],
+   "source_tag": "VC-portfolio (Untrod)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "GRA&GREEN",
+   "domain": "gragreen.com",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Beyond Next Ventures"
+   ],
+   "tech": "Genome editing for crop development",
+   "sectors": "AgBiotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Beyond Next)"
+   ],
+   "source_tag": "VC-portfolio (Beyond Next)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Symbiobe",
+   "domain": "symbiobe.jp",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Beyond Next Ventures"
+   ],
+   "tech": "Biomass and photosynthetic organisms",
+   "sectors": "Biotech, Circular Economy",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Beyond Next)"
+   ],
+   "source_tag": "VC-portfolio (Beyond Next)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "AlgaleX",
+   "domain": "algalex.com",
+   "hq": "India",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Beyond Next Ventures"
+   ],
+   "tech": "Algae-based components from food waste",
+   "sectors": "Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Beyond Next)"
+   ],
+   "source_tag": "VC-portfolio (Beyond Next)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "UMAMI UNITED",
+   "domain": "umamiunited.com",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Beyond Next Ventures"
+   ],
+   "tech": "Plant-based egg R&D",
+   "sectors": "Food, Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Beyond Next)"
+   ],
+   "source_tag": "VC-portfolio (Beyond Next)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Rhinoflux",
+   "domain": "rhinoflux.com",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Beyond Next Ventures"
+   ],
+   "tech": "Bioenergy carbon capture plants",
+   "sectors": "Advanced Materials, Energy",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Beyond Next)"
+   ],
+   "source_tag": "VC-portfolio (Beyond Next)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "The Ethical Spirits & Co.",
+   "domain": "ethicalspirits.jp",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Beyond Next Ventures"
+   ],
+   "tech": "Regenerative distillery (fermentation upcycling)",
+   "sectors": "Specialty Chemicals, Food",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Beyond Next)"
+   ],
+   "source_tag": "VC-portfolio (Beyond Next)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Aqua Theon",
+   "domain": "aquatheon.com",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Beyond Next Ventures"
+   ],
+   "tech": "Seaweed technology applications",
+   "sectors": "Food, Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Beyond Next)"
+   ],
+   "source_tag": "VC-portfolio (Beyond Next)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Algal Bio",
+   "domain": "algalbio.co.jp",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "UTEC"
+   ],
+   "tech": "Algae-based functional ingredients",
+   "sectors": "Biotech, Food",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (UTEC)"
+   ],
+   "source_tag": "VC-portfolio (UTEC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Trillium",
+   "domain": "trilliumchemicals.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Capricorn Partners"
+   ],
+   "tech": "Bio-based acrylonitrile production",
+   "sectors": "Specialty Chemicals, Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Capricorn)"
+   ],
+   "source_tag": "VC-portfolio (Capricorn)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Sirrus",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Mitsui & Co. Global Investment"
+   ],
+   "tech": "Methylene malonates chemistry",
+   "sectors": "Specialty Chemicals",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Mitsui MGI)"
+   ],
+   "source_tag": "VC-portfolio (Mitsui MGI)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Elo Life",
+   "domain": "elolife.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DCVC"
+   ],
+   "tech": "Molecular farming for food ingredients",
+   "sectors": "Synthetic Biology, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DCVC)"
+   ],
+   "source_tag": "VC-portfolio (DCVC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Enough",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DCVC"
+   ],
+   "tech": "Fungal protein via fermentation",
+   "sectors": "Fermentation, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DCVC)"
+   ],
+   "source_tag": "VC-portfolio (DCVC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Ginkgo Bioworks",
+   "domain": "ginkgobioworks.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DCVC"
+   ],
+   "tech": "Programming cells for production",
+   "sectors": "Synthetic Biology, Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DCVC)"
+   ],
+   "source_tag": "VC-portfolio (DCVC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "MycoWorks",
+   "domain": "mycoworks.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DCVC"
+   ],
+   "tech": "Mycelium-based leather alternative",
+   "sectors": "Advanced Materials, Fermentation",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DCVC)"
+   ],
+   "source_tag": "VC-portfolio (DCVC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Visolis",
+   "domain": "visolisbio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DCVC"
+   ],
+   "tech": "Synthetic biology for carbon-negative materials",
+   "sectors": "Synthetic Biology, Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DCVC)"
+   ],
+   "source_tag": "VC-portfolio (DCVC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Asimov",
+   "domain": "asimov.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "DCVC"
+   ],
+   "tech": "Genetic engineering platform (cell programming)",
+   "sectors": "Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (DCVC)"
+   ],
+   "source_tag": "VC-portfolio (DCVC)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Hyfe",
+   "domain": "hyfe.tech",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "The Engine Ventures"
+   ],
+   "tech": "Wastewater feedstock for biomanufacturing",
+   "sectors": "Bioprocessing, Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (The Engine)"
+   ],
+   "source_tag": "VC-portfolio (The Engine)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Anthology",
+   "domain": "anthology.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "The Engine Ventures"
+   ],
+   "tech": "Genome generation for biomanufacturing",
+   "sectors": "Bioprocessing, Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (The Engine)"
+   ],
+   "source_tag": "VC-portfolio (The Engine)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Amide",
+   "domain": "amidetech.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "The Engine Ventures"
+   ],
+   "tech": "Robotic peptide and protein synthesis",
+   "sectors": "Industrial Biotech, Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (The Engine)"
+   ],
+   "source_tag": "VC-portfolio (The Engine)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Kano",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "The Engine Ventures"
+   ],
+   "tech": "Precision genomic editing",
+   "sectors": "Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (The Engine)"
+   ],
+   "source_tag": "VC-portfolio (The Engine)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Foray Bioscience",
+   "domain": "foraybio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "The Engine Ventures"
+   ],
+   "tech": "Plant cell biotech for ecosystem restoration",
+   "sectors": "Synthetic Biology, Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (The Engine)"
+   ],
+   "source_tag": "VC-portfolio (The Engine)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Terragia",
+   "domain": "terragia.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "The Engine Ventures"
+   ],
+   "tech": "Sustainable biofuels with biology",
+   "sectors": "Industrial Biotech",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (The Engine)"
+   ],
+   "source_tag": "VC-portfolio (The Engine)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Tierra Biosciences",
+   "domain": "tierrabiosciences.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Material Impact"
+   ],
+   "tech": "Synthetic biology protein manufacturing (cell-free)",
+   "sectors": "Synthetic Biology, Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Material Impact)"
+   ],
+   "source_tag": "VC-portfolio (Material Impact)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "6K Inc",
+   "domain": "6kinc.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Material Impact"
+   ],
+   "tech": "Advanced materials via microwave plasma",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Material Impact)"
+   ],
+   "source_tag": "VC-portfolio (Material Impact)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Mattiq",
+   "domain": "mattiq.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Material Impact"
+   ],
+   "tech": "Nanomaterials libraries (AI-driven)",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Material Impact)"
+   ],
+   "source_tag": "VC-portfolio (Material Impact)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Huue",
+   "domain": "huue.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Material Impact"
+   ],
+   "tech": "Biosynthetic dyes (fermentation-derived indigo)",
+   "sectors": "Specialty Chemicals, Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Material Impact)"
+   ],
+   "source_tag": "VC-portfolio (Material Impact)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Werewool",
+   "domain": "werewool.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Material Impact"
+   ],
+   "tech": "Protein-based textile fibers",
+   "sectors": "Advanced Materials, Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Material Impact)"
+   ],
+   "source_tag": "VC-portfolio (Material Impact)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Talus Renewables",
+   "domain": "talusag.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Material Impact"
+   ],
+   "tech": "Green ammonia production (modular)",
+   "sectors": "Specialty Chemicals",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Material Impact)"
+   ],
+   "source_tag": "VC-portfolio (Material Impact)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "GreenLight Biosciences",
+   "domain": "greenlightbiosciences.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture, Growth",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "S2G Investments"
+   ],
+   "tech": "Bio-production platform for RNA solutions",
+   "sectors": "Bioprocessing, Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (S2G)"
+   ],
+   "source_tag": "VC-portfolio (S2G)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "New Culture",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture, Growth",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "S2G Investments"
+   ],
+   "tech": "Precision fermentation dairy alternative",
+   "sectors": "Fermentation, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (S2G)"
+   ],
+   "source_tag": "VC-portfolio (S2G)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "ForeLight",
+   "domain": "forelight.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture, Growth",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "S2G Investments"
+   ],
+   "tech": "Natural ingredients via photosynthetic organisms",
+   "sectors": "Bioprocessing, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (S2G)"
+   ],
+   "source_tag": "VC-portfolio (S2G)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Kuehnle AgroSystems",
+   "domain": "kuehnleagro.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture, Growth",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "S2G Investments"
+   ],
+   "tech": "Microalgal ingredients via fermentation",
+   "sectors": "Fermentation, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (S2G)"
+   ],
+   "source_tag": "VC-portfolio (S2G)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Mara Renewables",
+   "domain": "maracorp.ca",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture, Growth",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "S2G Investments"
+   ],
+   "tech": "Algae-derived Omega-3s",
+   "sectors": "Bioprocessing, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (S2G)"
+   ],
+   "source_tag": "VC-portfolio (S2G)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Avant",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture, Growth",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "S2G Investments"
+   ],
+   "tech": "Cell-cultivated marine proteins",
+   "sectors": "Bioprocessing, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (S2G)"
+   ],
+   "source_tag": "VC-portfolio (S2G)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Aspect Biosystems",
+   "domain": "aspectbiosystems.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Pangaea Ventures"
+   ],
+   "tech": "Bioprocessing systems (3D bioprinting)",
+   "sectors": "Bioprocessing, Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Pangaea)"
+   ],
+   "source_tag": "VC-portfolio (Pangaea)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Correlia Biosystems",
+   "domain": "correliabio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Pangaea Ventures"
+   ],
+   "tech": "Synthetic biology platform",
+   "sectors": "Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Pangaea)"
+   ],
+   "source_tag": "VC-portfolio (Pangaea)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Biodel AG",
+   "domain": "biodelag.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Pangaea Ventures"
+   ],
+   "tech": "Industrial biotech",
+   "sectors": "Industrial Biotech, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Pangaea)"
+   ],
+   "source_tag": "VC-portfolio (Pangaea)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Prime Roots",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Pangaea Ventures"
+   ],
+   "tech": "Mycoprotein via fermentation",
+   "sectors": "Fermentation, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Pangaea)"
+   ],
+   "source_tag": "VC-portfolio (Pangaea)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "NewLeaf Symbiotics",
+   "domain": "newleafsym.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Pangaea Ventures"
+   ],
+   "tech": "Industrial biotech for specialty chemicals (biologicals)",
+   "sectors": "Industrial Biotech, Specialty Chemicals",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Pangaea)"
+   ],
+   "source_tag": "VC-portfolio (Pangaea)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Membrion",
+   "domain": "membrion.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Pangaea Ventures"
+   ],
+   "tech": "Specialty chemicals and bioprocessing (ceramic membranes)",
+   "sectors": "Specialty Chemicals, Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Pangaea)"
+   ],
+   "source_tag": "VC-portfolio (Pangaea)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Boston Bioprocess",
+   "domain": "bostonbioprocess.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Clear Current Capital"
+   ],
+   "tech": "Bioprocessing (fermentation process development services)",
+   "sectors": "Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Clear Current Capital)"
+   ],
+   "source_tag": "VC-portfolio (Clear Current Capital)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Concert Bio",
+   "domain": "concert.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Clear Current Capital"
+   ],
+   "tech": "Synthetic biology",
+   "sectors": "Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Clear Current Capital)"
+   ],
+   "source_tag": "VC-portfolio (Clear Current Capital)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Sunflower",
+   "domain": "sunflowertx.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Clear Current Capital"
+   ],
+   "tech": "Advanced materials",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Clear Current Capital)"
+   ],
+   "source_tag": "VC-portfolio (Clear Current Capital)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Brightly",
+   "domain": "brightly.earth",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Clear Current Capital"
+   ],
+   "tech": "Specialty chemicals",
+   "sectors": "Specialty Chemicals",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Clear Current Capital)"
+   ],
+   "source_tag": "VC-portfolio (Clear Current Capital)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Blue Nalu",
+   "domain": "bluenalu.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Clear Current Capital"
+   ],
+   "tech": "Cell cultivation for seafood",
+   "sectors": "Bioprocessing, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Clear Current Capital)"
+   ],
+   "source_tag": "VC-portfolio (Clear Current Capital)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Puna Bio",
+   "domain": "puna.bio",
+   "hq": "Argentina/US",
+   "fte": "Unknown",
+   "stage": "Seed",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "SOSV"
+   ],
+   "tech": "Extremophile microorganisms for agricultural biologics",
+   "sectors": "Industrial Biotech, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (SOSV)"
+   ],
+   "source_tag": "VC-portfolio (SOSV)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Hoofprint Biome",
+   "domain": "hoofprintbiome.com",
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Seed",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "SOSV"
+   ],
+   "tech": "Methane suppression via biotech",
+   "sectors": "Industrial Biotech, Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (SOSV)"
+   ],
+   "source_tag": "VC-portfolio (SOSV)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Mosa Meat",
+   "domain": "mosameat.com",
+   "hq": "Netherlands",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "M Ventures"
+   ],
+   "tech": "Cultivated meat biotech",
+   "sectors": "Food/Nutrition, Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (M Ventures)"
+   ],
+   "source_tag": "VC-portfolio (M Ventures)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "iVexSol",
+   "domain": "ivexsol.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Asahi Kasei Ventures"
+   ],
+   "tech": "Lentiviral vectors for CGT manufacturing",
+   "sectors": "Bioprocessing, Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Asahi Kasei Ventures)"
+   ],
+   "source_tag": "VC-portfolio (Asahi Kasei Ventures)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Exactmer",
+   "domain": "exactmer.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Asahi Kasei Ventures"
+   ],
+   "tech": "Polymeric pharmaceuticals",
+   "sectors": "Specialty Chemicals",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Asahi Kasei Ventures)"
+   ],
+   "source_tag": "VC-portfolio (Asahi Kasei Ventures)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "NFW Technologies",
+   "domain": "nfw.earth",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Asahi Kasei Ventures"
+   ],
+   "tech": "Plastic-free performance materials",
+   "sectors": "Advanced Materials",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Asahi Kasei Ventures)"
+   ],
+   "source_tag": "VC-portfolio (Asahi Kasei Ventures)",
+   "prescreen": "Pass"
+  },
+  {
+   "name": "Multus",
+   "domain": "multus.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Asahi Kasei Ventures"
+   ],
+   "tech": "Growth media for cellular agriculture",
+   "sectors": "Bioprocessing, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Asahi Kasei Ventures)"
+   ],
+   "source_tag": "VC-portfolio (Asahi Kasei Ventures)",
+   "prescreen": "Pass"
+  }
+ ],
+ "failed": [
+  {
+   "name": "Cleveland Kitchen",
+   "domain": null,
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Series A",
+   "raised": "$19M",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Fermented foods",
+   "sectors": "Food",
+   "why_now": "Unknown",
+   "sources": [
+    "Press US"
+   ],
+   "source_tag": "Press US",
+   "prescreen": "Fail \u2014 pure B2C consumer brand"
+  },
+  {
+   "name": "Joywell",
+   "domain": null,
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Series B",
+   "raised": "$25M",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Microbial fermentation",
+   "sectors": "Beverages",
+   "why_now": "Unknown",
+   "sources": [
+    "Press US"
+   ],
+   "source_tag": "Press US",
+   "prescreen": "Fail \u2014 pure B2C consumer brand"
+  },
+  {
+   "name": "v2Food",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Plant-based meat",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Fail \u2014 pure B2C consumer brand"
+  },
+  {
+   "name": "Swap",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Venture",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Astanor"
+   ],
+   "tech": "Plant-based protein",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Astanor)"
+   ],
+   "source_tag": "VC-portfolio (Astanor)",
+   "prescreen": "Fail \u2014 pure B2C consumer brand"
+  },
+  {
+   "name": "Impossible Foods",
+   "domain": "impossiblefoods.com",
+   "hq": "US",
+   "fte": "Unknown",
+   "stage": "Growth",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Khosla Ventures"
+   ],
+   "tech": "Plant-based food",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Khosla)"
+   ],
+   "source_tag": "VC-portfolio (Khosla)",
+   "prescreen": "Fail \u2014 pure B2C consumer brand"
+  },
+  {
+   "name": "Bali Grove",
+   "domain": "eatkarana.com",
+   "hq": "Singapore",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Untrod"
+   ],
+   "tech": "Plant-based jackfruit meat",
+   "sectors": "Food, Plant-based",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Untrod)"
+   ],
+   "source_tag": "VC-portfolio (Untrod)",
+   "prescreen": "Fail \u2014 pure B2C consumer brand"
+  },
+  {
+   "name": "Epsilon Molecular Engineering",
+   "domain": "epsilon-mol.co.jp",
+   "hq": "Japan",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Untrod"
+   ],
+   "tech": "Antibody molecule design",
+   "sectors": "Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Untrod)"
+   ],
+   "source_tag": "VC-portfolio (Untrod)",
+   "prescreen": "Fail \u2014 pharma/therapeutics-only, no industrial/food application"
+  },
+  {
+   "name": "Ripple Foods",
+   "domain": "ripplefoods.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Material Impact"
+   ],
+   "tech": "Dairy alternative from pea protein",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Material Impact)"
+   ],
+   "source_tag": "VC-portfolio (Material Impact)",
+   "prescreen": "Fail \u2014 pure B2C consumer brand"
+  },
+  {
+   "name": "Flying Embers",
+   "domain": "flyingembers.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Ecosystem Integrity Fund"
+   ],
+   "tech": "Probiotic fermentation for beverages",
+   "sectors": "Fermentation, Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Ecosystem Integrity Fund)"
+   ],
+   "source_tag": "VC-portfolio (Ecosystem Integrity Fund)",
+   "prescreen": "Fail \u2014 pure B2C consumer brand"
+  },
+  {
+   "name": "SANA Foods",
+   "domain": "sanafoods.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Ecosystem Integrity Fund"
+   ],
+   "tech": "Organic packaged foods",
+   "sectors": "Food/Nutrition",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Ecosystem Integrity Fund)"
+   ],
+   "source_tag": "VC-portfolio (Ecosystem Integrity Fund)",
+   "prescreen": "Fail \u2014 pure B2C consumer brand"
+  },
+  {
+   "name": "Cyto-Facto",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Asahi Kasei Ventures"
+   ],
+   "tech": "Cell and gene therapy manufacturing",
+   "sectors": "Bioprocessing, Synthetic Biology",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Asahi Kasei Ventures)"
+   ],
+   "source_tag": "VC-portfolio (Asahi Kasei Ventures)",
+   "prescreen": "Fail \u2014 pharma/therapeutics-only, no industrial/food application"
+  },
+  {
+   "name": "Syngoi",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [
+    "Asahi Kasei Ventures"
+   ],
+   "tech": "Synthetic DNA for gene therapies",
+   "sectors": "Synthetic Biology, Bioprocessing",
+   "why_now": "Unknown",
+   "sources": [
+    "VC-portfolio (Asahi Kasei Ventures)"
+   ],
+   "source_tag": "VC-portfolio (Asahi Kasei Ventures)",
+   "prescreen": "Fail \u2014 pharma/therapeutics-only, no industrial/food application"
+  }
+ ],
+ "pd_skip": [
+  {
+   "name": "Pow.bio",
+   "domain": "pow.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Developer of intelligent fermentation technology designed to solve the capacity problem. Combines continuous fermentation with advanced control methodology.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too early stage",
+   "pd_stage": "Quickscan",
+   "pd_updated": "2026-07-10"
+  },
+  {
+   "name": "Kidemis",
+   "domain": "kidemis.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Producer of plant-based protein via mycelium-based fermentation converting industrial food waste into protein-content ingredients.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Advanced Follow-up",
+   "pd_updated": "2026-06-17"
+  },
+  {
+   "name": "Maya Milk",
+   "domain": "mayamilk.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Producer of vegan dairy substitutes using precision fermentation to produce animal-origin-free dairy proteins and fats.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Follow Up",
+   "pd_updated": "2026-01-08"
+  },
+  {
+   "name": "Calidris Bio",
+   "domain": "calidrisbio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Manufacturer of microbe-based sustainable protein via natural fermentation process.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Follow Up",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Sestina Bio",
+   "domain": "sestinabio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Synthetic biology platform to engineer yeast and bacteria to produce chemicals and pharmaceuticals.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Leads",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "MOA Foodtech",
+   "domain": "moafoodtech.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "AI-driven fermentation platform (Albatros) upcycling food industry residues into high-value ingredients.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "won",
+   "pd_reason": "",
+   "pd_stage": "PUR/DD/FIP",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "3FBio",
+   "domain": "3fbio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Zero-waste fermentation of high-quality protein, converting starch to protein.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too late stage",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Delft Advanced Biorenewables",
+   "domain": "dab.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Bioreactor technology combining fermentation and separation of extracted components in one vessel.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too early stage",
+   "pd_stage": "Follow Up",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Arbiom",
+   "domain": "arbiom.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Bioprocessing/fermentation technology turning wood into protein for animal feed.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "not competitive",
+   "pd_stage": "Follow Up",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Smobya",
+   "domain": "smobya.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Cellulose manufacturing from food waste for plastic-free textile/leather materials via microbes.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too early stage",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Sophie's Bionutrients",
+   "domain": "sophiesbionutrients.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Grows microalgae in soybean residue via fermentation for alternative protein.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too early stage",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "NovoNutrients",
+   "domain": "novonutrients.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Uses natural microbes to break down CO2/hydrogen into lowest-cost feed/food ingredients.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too early stage",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "protein fatco",
+   "domain": "timetravellingmilkman.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Fat ingredients for dairy alternatives, extracted from seeds/plant materials.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "disqualified in market scan",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-05-05"
+  },
+  {
+   "name": "Enzymit",
+   "domain": "enzymit.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Computational design platform augmented with deep-learning for enzyme/chemistry.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too late stage",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-05-05"
+  },
+  {
+   "name": "Luya Foods",
+   "domain": "luya.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Combines traditional fermentation with modern technology to turn okara into food.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too early stage",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-05-05"
+  },
+  {
+   "name": "BioTork",
+   "domain": "biotork.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Biotechnology platform for bio-based chemical commodities via microbial strains/bioconversion.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "Not in focus region",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-05-05"
+  },
+  {
+   "name": "Hayden Biotech",
+   "domain": "haydenbiotech.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Biomanufacturing company making precision fermentation affordable/scalable via simplified bioreactors.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "Does not fit fund (ICF 4) strategy",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2025-07-08"
+  },
+  {
+   "name": "FluIDect",
+   "domain": "fluidect.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Microbial analytic instruments for seamless process monitoring/control using light-emitting microbeads.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "Does not fit fund (ICF 4) strategy",
+   "pd_stage": "Data Entry",
+   "pd_updated": "2026-07-01"
+  },
+  {
+   "name": "Arkeon Biotechnologies",
+   "domain": "arkeon.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Converts CO2 into protein ingredients using ancient microbes.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "Closed down",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Biotic (Bio-Circular)",
+   "domain": "biotic-labs.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Fully bio-based biodegradable polymers from sea macro-algae.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too early stage",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Locus Fermentation Solutions",
+   "domain": "locusfs.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Microbial/biosurfactant systems, patent-pending processes, modular low-capex facilities.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too late stage",
+   "pd_stage": "Leads",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Nutrition from Water",
+   "domain": "nutritionfromwater.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Commercializes endemic microalgae strains via fermentation/biotechnology into sports nutrition.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Quickscan",
+   "pd_updated": "2026-07-13"
+  },
+  {
+   "name": "Nosh.bio",
+   "domain": "nosh.bio",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Techno-functional ingredients via novel proprietary fermentation and mild downstream processing.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Advanced Follow-up",
+   "pd_updated": "2026-07-13"
+  },
+  {
+   "name": "ALGAEPRO",
+   "domain": "greentechinnovators.no",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Automatic carbon-negative algae growth using food waste as fermentation input.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Leads",
+   "pd_updated": "2026-05-11"
+  },
+  {
+   "name": "SomaTech",
+   "domain": "somatech.ie",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Solid-state fermentation platform to grow mushroom mycelium, upcycling plant side streams.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Leads",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "N-fix",
+   "domain": "zymofix.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Biofertilizers from recycled agricultural residues via solid state fermentation/hydrothermal carbonization.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Corporate Follow-up",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Chromologics",
+   "domain": "chromologics.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Fermentation-derived natural colorant platform for bio-based food color pigments.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Corporate Follow-up",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "SuperBrewed Food",
+   "domain": "superbrewedfood.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Fermentation technology shifting carbon to ethanol production, boosting fermentation yields.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Corporate Follow-up",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "AquaCultured Foods",
+   "domain": "aquaculturedfoods.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Seafood alternative via microbial fermentation creating fibrous protein/probiotic threads.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Leads",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "Fermtech",
+   "domain": "fermtech.co.uk",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Low-carbon protein via solid-state fermentation of brewery spent grains.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "won",
+   "pd_reason": "",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-05-29"
+  },
+  {
+   "name": "Bar.on",
+   "domain": "baron.bar",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Molecular mixing technology to recreate beer without fermentation.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "no corporate buy-in",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-05-05"
+  },
+  {
+   "name": "Rebio",
+   "domain": "tmo-group.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Converts thermophilic bacteria/fermentation of cellulosic sugars into bioethanol.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too late stage",
+   "pd_stage": "Data Entry",
+   "pd_updated": "2023-12-27"
+  },
+  {
+   "name": "Food and Feed Biotech S.L.",
+   "domain": "mmmicoeats.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Fermentation and directed evolution to create natural ingredients for food/nutraceuticals/cosmetics/feed.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "No Reply",
+   "pd_stage": "Data Entry",
+   "pd_updated": "2024-06-06"
+  },
+  {
+   "name": "Bioboost Synbio",
+   "domain": "bioboostsynbio.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Sustainable yeast fermentation technology producing proteins/biomolecules.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too early stage",
+   "pd_stage": "Data Entry",
+   "pd_updated": "2024-06-20"
+  },
+  {
+   "name": "Porlammin Meijeri",
+   "domain": null,
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Finnish dairy company transforming food-tech via protein purification/cheese fermentation.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "Does not fit fund (ICF 4) strategy",
+   "pd_stage": "Data Entry",
+   "pd_updated": "2024-07-05"
+  },
+  {
+   "name": "SNL BioSolutions",
+   "domain": "snlbiosolutions.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Fermentation-based oils at scale from food ingredients to sustainable aviation fuel.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "too early stage",
+   "pd_stage": "Data Entry",
+   "pd_updated": "2024-09-13"
+  },
+  {
+   "name": "VIFFFF",
+   "domain": "vif4.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Vegan/gluten-free food combining Asian/European fermentation cycles.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "Not interesting enough",
+   "pd_stage": "Data Entry",
+   "pd_updated": "2025-07-17"
+  },
+  {
+   "name": "Evologic",
+   "domain": "evologic-technologies.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Bioprocessing company developing novel production methods for biostimulants.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "Does not fit fund (ICF 4) strategy",
+   "pd_stage": "Deals to Discuss",
+   "pd_updated": "2026-05-05"
+  },
+  {
+   "name": "ZwitterCo",
+   "domain": "zwitterco.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Reverse osmosis membrane technology for industrial water treatment/reuse.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "open",
+   "pd_reason": "",
+   "pd_stage": "Leads",
+   "pd_updated": "2026-03-22"
+  },
+  {
+   "name": "CellRX",
+   "domain": "proteindirectory.com",
+   "hq": "Unknown",
+   "fte": "Unknown",
+   "stage": "Unknown",
+   "raised": "Unknown",
+   "last_round": "Unknown",
+   "investors": [],
+   "tech": "Manufacturer/supplier of growth factors serving technical research/bioprocessing markets.",
+   "sectors": "Unknown",
+   "why_now": "Unknown",
+   "sources": [
+    "Pipedrive CRM"
+   ],
+   "source_tag": "Pipedrive CRM",
+   "pd_status": "lost",
+   "pd_reason": "Does not fit fund (ICF 4) strategy",
+   "pd_stage": "Data Entry",
+   "pd_updated": "2026-01-13"
+  }
+ ]
+}
