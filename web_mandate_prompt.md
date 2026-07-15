@@ -39,7 +39,17 @@ Map `{geography}` to a region set used by sources 0 and 2:
   "Global"/blank/multi → **EU+JP+US** (all three).
 In EU_ONLY mode the region is always **EU** regardless of geography.
 
-### Sources (BOTH modes = P + …; EU_ONLY = P + 1–5, Europe, no Source 0; COMPREHENSIVE = all incl. Source 0)
+### Sources (BOTH modes = M + P + …; EU_ONLY = M + P + 1–5, Europe, no Source 0; COMPREHENSIVE = all incl. Sources 0 and 14)
+
+M. **Herb's own universe (BOTH modes — run FIRST, instant, free).** Herb has seen thousands
+   of companies across past mandates. Before searching the web:
+   ```python
+   from scripts.herb_memory import search_universe
+   hits = search_universe("{theme keywords}")   # trigram + vector similarity over all past longlists
+   ```
+   Merge hits as source "Herb memory". These rows already have verified websites and
+   descriptions from earlier runs — cheap, high-precision recall. (Function appears with
+   the v3 migration; if the call errors, log and move on.)
 
 P. **Pipedrive CRM (BOTH modes — run FIRST, before any sub-agent batch)** — mine our own
    CRM for companies Icos already knows that match the theme:
@@ -109,6 +119,22 @@ E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).*
 13. **Non-English EU queries** *(EU region)* — run the theme keyword translated into German/French/
     Dutch on sources 1/3/4 (`Finanzierungsrunde`, `levée de fonds`, `financieringsronde`) to reach
     DACH/FR/Benelux startups with no English PR.
+14. **Patent mining** *(COMPREHENSIVE only)* — finds deeptech companies 12–18 months before
+    funding databases do. One Haiku sub-agent per region:
+    ```
+    Search Google Patents for recent filings matching: {theme technical keywords}.
+    Queries: site:patents.google.com "{keyword}" after:2022, plus 2-3 technical variants.
+    Extract ASSIGNEES only (the owning organization, never the inventor person).
+    DISCARD: individual people, universities, research institutes (Fraunhofer/TNO/CNRS/
+    Max Planck etc.), and large incumbents (>10k employees). KEEP only what looks like a
+    startup/scale-up company (GmbH, B.V., Ltd, Inc, AB, ApS, S.A.S, K.K. …).
+    LIMITS: ≤5 WebSearch calls.
+    OUTPUT (strict, pipe-delimited, no prose): Assignee|Country|Patent topic (5 words)|Patent URL.
+    If none: "patents {region} | no results".
+    ```
+    Patent assignees are CANDIDATES, not results — every one of them MUST pass the
+    Reality Gate (step 2d below) before joining the longlist. Grants hits from source 11
+    go through the same gate.
 
 ### Sub-agent dispatch — batched, 3 per batch (rate-limit safety)
 
@@ -133,10 +159,11 @@ One fund per row. Omit any fund whose portfolio URL you cannot verify. If none: 
 
 Then dedup discovered funds by domain against vc-roster.xlsx and merge into the source-2 working set.
 
-**Model routing (3 tiers):** search/discovery/website-finder sub-agents → **Haiku** (bounded
-extraction, cheapest); you the orchestrator → **Sonnet** (the search protocol, dedup, Pipedrive,
-write-up); Icos-fit scoring (STEP 2 step 5) → **Opus** (the one reasoning-heavy judgment call that
-decides top picks). Do not move search onto Opus — it 5×'s cost for no quality gain on bounded extraction.
+**Model routing (3 tiers):** search/discovery/website-finder/reality-gate sub-agents → **Haiku**
+(bounded extraction, cheapest); you the orchestrator → **Sonnet 5** (the search protocol, dedup,
+Pipedrive, segmentation, write-up); Icos-fit scoring (STEP 2 step 5) → **Opus** (the one
+reasoning-heavy judgment call that decides top picks). Do not move search onto Opus — it 5×'s
+cost for no quality gain on bounded extraction.
 
 Search sub-agent config: `subagent_type=general-purpose`, `model=haiku`. Sub-agent prompt template (substitute `{source}`, `{theme}`, `{geography}`, `{stage}`, `{query}` from the source list above):
 
@@ -202,6 +229,25 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    Drop every deduped row whose normalized domain OR lowercase name is in `prior` —
    a watch re-run reports ONLY companies new since the previous round. Add the count
    to the email summary: `Watch: N new companies since the last round.`
+2d. **Reality Gate — for every candidate sourced from patents (source 14) or grants
+   (source 11).** These sources surface inventors, university projects, and dormant
+   shells; only operating companies may reach the longlist. Dispatch verification
+   sub-agents (`model=haiku`, batches of 3, up to 4 candidates each):
+   ```
+   For each candidate, determine whether it is an OPERATING COMPANY:
+   1) Own working website (apply the standard DOMAIN RULES)
+   2) Employee count / LinkedIn bucket
+   3) Commercial traction: a NAMED customer, paid pilot, commercial partner, or revenue —
+      quote the evidence in ≤10 words with its source
+   LIMITS: ≤5 WebSearch calls. Never invent evidence — "NONE" over guesses.
+   OUTPUT (strict, pipe-delimited): Name|Domain|FTE|Traction (≤10 words or NONE)|Verdict
+   Verdict ∈ REAL / INVENTOR / UNIVERSITY / SHELL / UNCLEAR
+   ```
+   **Keep only rows with Verdict=REAL, FTE ≥ 10 (bucket "11-50"+ or count ≥10), AND
+   Traction ≠ NONE.** Everything else is dropped — do not add them to the longlist at
+   all (a patent-sourced inventor list defeats the purpose). Log the funnel in progress:
+   `update_progress(id, "Patent/grant gate: 31 candidates → 7 real companies")` and add
+   the same line to the email summary.
 3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date]. Skip rows sourced from "Pipedrive CRM" (status already known).
 4. Pre-screen — for each row check the gate inline below. Open/Won/Lost rows stay but skip icos-fit-eval.
 5. **Icos Fit scoring — ONLY when `ctx['icos_fit']` is true.** When false, skip this step
@@ -212,8 +258,14 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    `score=None` and are skipped). Dispatch scoring sub-agents —
    `subagent_type=general-purpose`, **`model=opus`** — in batches of ~6 companies each
    (low-volume, reasoning-heavy; Opus changes which companies surface as top picks, so
-   it's worth it here). Give each agent the row's {name, sector, stage, FTE, business model,
-   technology, HQ, funding, why-now} plus this rubric:
+   it's worth it here). First fetch the calibration block ONCE:
+   ```python
+   from scripts.herb_memory import get_calibration_examples
+   calibration = get_calibration_examples()   # "" until enough team decisions accumulate
+   ```
+   Give each agent the row's {name, sector, stage, FTE, business model,
+   technology, HQ, funding, why-now}, the calibration block (when non-empty — it teaches
+   the scorer what the team ACTUALLY pushed vs rejected), plus this rubric:
 
    ```
    Score each company 0–10 for Icos Capital ICF investment fit.
@@ -230,6 +282,13 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    Merge each `Score` into the row's `score` field (0–10). Append the rationale and critical
    question to the row's `notes` as `Fit: <rationale> | Q: <question>`, preserving any
    Pipedrive tag already in `notes`.
+5b. **Segment every row (market map).** You (the orchestrator) group the longlist into
+   3–6 thematic sub-segments of the mandate — short labels of 2–4 words, e.g. for
+   causal AI: `Process industry AI`, `Supply chain`, `Decision intelligence`,
+   `Drug discovery`. Assign each company its segment in a `segment` field. Rules:
+   segments describe WHAT THE COMPANY DOES within the theme (not geography, not stage);
+   reuse identical labels across rows; nothing left unlabeled (use `Other` sparingly).
+   This powers the dashboard's Map view — sloppy labels make a sloppy map.
 6. **Deep-dive on top picks (only when step 5 ran).** Take the top 8 rows by score
    (score ≥ 6 only; fewer is fine). Dispatch deep-dive sub-agents —
    `subagent_type=general-purpose`, `model=sonnet` — max 3 in parallel, one company each:
@@ -259,6 +318,11 @@ A company passes pre-screen if **all** of:
   neither "Pre-seed" nor "Seed". When it does include them, do NOT fail on this —
   tag notes `Early (<10 FTE)` instead. FTE **Unknown never fails** this check (missing
   LinkedIn data must not kill a real company).
+- **Commercial traction** — when `ctx['stage']` contains neither "Pre-seed" nor "Seed":
+  the row needs at least one traction signal (named customer, paid pilot, commercial
+  partner, or revenue) in its description/notes/why-now. Clearly none after checking →
+  **Fail — no commercial traction**. Signal unclear/unstated → pass but tag notes
+  `Traction unverified`. Seed/pre-seed mandates: tag only, never fail.
 
 Companies that fail the gate stay on the longlist but with notes "Pre-screen: Fail — [reason]" and are NOT scored.
 For every row where FTE is known, prepend `FTE: <value>` to its `notes` so headcount shows on the dashboard and Excel.
@@ -268,7 +332,7 @@ Call `update_progress(ctx['run_id'], <message>)` at each checkpoint.
 ## STEP 3 — Finish
 
 ```python
-# companies = list of dicts: {name, description, website, linkedin, stage, geography, score, source, notes, deep_dive?}
+# companies = list of dicts: {name, description, website, linkedin, stage, geography, segment, score, source, notes, deep_dive?}
 # summary   = optional email lines: recall check result, watch diff count (omit if neither applies)
 finish_run(ctx, companies, summary=summary)  # verifies websites, records herb_seen memory,
                                              # stores results, marks DONE, emails, commits

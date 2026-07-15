@@ -11,7 +11,14 @@ If `ctx['companies']` is empty: print "nothing to score" and exit — done.
 
 ## STEP 2 — Score on Opus
 
-Dispatch scoring sub-agents — `subagent_type=general-purpose`, **`model=opus`** — in batches of ~6 companies each, max 3 agents in parallel. Give each agent its companies' {name, description, stage, geography, source, notes} plus this rubric:
+First fetch the calibration block ONCE:
+
+```python
+from scripts.herb_memory import get_calibration_examples
+calibration = get_calibration_examples()   # "" until enough team decisions accumulate
+```
+
+Dispatch scoring sub-agents — `subagent_type=general-purpose`, **`model=opus`** — in batches of ~6 companies each, max 3 agents in parallel. Give each agent its companies' {name, description, stage, geography, source, notes}, the calibration block (when non-empty), plus this rubric:
 
 ```
 Score each company 0–10 for Icos Capital ICF investment fit.

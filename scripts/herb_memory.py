@@ -113,6 +113,85 @@ def record_seen(run_id: str, theme: str, round_no: int, companies: list[dict]) -
         print(f"[herb_memory] record_seen skipped (non-fatal): {e}")
 
 
+def search_universe(query: str, count: int = 15) -> list[dict]:
+    """Search Herb's OWN accumulated universe (all past longlists) before
+    touching the web. Combines trigram similarity (always available once the
+    v3 migration ran) with vector similarity (when VOYAGE_API_KEY is set).
+
+    Returns [{name, website, description, source, match}] deduped by name.
+    """
+    results: dict[str, dict] = {}
+    try:
+        sb = _get_sb()
+        res = sb.rpc("search_herb_universe", {"q": query[:200], "match_count": count}).execute()
+        for row in res.data or []:
+            key = (row.get("name") or "").strip().lower()
+            if key:
+                results[key] = {
+                    "name": row.get("name"), "website": row.get("website"),
+                    "description": row.get("description"), "source": row.get("source"),
+                    "match": f"trigram {row.get('sim', 0):.2f}",
+                }
+    except Exception as e:
+        print(f"[herb_memory] trigram universe search unavailable (non-fatal): {e}")
+    try:
+        from .embeddings import match_similar
+        for row in match_similar(query, count):
+            key = (row.get("name") or "").strip().lower()
+            if key and key not in results:
+                results[key] = {
+                    "name": row.get("name"), "website": row.get("domain"),
+                    "description": "", "source": "semantic memory",
+                    "match": f"vector {row.get('similarity', 0):.2f}",
+                }
+    except Exception as e:
+        print(f"[herb_memory] vector universe search unavailable (non-fatal): {e}")
+    out = list(results.values())
+    print(f"[herb_memory] search_universe('{query[:40]}…'): {len(out)} hits")
+    return out
+
+
+def get_calibration_examples(limit: int = 12) -> str:
+    """Recent partnership decisions as few-shot calibration for Icos-fit scoring.
+
+    Returns a text block of companies Icos PUSHED to Pipedrive vs EXCLUDED in
+    feedback, with their stored descriptions — or "" when too little data.
+    """
+    try:
+        sb = _get_sb()
+        rows = (sb.table("herb_seen")
+                .select("name,domain,last_status,last_seen_at")
+                .in_("last_status", ["pushed_to_pipedrive", "excluded"])
+                .order("last_seen_at", desc=True).limit(limit * 2).execute()).data or []
+        pushed = [r for r in rows if r["last_status"] == "pushed_to_pipedrive"][:limit // 2]
+        excluded = [r for r in rows if r["last_status"] == "excluded"][:limit // 2]
+        if len(pushed) + len(excluded) < 4:
+            return ""   # not enough signal yet — rubric-only scoring
+
+        def _describe(items: list[dict]) -> list[str]:
+            lines = []
+            for r in items:
+                desc = ""
+                try:
+                    ll = (sb.table("herb_longlist").select("description")
+                          .ilike("name", r["name"]).limit(1).execute()).data
+                    desc = (ll[0].get("description") or "")[:140] if ll else ""
+                except Exception:
+                    pass
+                lines.append(f"- {r['name']}: {desc}" if desc else f"- {r['name']}")
+            return lines
+
+        block = ["CALIBRATION — recent real decisions by the Icos team:",
+                 "Companies the team PUSHED to Pipedrive (score similar profiles higher):"]
+        block += _describe(pushed)
+        block += ["Companies the team EXCLUDED in feedback (score similar profiles lower):"]
+        block += _describe(excluded)
+        return "\n".join(block)
+    except Exception as e:
+        print(f"[herb_memory] calibration unavailable (non-fatal): {e}")
+        return ""
+
+
 def previous_companies(slug: str, exclude_run_id: str | None = None) -> set[str]:
     """All company keys from earlier rounds of this slug's lineage.
 

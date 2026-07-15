@@ -1,0 +1,45 @@
+{
+  "_readme": "Golden mandates for recall regression. Each entry freezes a search Herb has run before, with companies we KNOW belong in the results (verified real, on-thesis). After changing sources/prompts, dispatch a benchmark run and check recall: scripts/benchmark.py --dispatch <key>, later --check <key>. Expected lists are floors, not ceilings — finding MORE is good, missing these is a regression.",
+  "causal-ai-europe": {
+    "theme": "Causal AI companies in Europe — causal reasoning, causal inference, causal machine learning for industry",
+    "geography": "Europe",
+    "stage": "Series A, Series B",
+    "search_mode": "DEEP",
+    "seeds": "",
+    "expected": [
+      { "name": "Vernaio", "domain": "vernaio.com" },
+      { "name": "Ethos AI", "domain": "ethosai.ch" },
+      { "name": "causaLens", "domain": "causalens.com" }
+    ]
+  },
+  "datacenter-cooling-eu": {
+    "theme": "Companies providing solutions for data center cooling — liquid cooling, immersion cooling, heat reuse",
+    "geography": "Europe",
+    "stage": "Series A, Series B",
+    "search_mode": "DEEP",
+    "seeds": "",
+    "expected": [
+      { "name": "Submer", "domain": "submer.com" },
+      { "name": "Corintis", "domain": "corintis.com" },
+      { "name": "Asperitas", "domain": "asperitas.com" },
+      { "name": "Iceotope Technologies", "domain": "iceotope.com" },
+      { "name": "MegaCool Technologies", "domain": "megacool-technologies.com" },
+      { "name": "Heatflow", "domain": "heatflow.dk" }
+    ]
+  },
+  "biopreservation-foodtech": {
+    "theme": "Corbion-adjacent startups: biology-based food preservation, algal fermentation, lactic acid platforms and food ferments",
+    "geography": "Europe",
+    "stage": "Seed, Series A, Series B",
+    "search_mode": "DEEP",
+    "seeds": "",
+    "expected": [
+      { "name": "Onego Bio", "domain": "onego.bio" },
+      { "name": "Planet A Foods", "domain": "planet-a-foods.com" },
+      { "name": "Better Dairy", "domain": "betterdairy.com" },
+      { "name": "Those Vegan Cowboys", "domain": "thosevegancowboys.com" },
+      { "name": "MiAlgae", "domain": "mialgae.com" },
+      { "name": "Arsenale Bioyards", "domain": "arsenalebioyards.com" }
+    ]
+  }
+}

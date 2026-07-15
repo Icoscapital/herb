@@ -105,6 +105,13 @@ def finish_run(ctx: dict, companies: list[dict], summary: str | None = None) -> 
     except Exception as e:
         print(f"[run-web-mandate] herb_seen memory skipped (non-fatal): {e}")
 
+    # Semantic layer: embed the stored companies (no-op without VOYAGE_API_KEY)
+    try:
+        from .embeddings import embed_companies
+        embed_companies(companies)
+    except Exception as e:
+        print(f"[run-web-mandate] embeddings skipped (non-fatal): {e}")
+
     store_results(run_id, companies)
     duration = int(time.time() - ctx["t_start"])
     mark_done(run_id, len(companies), duration)

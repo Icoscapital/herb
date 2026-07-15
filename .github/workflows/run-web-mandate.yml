@@ -70,7 +70,7 @@ jobs:
           fi
           claude -p "$(cat $PROMPT)" \
             --allowedTools Bash,Read,Write,Task,WebSearch,WebFetch \
-            --model claude-sonnet-4-6 \
+            --model claude-sonnet-5 \
             --max-turns 120
 
       - name: Verify run reached terminal state

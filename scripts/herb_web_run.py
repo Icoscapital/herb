@@ -154,10 +154,11 @@ def store_results(run_id: str, companies: list) -> None:
             return token
         return ""
 
-    # Include deep_dive only when at least one company has it (pre-migration
-    # databases lack the column). PostgREST bulk inserts need uniform keys,
-    # so it's all rows or none.
+    # Include optional v2/v3 columns only when at least one company carries a
+    # value (pre-migration databases lack them). PostgREST bulk inserts need
+    # uniform keys, so each column is all rows or none.
     any_deep_dive = any(c.get("deep_dive") for c in companies)
+    any_segment = any(c.get("segment") for c in companies)
     rows = [
         {
             "run_id": run_id,
@@ -171,6 +172,7 @@ def store_results(run_id: str, companies: list) -> None:
             "source": _clean(c.get("source")),
             "notes": _clean(c.get("notes")),
             **({"deep_dive": _clean(c.get("deep_dive"))} if any_deep_dive else {}),
+            **({"segment": _clean(c.get("segment"))} if any_segment else {}),
         }
         for c in companies
         if c.get("name")
