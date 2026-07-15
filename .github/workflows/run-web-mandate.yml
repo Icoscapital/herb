@@ -68,10 +68,12 @@ jobs:
           else
             PROMPT=web_mandate_prompt.md
           fi
+          # 200 turns: normal runs use ~40-60; exhaustive fund scraping
+          # (400-900 funds, ~50 batches) needs the extra headroom.
           claude -p "$(cat $PROMPT)" \
             --allowedTools Bash,Read,Write,Task,WebSearch,WebFetch \
             --model claude-sonnet-5 \
-            --max-turns 120
+            --max-turns 200
 
       - name: Verify run reached terminal state
         if: always()

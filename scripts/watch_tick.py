@@ -116,6 +116,7 @@ def main() -> int:
             "watch": True,
             "icos_fit": head.get("icos_fit", True),
             **({"seed_companies": head["seed_companies"]} if head.get("seed_companies") else {}),
+            **({"exhaustive": True} if head.get("exhaustive") else {}),
         }
         ins = sb.table("herb_runs").insert(new_row).select("id").execute()
         new_id = (ins.data or [{}])[0].get("id")

@@ -29,6 +29,7 @@ export default function NewMandatePage() {
   const [stages, setStages] = useState<string[]>(['Series A', 'Series B'])
   const [icosFit, setIcosFit] = useState(true)
   const [seedText, setSeedText] = useState('')
+  const [exhaustive, setExhaustive] = useState(false)
   const [files, setFiles] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
@@ -125,6 +126,7 @@ export default function NewMandatePage() {
       // insert keeps working until the 20260713 migration is applied.
       ...(icosFit ? {} : { icos_fit: false }),
       ...(seedText.trim() ? { seed_companies: seedText.trim() } : {}),
+      ...(exhaustive && mode === 'COMPREHENSIVE' ? { exhaustive: true } : {}),
     }).select('id').single()
     if (e) { setError('Could not submit: ' + e.message); setSubmitting(false); return }
 
@@ -292,6 +294,31 @@ export default function NewMandatePage() {
                 })}
               </div>
             </div>
+
+            {/* Exhaustive search — deliberate, expensive opt-in (Comprehensive mode only) */}
+            {mode === 'COMPREHENSIVE' && (
+              <div className="px-4 pt-3 pb-1">
+                <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer select-none transition-all"
+                  style={{
+                    background: exhaustive ? '#fdf6ec' : 'var(--bg)',
+                    border: exhaustive ? '1.5px solid #b7600a' : '1px dashed var(--border)',
+                  }}>
+                  <input type="checkbox" checked={exhaustive} disabled={submitting}
+                    onChange={e => setExhaustive(e.target.checked)}
+                    style={{ accentColor: '#b7600a', marginTop: '2px' }} />
+                  <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                    <strong style={{ color: exhaustive ? '#b7600a' : 'var(--text)', fontWeight: 800, letterSpacing: '0.02em' }}>
+                      COMPREHENSIVE &amp; EXPENSIVE SEARCH
+                    </strong>
+                    <span className="block mt-0.5">
+                      Queries the portfolio of <strong>every</strong> matching fund in the 5,070-fund
+                      universe (broad themes: 400–900+ funds). Multi-hour run, roughly 5–10× normal cost.
+                      For flagship mandates — the default already covers the 250 most relevant funds.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            )}
 
             {/* Stage chips */}
             <div className="px-4 pt-3 pb-1">

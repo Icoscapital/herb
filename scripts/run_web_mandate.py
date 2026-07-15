@@ -63,6 +63,7 @@ def start_run() -> dict:
         "extra_check_sites":    check_sites,
         "icos_fit":             m.get("icos_fit", True) is not False,
         "seed_companies":       seeds,
+        "exhaustive":           bool(m.get("exhaustive")),
         "slug":                 m.get("slug") or "",
         "current_round":        m.get("current_round") or 1,
         "watch":                bool(m.get("watch")),

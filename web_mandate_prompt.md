@@ -7,7 +7,8 @@ from scripts.run_web_mandate import start_run, finish_run, fail_run
 ctx = start_run()  # fetches run, marks SEARCHING, loads attachments
 # ctx keys: run_id, theme, geography, stage, search_mode, special_instructions,
 #           submitted_by_email, additional_companies, extra_check_sites,
-#           icos_fit (bool), seed_companies (list), slug, current_round, watch (bool)
+#           icos_fit (bool), seed_companies (list), slug, current_round, watch (bool),
+#           exhaustive (bool — the author checked "COMPREHENSIVE & EXPENSIVE SEARCH")
 ```
 
 `ctx['stage']` is a comma-separated list picked via checkboxes (e.g. "Seed, Series A,
@@ -95,8 +96,13 @@ E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).*
      top-N — the script returns EVERY fund with a genuine keyword match, up to a 250 safety
      cap, as `Investor | Region | HQ | Website | Inv5y`; its stderr funnel line, e.g.
      "87 matched -> 87 emitted", goes into update_progress. If stderr says CAPPED, re-run
-     with `--max 400`. Do NOT read the xlsx directly), and (c) the funds discovered in
-     source 0. Dedup the union by website domain.
+     with `--max 400`. **EXHAUSTIVE mode — when `ctx['exhaustive']` is true, the author
+     explicitly paid for everything: run with `--all` instead (NO ceiling), scrape the FULL
+     matched set, and never trim it — the multi-hour runtime is expected and accepted.
+     Compact aggressively between batches: merge each scrape batch into the deduped working
+     list and discard the raw agent outputs immediately, or you will exhaust your context
+     long before the fund list ends.** Do NOT read the xlsx directly), and (c) the funds
+     discovered in source 0. Dedup the union by website domain.
    For each fund fetch its portfolio page (universe rows give the homepage — append/find "portfolio"
    or "companies") and extract companies — READ the page to capture each company's own website.
 3. **X / Twitter** — `site:x.com "{theme keyword}" "raised" "{geography}" 2025` + variants
@@ -146,10 +152,12 @@ wait, next batch. EU_ONLY ≈ 2–3 batches; COMPREHENSIVE ≈ 5–7 batches of 
 mandate spans EU+JP+US, since sources 0/5/6/7/8 fan out per region). Runtime budget is fine (360-min job).
 
 **Portfolio scraping scales with the fund working-set** (source 2 can now return 100–250 funds on
-broad themes). Portfolio-scrape sub-agents are WebFetch-heavy (fetching a known portfolio URL is
-NOT WebSearch-rate-limited), so give each scrape agent **up to 6 funds** and run batches of 3
-agents — 150 funds ≈ 25 agents ≈ 9 batches. Do NOT silently truncate the fund list to save
-batches; if you must trim, drop the lowest inv5y funds and say so in update_progress
+broad themes; 400–900+ in exhaustive mode). Portfolio-scrape sub-agents are WebFetch-heavy (fetching
+a known portfolio URL is NOT WebSearch-rate-limited), so give each scrape agent **up to 6 funds**
+and run batches of 3 agents — 150 funds ≈ 25 agents ≈ 9 batches; 900 funds ≈ 150 agents ≈ 50
+batches (exhaustive only; report progress every ~10 batches: "portfolio scrape 120/900 funds").
+Do NOT silently truncate the fund list to save batches; if you must trim (NEVER in exhaustive
+mode), drop the lowest inv5y funds and say so in update_progress
 ("scraping 150 of 180 matched funds — dropped 30 least-active").
 
 **Source P (Pipedrive CRM) runs before everything in both modes** — it's an inline Python call,

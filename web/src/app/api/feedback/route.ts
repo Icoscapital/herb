@@ -53,10 +53,11 @@ export async function POST(req: NextRequest) {
         status: 'PENDING',
         current_round: nextRound,
         created_at: new Date().toISOString(),
-        // Inherit v2 options when present (tolerates pre-migration rows)
+        // Inherit v2/v3 options when present (tolerates pre-migration rows)
         ...(orig.icos_fit === false ? { icos_fit: false } : {}),
         ...(orig.seed_companies ? { seed_companies: orig.seed_companies } : {}),
         ...(orig.watch ? { watch: true } : {}),
+        ...(orig.exhaustive ? { exhaustive: true } : {}),
       })
       .select('id, slug')
       .single()

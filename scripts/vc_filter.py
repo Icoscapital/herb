@@ -52,12 +52,14 @@ def main() -> None:
                     help="relevance floor: 1.0 = at least one real keyword hit")
     ap.add_argument("--max", type=int, default=250,
                     help="safety ceiling on emitted funds (broad themes)")
+    ap.add_argument("--all", action="store_true",
+                    help="EXHAUSTIVE: no ceiling — emit every matching fund")
     ap.add_argument("--top", type=int, default=None,
                     help="legacy alias for --max (kept for old prompts)")
     ap.add_argument("--min-inv5y", type=int, default=0,
                     help="optional extra activity floor")
     args = ap.parse_args()
-    ceiling = args.top if args.top is not None else args.max
+    ceiling = 10**9 if args.all else (args.top if args.top is not None else args.max)
 
     keywords = tokenize_keywords(args.keywords)
     regions = {r.strip().upper() for r in args.regions.split(",") if r.strip()}
