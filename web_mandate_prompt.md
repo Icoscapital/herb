@@ -90,10 +90,13 @@ E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).*
    - **EU_ONLY**: read `references/vc-roster.xlsx`, **"VCs"** sheet, filtered to Region==EU. That's all.
    - **COMPREHENSIVE**: union of (a) `references/vc-roster.xlsx` **"VCs (deep)"** sheet filtered by
      Region to the mandate's regions, (b) the PitchBook universe slice — run
-     `python -m scripts.vc_filter --keywords "{theme keywords, comma-separated}" --regions {EU,JP,US per mandate} --top 50`
-     (5,070-fund universe in `references/vc-universe.xlsx`; the script returns the ~50 most
-     theme-relevant active funds as `Investor | Region | HQ | Website | Inv5y` — do NOT read the
-     xlsx directly), and (c) the funds discovered in source 0. Dedup the union by website domain.
+     `python -m scripts.vc_filter --keywords "{theme keywords, comma-separated}" --regions {EU,JP,US per mandate}`
+     (5,070-fund universe in `references/vc-universe.xlsx`; selection is THRESHOLD-based, not
+     top-N — the script returns EVERY fund with a genuine keyword match, up to a 250 safety
+     cap, as `Investor | Region | HQ | Website | Inv5y`; its stderr funnel line, e.g.
+     "87 matched -> 87 emitted", goes into update_progress. If stderr says CAPPED, re-run
+     with `--max 400`. Do NOT read the xlsx directly), and (c) the funds discovered in
+     source 0. Dedup the union by website domain.
    For each fund fetch its portfolio page (universe rows give the homepage — append/find "portfolio"
    or "companies") and extract companies — READ the page to capture each company's own website.
 3. **X / Twitter** — `site:x.com "{theme keyword}" "raised" "{geography}" 2025` + variants
@@ -139,8 +142,15 @@ E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).*
 ### Sub-agent dispatch — batched, 3 per batch (rate-limit safety)
 
 WebSearch has an org-wide 10k-tok/min cap. Firing many in parallel burns it. Dispatch **3 per batch**,
-wait, next batch. EU_ONLY ≈ 2–3 batches; COMPREHENSIVE ≈ 5–7 batches (more when the mandate spans
-EU+JP+US, since sources 0/2/5/6/7/8 fan out per region). Runtime budget is fine (360-min job).
+wait, next batch. EU_ONLY ≈ 2–3 batches; COMPREHENSIVE ≈ 5–7 batches of search agents (more when the
+mandate spans EU+JP+US, since sources 0/5/6/7/8 fan out per region). Runtime budget is fine (360-min job).
+
+**Portfolio scraping scales with the fund working-set** (source 2 can now return 100–250 funds on
+broad themes). Portfolio-scrape sub-agents are WebFetch-heavy (fetching a known portfolio URL is
+NOT WebSearch-rate-limited), so give each scrape agent **up to 6 funds** and run batches of 3
+agents — 150 funds ≈ 25 agents ≈ 9 batches. Do NOT silently truncate the fund list to save
+batches; if you must trim, drop the lowest inv5y funds and say so in update_progress
+("scraping 150 of 180 matched funds — dropped 30 least-active").
 
 **Source P (Pipedrive CRM) runs before everything in both modes** — it's an inline Python call,
 not a sub-agent, so it costs no batch slot. **COMPREHENSIVE mode only: then run source 0
