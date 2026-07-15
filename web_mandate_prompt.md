@@ -7,8 +7,10 @@ from scripts.run_web_mandate import start_run, finish_run, fail_run
 ctx = start_run()  # fetches run, marks SEARCHING, loads attachments
 # ctx keys: run_id, theme, geography, stage, search_mode, special_instructions,
 #           submitted_by_email, additional_companies, extra_check_sites,
-#           icos_fit (bool), seed_companies (list), slug, current_round, watch (bool),
-#           exhaustive (bool — the author checked "COMPREHENSIVE & EXPENSIVE SEARCH")
+#           icos_fit (bool — scoring is opt-IN, default False),
+#           seed_companies (list), slug, current_round, watch (bool),
+#           exhaustive (bool — the author checked "COMPREHENSIVE & EXPENSIVE SEARCH"),
+#           include_small (bool — keep sub-10-FTE companies, tagged "Early")
 ```
 
 `ctx['stage']` is a comma-separated list picked via checkboxes (e.g. "Seed, Series A,
@@ -262,8 +264,11 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    Verdict ∈ REAL / INVENTOR / UNIVERSITY / SHELL / UNCLEAR
    ```
    **Keep only rows with Verdict=REAL, FTE ≥ 10 (bucket "11-50"+ or count ≥10), AND
-   Traction ≠ NONE.** Everything else is dropped — do not add them to the longlist at
-   all (a patent-sourced inventor list defeats the purpose). Log the funnel in progress:
+   Traction ≠ NONE.** (When `ctx['include_small']` is true, relax ONLY the FTE bar:
+   Verdict=REAL + Traction≠NONE still required, sub-10-FTE keepers get tagged
+   `Early (<10 FTE)` — inventors and shells are never kept.) Everything else is
+   dropped — do not add them to the longlist at all (a patent-sourced inventor list
+   defeats the purpose). Log the funnel in progress:
    `update_progress(id, "Patent/grant gate: 31 candidates → 7 real companies")` and add
    the same line to the email summary.
 3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date]. Skip rows sourced from "Pipedrive CRM" (status already known).
@@ -331,11 +336,12 @@ A company passes pre-screen if **all** of:
   Series B") — or Unknown but plausible from context
 - **Business model** is B2B or Mixed (not pure B2C)
 - **At least one LP flag** = Yes or Maybe — LPs are: Nouryon (specialty chemicals), Bühler (food/grain), FrieslandCampina (dairy/nutrition)
-- **Maturity (min 10 FTE)** — if FTE is known and below 10 (a count `<10`, or LinkedIn
-  bucket "1-10"/"2-10"): **Fail — too early (<10 FTE)** when `ctx['stage']` contains
-  neither "Pre-seed" nor "Seed". When it does include them, do NOT fail on this —
-  tag notes `Early (<10 FTE)` instead. FTE **Unknown never fails** this check (missing
-  LinkedIn data must not kill a real company).
+- **Maturity (min 10 FTE — applies to ALL searches, regardless of stage)** — if FTE is
+  known and below 10 (a count `<10`, or LinkedIn bucket "1-10"/"2-10"):
+  **Fail — too early (<10 FTE)**. Exception: when `ctx['include_small']` is true, the
+  author explicitly asked to also see sub-10-FTE companies — do NOT fail them; tag notes
+  `Early (<10 FTE)` and score them like any other pass. FTE **Unknown never fails** this
+  check (missing LinkedIn data must not kill a real company).
 - **Commercial traction** — when `ctx['stage']` contains neither "Pre-seed" nor "Seed":
   the row needs at least one traction signal (named customer, paid pilot, commercial
   partner, or revenue) in its description/notes/why-now. Clearly none after checking →

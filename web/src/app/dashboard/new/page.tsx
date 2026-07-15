@@ -27,7 +27,8 @@ export default function NewMandatePage() {
   const [text, setText] = useState('')
   const [mode, setMode] = useState<'COMPREHENSIVE' | 'EU_ONLY'>('COMPREHENSIVE')
   const [stages, setStages] = useState<string[]>(['Series A', 'Series B'])
-  const [icosFit, setIcosFit] = useState(true)
+  const [icosFit, setIcosFit] = useState(false)          // scoring is opt-in
+  const [includeSmall, setIncludeSmall] = useState(false) // <10 FTE excluded by default
   const [seedText, setSeedText] = useState('')
   const [exhaustive, setExhaustive] = useState(false)
   const [files, setFiles] = useState<Attachment[]>([])
@@ -124,9 +125,11 @@ export default function NewMandatePage() {
       created_at: new Date().toISOString(),
       // Only include the new columns when they deviate from defaults, so the
       // insert keeps working until the 20260713 migration is applied.
-      ...(icosFit ? {} : { icos_fit: false }),
+      icos_fit: icosFit,   // column exists since v2 migration; explicit either way
       ...(seedText.trim() ? { seed_companies: seedText.trim() } : {}),
       ...(exhaustive && mode === 'COMPREHENSIVE' ? { exhaustive: true } : {}),
+      // include_small column arrives with the 20260716 migration — only send when used
+      ...(includeSmall ? { include_small: true } : {}),
     }).select('id').single()
     if (e) { setError('Could not submit: ' + e.message); setSubmitting(false); return }
 
@@ -347,6 +350,21 @@ export default function NewMandatePage() {
               </div>
             </div>
 
+            {/* Sub-10-FTE inclusion — the 10 FTE maturity threshold applies to ALL searches by default */}
+            <div className="px-4 pt-2 pb-1">
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none" style={{ color: 'var(--muted)' }}>
+                <input type="checkbox" checked={includeSmall} disabled={submitting}
+                  onChange={e => setIncludeSmall(e.target.checked)}
+                  style={{ accentColor: 'var(--teal)' }} />
+                <span style={{ fontWeight: 500, color: includeSmall ? 'var(--teal)' : 'var(--muted)' }}>
+                  Also include companies under 10 FTE
+                </span>
+                <span style={{ color: 'var(--subtle)' }}>
+                  — by default Herb drops sub-10-FTE companies as too early; tick to keep them, tagged “Early”.
+                </span>
+              </label>
+            </div>
+
             {/* Seed companies — known examples that define the thesis */}
             <div className="px-4 pt-2 pb-1">
               <input
@@ -373,7 +391,7 @@ export default function NewMandatePage() {
                   Score Icos Fit (0–10)
                 </span>
                 <span style={{ color: 'var(--subtle)' }}>
-                  — thesis-fit scoring of every screened company. Skip for a faster raw longlist; you can score later from the results page.
+                  — off by default (faster, cheaper raw longlist). Tick to score now, or score any completed run later via “★ Score Icos Fit” on its results page.
                 </span>
               </label>
             </div>

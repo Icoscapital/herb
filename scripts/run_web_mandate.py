@@ -61,9 +61,10 @@ def start_run() -> dict:
         "submitted_by_name":    m.get("submitted_by_name") or "",
         "additional_companies": additional,
         "extra_check_sites":    check_sites,
-        "icos_fit":             m.get("icos_fit", True) is not False,
+        "icos_fit":             m.get("icos_fit") is True,   # scoring is opt-IN
         "seed_companies":       seeds,
         "exhaustive":           bool(m.get("exhaustive")),
+        "include_small":        bool(m.get("include_small")),
         "slug":                 m.get("slug") or "",
         "current_round":        m.get("current_round") or 1,
         "watch":                bool(m.get("watch")),

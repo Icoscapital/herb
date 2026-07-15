@@ -114,9 +114,10 @@ def main() -> int:
             "current_round": next_round,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "watch": True,
-            "icos_fit": head.get("icos_fit", True),
+            "icos_fit": head.get("icos_fit") is True,
             **({"seed_companies": head["seed_companies"]} if head.get("seed_companies") else {}),
             **({"exhaustive": True} if head.get("exhaustive") else {}),
+            **({"include_small": True} if head.get("include_small") else {}),
         }
         ins = sb.table("herb_runs").insert(new_row).select("id").execute()
         new_id = (ins.data or [{}])[0].get("id")
