@@ -4,7 +4,9 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { authedFetch } from '@/lib/api-client'
 import { generateRunSlug } from '@/lib/slug'
+import SearchPlanDialog, { SearchPlan } from '@/components/SearchPlanDialog'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -32,6 +34,11 @@ export default function NewMandatePage() {
   const [includeSmall, setIncludeSmall] = useState(false) // <10 FTE excluded by default
   const [seedText, setSeedText] = useState('')
   const [exhaustive, setExhaustive] = useState(false)
+  // Confirm-before-run dialog
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
+  const [plan, setPlan] = useState<SearchPlan | null>(null)
   const [files, setFiles] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
@@ -100,15 +107,50 @@ export default function NewMandatePage() {
     })
   }
 
-  const submit = async () => {
+  const parseText = () => {
+    const lines = text.trim().split('\n')
+    const theme = lines[0].trim()
+    const special_instructions = lines.slice(1).join('\n').trim() || null
+    return { theme, special_instructions }
+  }
+
+  // Step 1: click "Search →" — generate the plan and open the confirm dialog.
+  // Nothing is created or dispatched yet.
+  const requestPreview = async () => {
+    if (!text.trim()) return
+    const { theme, special_instructions } = parseText()
+    setPreviewLoading(true); setPreviewError(null); setPlan(null); setDialogOpen(true)
+    try {
+      const res = await authedFetch('/api/preview-plan', {
+        method: 'POST',
+        body: JSON.stringify({
+          theme, special_instructions,
+          mode, geography: mode === 'EU_ONLY' ? 'Europe' : 'Global',
+          stage: stages.length ? stages.join(', ') : 'Series A, Series B',
+          seed_companies: seedText.trim() || null,
+          icos_fit: icosFit, include_small: includeSmall, exhaustive,
+        }),
+      })
+      const json = await res.json()
+      if (!json.ok) { setPreviewError(json.error || 'Unknown error'); return }
+      setPlan(json)
+    } catch (e: any) {
+      setPreviewError(e?.message ?? String(e))
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
+
+  const closeDialog = () => { setDialogOpen(false); setPlan(null); setPreviewError(null) }
+
+  // Step 2: user clicks Confirm in the dialog — NOW create + dispatch the run, immediately.
+  const confirmAndRun = async () => {
     if (!text.trim()) return
     setSubmitting(true); setError('')
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/login'); return }
     const meta = session.user.user_metadata
-    const lines = text.trim().split('\n')
-    const theme = lines[0].trim()
-    const special_instructions = lines.slice(1).join('\n').trim() || null
+    const { theme, special_instructions } = parseText()
     const slug = generateRunSlug(theme)
     const { data: runData, error: e } = await supabase.from('herb_runs').insert({
       user_id: session.user.id,
@@ -131,7 +173,7 @@ export default function NewMandatePage() {
       // include_small column arrives with the 20260716 migration — only send when used
       ...(includeSmall ? { include_small: true } : {}),
     }).select('id').single()
-    if (e) { setError('Could not submit: ' + e.message); setSubmitting(false); return }
+    if (e) { setError('Could not submit: ' + e.message); setSubmitting(false); closeDialog(); return }
 
     // Link uploaded files to the new run in herb_files
     if (runData?.id && files.filter(f => f.fileType).length > 0) {
@@ -158,7 +200,7 @@ export default function NewMandatePage() {
   }
 
   const fmt = (b: number) => b < 1048576 ? `${(b / 1024).toFixed(0)} KB` : `${(b / 1048576).toFixed(1)} MB`
-  const ready = text.trim().length > 3 && !submitting && !uploading
+  const ready = text.trim().length > 3 && !submitting && !uploading && !previewLoading
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
@@ -409,10 +451,10 @@ export default function NewMandatePage() {
                   {uploading ? 'Uploading…' : 'Brief or context doc'}
                 </span>
               </div>
-              <button onClick={submit} disabled={!ready}
+              <button onClick={requestPreview} disabled={!ready}
                 className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all"
                 style={{ background: ready ? 'var(--teal)' : 'var(--border)', color: ready ? '#fff' : 'var(--subtle)', cursor: ready ? 'pointer' : 'not-allowed' }}>
-                {submitting ? 'Submitting…' : 'Search →'}
+                {previewLoading ? 'Reading…' : submitting ? 'Submitting…' : 'Search →'}
               </button>
             </div>
           </div>
@@ -433,6 +475,17 @@ export default function NewMandatePage() {
           </div>
         </div>
       </div>
+
+      <SearchPlanDialog
+        open={dialogOpen}
+        loading={previewLoading}
+        error={previewError}
+        plan={plan}
+        confirming={submitting}
+        onConfirm={confirmAndRun}
+        onEdit={closeDialog}
+        onRunWithoutPreview={() => { closeDialog(); confirmAndRun() }}
+      />
     </div>
   )
 }

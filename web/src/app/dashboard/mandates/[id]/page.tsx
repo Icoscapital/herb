@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx-js-style'
 import { supabase } from '@/lib/supabase'
 import { authedFetch } from '@/lib/api-client'
 import { generateRunSlug } from '@/lib/slug'
+import SearchPlanDialog, { SearchPlan } from '@/components/SearchPlanDialog'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -199,6 +200,11 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
   const [editMode, setEditMode] = useState(false)
   const [editText, setEditText] = useState('')
   const [editSaving, setEditSaving] = useState(false)
+  // Confirm-before-run dialog for the edit panel
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editPreviewLoading, setEditPreviewLoading] = useState(false)
+  const [editPreviewError, setEditPreviewError] = useState<string | null>(null)
+  const [editPlan, setEditPlan] = useState<SearchPlan | null>(null)
   // Earlier rounds of the same mandate lineage (slug base match, lower current_round)
   const [previousRounds, setPreviousRounds] = useState<Array<{ id: string; current_round: number | null; result_count: number | null; status: string; created_at: string }>>([])
   const editRef = useRef<HTMLTextAreaElement>(null)
@@ -409,6 +415,40 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     setTimeout(() => { if (editRef.current) { editRef.current.focus(); editRef.current.style.height = 'auto'; editRef.current.style.height = Math.min(editRef.current.scrollHeight, 320) + 'px' } }, 50)
   }
 
+  // Step 1: click "Update & re-queue" / "New search with this text" — preview first.
+  const requestEditPreview = async () => {
+    if (!editText.trim() || !run) return
+    const lines = editText.trim().split('\n')
+    const theme = lines[0].trim()
+    const special_instructions = lines.slice(1).join('\n').trim() || null
+    setEditPreviewLoading(true); setEditPreviewError(null); setEditPlan(null); setEditDialogOpen(true)
+    try {
+      const res = await authedFetch('/api/preview-plan', {
+        method: 'POST',
+        body: JSON.stringify({
+          theme, special_instructions,
+          mode: run.search_mode === 'STANDARD' || run.search_mode === 'EU_ONLY' ? 'EU_ONLY' : 'COMPREHENSIVE',
+          geography: run.geography,
+          stage: run.stage,
+          seed_companies: (run as any).seed_companies ?? null,
+          icos_fit: !!(run as any).icos_fit,
+          include_small: !!(run as any).include_small,
+          exhaustive: !!(run as any).exhaustive,
+        }),
+      })
+      const json = await res.json()
+      if (!json.ok) { setEditPreviewError(json.error || 'Unknown error'); return }
+      setEditPlan(json)
+    } catch (e: any) {
+      setEditPreviewError(e?.message ?? String(e))
+    } finally {
+      setEditPreviewLoading(false)
+    }
+  }
+
+  const closeEditDialog = () => { setEditDialogOpen(false); setEditPlan(null); setEditPreviewError(null) }
+
+  // Step 2: user clicks Confirm in the dialog — NOW update/create + dispatch, immediately.
   const saveEdit = async () => {
     if (!editText.trim() || !run) return
     setEditSaving(true)
@@ -421,9 +461,10 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
         const { error } = await supabase.from('herb_runs')
           .update({ theme, special_instructions })
           .eq('id', params.id)
-        if (error) { alert('Could not update: ' + error.message); return }
+        if (error) { alert('Could not update: ' + error.message); closeEditDialog(); return }
         setRun(r => r ? { ...r, theme, special_instructions } : r)
         setEditMode(false)
+        closeEditDialog()
         // Re-queue the run
         authedFetch('/api/run-mandate', { method: 'POST', body: JSON.stringify({ run_id: params.id }) }).catch(() => {})
       } else {
@@ -440,7 +481,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
           status: 'PENDING', current_round: 1,
           created_at: new Date().toISOString(),
         })
-        if (error) { alert('Could not create run: ' + error.message); return }
+        if (error) { alert('Could not create run: ' + error.message); closeEditDialog(); return }
         router.push('/dashboard')
       }
     } finally {
@@ -787,16 +828,16 @@ ${mdToHtml(json.memo)}
                 {run.status === 'PENDING' ? 'Will update this search and re-queue it' : 'Will create a new search with this text'}
               </p>
               <button
-                onClick={saveEdit}
-                disabled={editSaving || !editText.trim()}
+                onClick={requestEditPreview}
+                disabled={editSaving || editPreviewLoading || !editText.trim()}
                 className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all"
                 style={{
                   background: editText.trim() ? 'var(--teal)' : 'var(--border)',
                   color: editText.trim() ? '#fff' : 'var(--subtle)',
-                  cursor: editText.trim() && !editSaving ? 'pointer' : 'not-allowed',
+                  cursor: editText.trim() && !editSaving && !editPreviewLoading ? 'pointer' : 'not-allowed',
                 }}
               >
-                {editSaving ? 'Saving…' : run.status === 'PENDING' ? '↻ Update & re-queue' : '+ New search with this text'}
+                {editPreviewLoading ? 'Reading…' : editSaving ? 'Saving…' : run.status === 'PENDING' ? '↻ Update & re-queue' : '+ New search with this text'}
               </button>
             </div>
           </div>
@@ -1454,6 +1495,17 @@ ${mdToHtml(json.memo)}
         )}
 
       </div>
+
+      <SearchPlanDialog
+        open={editDialogOpen}
+        loading={editPreviewLoading}
+        error={editPreviewError}
+        plan={editPlan}
+        confirming={editSaving}
+        onConfirm={saveEdit}
+        onEdit={closeEditDialog}
+        onRunWithoutPreview={() => { closeEditDialog(); saveEdit() }}
+      />
     </div>
   )
 }
