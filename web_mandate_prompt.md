@@ -70,6 +70,25 @@ Map `{geography}` to a region set used by sources 0 and 2:
   "Global"/blank/multi → **EU+JP+US** (all three).
 In EU_ONLY mode the region is always **EU** regardless of geography.
 
+### STEP 2.1 — Save the search plan (BEFORE dispatching any sub-agent)
+
+Mode and regions are now known. Save a short, human-readable summary so the author can
+see exactly what Herb is about to do within the first minute of the run — well before
+any results exist. This is **informational, not a gate** — it does not pause the run:
+
+```python
+from scripts.herb_web_run import save_search_plan
+save_search_plan(ctx['run_id'], f"""Mode: {mode} · Regions: {regions}
+Keywords: {", ".join(query_terms)}
+Must-haves: {"; ".join(must_haves) if must_haves else "none — general topic search"}
+Sources: {short comma-list of which numbered/lettered sources will run for this mode}""")
+```
+
+Keep it under ~500 characters — a scannable summary, not a restatement of this prompt.
+If `must_haves` or `query_terms` look thin or off-topic to you, that is itself a signal
+worth flagging in `update_progress` — the author can only catch a misread mandate if
+the plan you save actually reflects what you understood.
+
 ### Sources (BOTH modes = M + P + …; EU_ONLY = M + P + 1–5, Europe, no Source 0; COMPREHENSIVE = all incl. Sources 0 and 14)
 
 M. **Herb's own universe (BOTH modes — run FIRST, instant, free).** Herb has seen thousands

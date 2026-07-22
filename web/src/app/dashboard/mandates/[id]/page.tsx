@@ -37,6 +37,7 @@ type Run = {
   watch?: boolean
   icos_fit?: boolean
   progress?: string | null
+  search_plan?: string | null
 }
 
 const PAGE_SIZE = 10
@@ -264,6 +265,23 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
     }
     load()
   }, [params.id, router])
+
+  // While the run is still in progress, poll the run row every 8s so the
+  // search plan, live progress line, and eventual results appear without a
+  // manual refresh. Stops as soon as the run reaches a terminal status.
+  useEffect(() => {
+    if (!run || !['PENDING', 'SEARCHING', 'EMAILING'].includes(run.status)) return
+    const t = setInterval(async () => {
+      const { data: r } = await supabase.from('herb_runs').select('*').eq('id', params.id).single()
+      if (r) setRun(r)
+      if (r && ['DONE', 'EMAILED', 'COMPLETED'].includes(r.status)) {
+        const { data: c } = await supabase.from('herb_longlist').select('*')
+          .eq('run_id', params.id).order('score', { ascending: false })
+        setCompanies(c ?? [])
+      }
+    }, 8000)
+    return () => clearInterval(t)
+  }, [run?.status, params.id])
 
   const toggleExclude = (name: string) => {
     setExcluded(prev => {
@@ -853,11 +871,38 @@ ${mdToHtml(json.memo)}
           </div>
         )}
 
+        {/* Search plan — visible within the first ~minute of a run, well before results.
+            Lets the author catch a misread mandate early instead of finding out at completion. */}
+        {run.search_plan && companies.length === 0 && (
+          <div className="rounded-2xl px-5 py-4 mb-4"
+            style={{ background: 'var(--teal-light)', border: '1px solid var(--teal)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span style={{ fontSize: 16 }}>🔍</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--teal)' }}>
+                What Herb is searching for
+              </span>
+              <span className="text-xs" style={{ color: 'var(--subtle)' }}>
+                — if this looks off, edit and re-run rather than waiting for results
+              </span>
+            </div>
+            <pre className="text-xs whitespace-pre-wrap" style={{ color: 'var(--text)', fontFamily: 'inherit', margin: 0 }}>
+              {run.search_plan}
+            </pre>
+          </div>
+        )}
+
         {/* Table */}
         {companies.length === 0 ? (
           <div className="rounded-2xl py-16 text-center"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <p className="text-sm" style={{ color: 'var(--muted)' }}>Results not yet available.</p>
+            {run.progress && ['PENDING', 'SEARCHING', 'EMAILING'].includes(run.status) ? (
+              <>
+                <span className="loading-spinner" style={{ width: '18px', height: '18px', marginBottom: 10, display: 'inline-block' }} />
+                <p className="text-sm" style={{ color: 'var(--text)' }}>{run.progress}</p>
+              </>
+            ) : (
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>Results not yet available.</p>
+            )}
           </div>
         ) : viewMode === 'map' ? null : (
           <div className="rounded-2xl overflow-hidden"

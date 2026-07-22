@@ -98,6 +98,25 @@ def update_progress(run_id: str, message: str) -> None:
     }).eq("id", run_id).execute()
 
 
+def save_search_plan(run_id: str, plan_text: str) -> None:
+    """
+    Persist Herb's interpreted search plan (must-haves, keywords, sources,
+    regions — from STEP 2.0) so the dashboard can show it within the first
+    ~30-60s of a run, well before results are ready. Lets the author catch
+    a misread mandate early instead of finding out at completion.
+
+    Non-fatal: the search_plan column may not exist pre-migration.
+    """
+    print(f"[HERB] search plan:\n{plan_text}")
+    try:
+        _get_sb().table("herb_runs").update({
+            "search_plan": plan_text[:2000],
+            "last_heartbeat": _now(),
+        }).eq("id", run_id).execute()
+    except Exception as e:
+        print(f"[HERB] save_search_plan skipped (non-fatal): {e}")
+
+
 def store_results(run_id: str, companies: list) -> None:
     """
     Replace all herb_longlist rows for this run with the new results.
