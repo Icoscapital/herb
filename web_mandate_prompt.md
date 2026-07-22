@@ -73,8 +73,9 @@ requirement you actually asked for.
 - **EU_ONLY** (also accept legacy value `STANDARD`): the lighter, Europe-only run
   that reproduces the prior shortlist. Region = **EU only**. **SKIP Source 0** (no
   VC discovery). Use ONLY the curated European shortlist — the **"VCs"** sheet
-  filtered to **Region == EU**. Run **source P (Pipedrive CRM) + core sources 1, 1b, 2–5**
-  (Crunchbase, open web, VC portfolios, X, LinkedIn, conferences), Europe-focused. Do NOT run
+  filtered to **Region == EU**. Run **source P (Pipedrive CRM) + core sources 1, 1b, 2–5, 5b**
+  (Crunchbase, open web, VC portfolios, X, LinkedIn, conferences, sector trade media),
+  Europe-focused. Do NOT run
   tech-transfer, co-investor snowball, non-English, EU-grants, press, or accelerator
   expansions.
 
@@ -103,7 +104,7 @@ If `must_haves` or `query_terms` look thin or off-topic to you, that is itself a
 worth flagging in `update_progress` — the author can only catch a misread mandate if
 the plan you save actually reflects what you understood.
 
-### Sources (BOTH modes = M + P + …; EU_ONLY = M + P + 1, 1b, 2–5, Europe, no Source 0; COMPREHENSIVE = all incl. Sources 0 and 14)
+### Sources (BOTH modes = M + P + …; EU_ONLY = M + P + 1, 1b, 2–5, 5b, Europe, no Source 0; COMPREHENSIVE = all incl. Sources 0 and 14)
 
 M. **Herb's own universe (BOTH modes — run FIRST, instant, free).** Herb has seen thousands
    of companies across past mandates. Before searching the web:
@@ -189,19 +190,19 @@ E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).*
 5. **Conferences / competitions** — EU: `EIC Accelerator`, `Hello Tomorrow`, `Bits & Pretzels`,
    `EIT Food`, `Slush`; JP: `Plug and Play Japan`, `ICC Summit`, `IVS`; US: `Hello Tomorrow US`,
    `ARPA-E Summit`, `Web Summit`
+5b. **Sector trade media (BOTH modes — always run).** Read `references/media-sources.md`; IF the
+   mandate's sector matches a block there (match on that block's keyword line), search each listed
+   outlet `site:<domain> "{query_term}"` and FETCH the pages marked 📊 directly (ecosystem reports /
+   startup databases that name many companies at once — e.g. Forward Fooding, Digital Food Lab, GFI).
+   These specialized outlets surface on-thesis companies earlier than mainstream databases, so this
+   runs even in EU_ONLY mode. If no sector block matches the mandate, skip this source (no cost).
 6. **University tech-transfer & spinouts** — EU: ETH, TUM, Wageningen, Imperial, EPFL, Max Planck,
    KU Leuven; JP: UTokyo IPC, Kyoto-iCAP, Tohoku, Osaka; US: MIT TLO, Stanford OTL, Berkeley.
    Query `"{theme keyword}" spinout/spin-off {institution} 2023 2024 2025`. Surfaces companies
    earlier than funding databases.
 7. **Press / news** — general: EU `site:sifted.eu OR site:tech.eu`; JP `site:thebridge.jp OR bridge.jp`;
    US `site:techcrunch.com OR site:axios.com` — `"{theme keyword}" startup funding 2025`.
-   **PLUS sector trade media: read `references/media-sources.md` and, IF the mandate's sector
-   matches a block there (match on that block's keyword line), search each listed outlet
-   `site:<domain> "{query_term}"` and FETCH the pages marked 📊 directly (ecosystem reports /
-   startup databases that name many companies at once — e.g. Forward Fooding, Digital Food Lab,
-   GFI).** These specialized outlets surface on-thesis companies earlier than the general press
-   above. Only read the file when press (source 7) actually runs — skip it in EU_ONLY mode.
-   If no sector block matches the mandate, just use the general outlets.
+   (Sector-specific trade media is its own source 5b, which runs in BOTH modes — see above.)
 8. **Accelerator alumni** — `Y Combinator`, `Techstars`, `SOSV IndieBio`, EU: `EIT Food`,
    JP: `Plug and Play Japan`, `Beyond Next Ventures` cohorts — filtered to the theme
 9. **Custom company lists** — `ctx['additional_companies']` (companies the user uploaded)
