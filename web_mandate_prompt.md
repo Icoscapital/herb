@@ -73,8 +73,8 @@ requirement you actually asked for.
 - **EU_ONLY** (also accept legacy value `STANDARD`): the lighter, Europe-only run
   that reproduces the prior shortlist. Region = **EU only**. **SKIP Source 0** (no
   VC discovery). Use ONLY the curated European shortlist — the **"VCs"** sheet
-  filtered to **Region == EU**. Run **source P (Pipedrive CRM) + core sources 1–5**
-  (Crunchbase, VC portfolios, X, LinkedIn, conferences), Europe-focused. Do NOT run
+  filtered to **Region == EU**. Run **source P (Pipedrive CRM) + core sources 1, 1b, 2–5**
+  (Crunchbase, open web, VC portfolios, X, LinkedIn, conferences), Europe-focused. Do NOT run
   tech-transfer, co-investor snowball, non-English, EU-grants, press, or accelerator
   expansions.
 
@@ -103,7 +103,7 @@ If `must_haves` or `query_terms` look thin or off-topic to you, that is itself a
 worth flagging in `update_progress` — the author can only catch a misread mandate if
 the plan you save actually reflects what you understood.
 
-### Sources (BOTH modes = M + P + …; EU_ONLY = M + P + 1–5, Europe, no Source 0; COMPREHENSIVE = all incl. Sources 0 and 14)
+### Sources (BOTH modes = M + P + …; EU_ONLY = M + P + 1, 1b, 2–5, Europe, no Source 0; COMPREHENSIVE = all incl. Sources 0 and 14)
 
 M. **Herb's own universe (BOTH modes — run FIRST, instant, free).** Herb has seen thousands
    of companies across past mandates. Before searching the web:
@@ -150,6 +150,13 @@ E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).*
    Append verified funds to the roster working-set for source 2 (dedup by domain against
    vc-roster.xlsx). This is how Herb keeps finding NEW funds, especially in JP/US.
 1. **Crunchbase** — `site:crunchbase.com "{theme keyword}" "{geography}" "Series A"` + variants
+1b. **Open web (BOTH modes — do NOT skip).** The other sources are domain-scoped (`site:...`),
+   which misses companies covered only on their own blog, a niche trade journal, or a regional
+   outlet. Run 2–3 UNSCOPED web searches per mandate on `query_terms` — plain Google-style
+   queries with NO `site:` filter, e.g. `"{query_term}" startup {geography}`,
+   `"{query_term}" company funding`, `"{query_term}" {sector} manufacturer`. This is the
+   catch-all that makes coverage the whole internet, not just the known platforms. Extract
+   companies the same way (DOMAIN RULES apply); dedup against everything else by domain.
 2. **VC portfolios** — the fund working-set depends on mode:
    - **EU_ONLY**: read `references/vc-roster.xlsx`, **"VCs"** sheet, filtered to Region==EU. That's all.
    - **COMPREHENSIVE**: union of (a) `references/vc-roster.xlsx` **"VCs (deep)"** sheet filtered by
