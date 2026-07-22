@@ -110,7 +110,11 @@ exclusions: anything explicitly ruled out inline (e.g. "not already in our pipel
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5',
+        // Opus 4.8 for the confirm-gate extraction: this preview stands in
+        // front of expensive multi-hour searches, so max reasoning quality on
+        // decomposing the mandate into keywords + must-haves is worth the small
+        // per-call cost and the few extra seconds of dialog latency.
+        model: 'claude-opus-4-8',
         max_tokens: 600,
         system,
         messages: [{ role: 'user', content: userContent }],
