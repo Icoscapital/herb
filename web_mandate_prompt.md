@@ -193,8 +193,15 @@ E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).*
    KU Leuven; JP: UTokyo IPC, Kyoto-iCAP, Tohoku, Osaka; US: MIT TLO, Stanford OTL, Berkeley.
    Query `"{theme keyword}" spinout/spin-off {institution} 2023 2024 2025`. Surfaces companies
    earlier than funding databases.
-7. **Press / news** — EU: `site:sifted.eu OR site:tech.eu`; JP: `site:thebridge.jp OR bridge.jp`;
-   US: `site:techcrunch.com OR site:axios.com` — `"{theme keyword}" startup funding 2025`
+7. **Press / news** — general: EU `site:sifted.eu OR site:tech.eu`; JP `site:thebridge.jp OR bridge.jp`;
+   US `site:techcrunch.com OR site:axios.com` — `"{theme keyword}" startup funding 2025`.
+   **PLUS sector trade media: read `references/media-sources.md` and, IF the mandate's sector
+   matches a block there (match on that block's keyword line), search each listed outlet
+   `site:<domain> "{query_term}"` and FETCH the pages marked 📊 directly (ecosystem reports /
+   startup databases that name many companies at once — e.g. Forward Fooding, Digital Food Lab,
+   GFI).** These specialized outlets surface on-thesis companies earlier than the general press
+   above. Only read the file when press (source 7) actually runs — skip it in EU_ONLY mode.
+   If no sector block matches the mandate, just use the general outlets.
 8. **Accelerator alumni** — `Y Combinator`, `Techstars`, `SOSV IndieBio`, EU: `EIT Food`,
    JP: `Plug and Play Japan`, `Beyond Next Ventures` cohorts — filtered to the theme
 9. **Custom company lists** — `ctx['additional_companies']` (companies the user uploaded)
