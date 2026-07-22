@@ -242,9 +242,9 @@ Then dedup discovered funds by domain against vc-roster.xlsx and merge into the 
 
 **Model routing (3 tiers):** search/discovery/website-finder/reality-gate sub-agents → **Haiku**
 (bounded extraction, cheapest); you the orchestrator → **Sonnet 5** (the search protocol, dedup,
-Pipedrive, segmentation, write-up); Icos-fit scoring (STEP 2 step 5) → **Opus** (the one
-reasoning-heavy judgment call that decides top picks). Do not move search onto Opus — it 5×'s
-cost for no quality gain on bounded extraction.
+Pipedrive, segmentation, write-up); Icos-fit scoring (STEP 2 step 5) → **Opus 4.8**
+(`claude-opus-4-8`, the one reasoning-heavy judgment call that decides top picks — worth the top
+model here). Do not move search onto Opus — it 5×'s cost for no quality gain on bounded extraction.
 
 Search sub-agent config: `subagent_type=general-purpose`, `model=haiku`. Sub-agent prompt template (substitute `{source}`, `{theme}`, `{geography}`, `{stage}`, `{query}` from the source list above):
 
@@ -354,9 +354,9 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    uses Opus; search sub-agents stay on Haiku and you (the orchestrator) stay on Sonnet.
    Score ONLY Pass-Pre-screen rows (Open/Won/Lost and pre-screen-Fail rows get
    `score=None` and are skipped). Dispatch scoring sub-agents —
-   `subagent_type=general-purpose`, **`model=opus`** — in batches of ~6 companies each
+   `subagent_type=general-purpose`, **`model=claude-opus-4-8`** — in batches of ~6 companies each
    (low-volume, reasoning-heavy; Opus changes which companies surface as top picks, so
-   it's worth it here). First fetch the calibration block ONCE:
+   it's worth the top model here). First fetch the calibration block ONCE:
    ```python
    from scripts.herb_memory import get_calibration_examples
    calibration = get_calibration_examples()   # "" until enough team decisions accumulate

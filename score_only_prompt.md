@@ -18,7 +18,7 @@ from scripts.herb_memory import get_calibration_examples
 calibration = get_calibration_examples()   # "" until enough team decisions accumulate
 ```
 
-Dispatch scoring sub-agents — `subagent_type=general-purpose`, **`model=opus`** — in batches of ~6 companies each, max 3 agents in parallel. Give each agent **`ctx['theme']` AND `ctx['special_instructions']` in full** (the actual mandate text — read both in their entirety; round-2+ mandates often carry their real qualifying requirements in special_instructions, e.g. feedback like "must be based in Thailand, Singapore or Malaysia" — every qualifying clause matters, not just the opening topic), its companies' {name, description, stage, geography, source, notes}, the calibration block (when non-empty), plus this rubric:
+Dispatch scoring sub-agents — `subagent_type=general-purpose`, **`model=claude-opus-4-8`** — in batches of ~6 companies each, max 3 agents in parallel. Give each agent **`ctx['theme']` AND `ctx['special_instructions']` in full** (the actual mandate text — read both in their entirety; round-2+ mandates often carry their real qualifying requirements in special_instructions, e.g. feedback like "must be based in Thailand, Singapore or Malaysia" — every qualifying clause matters, not just the opening topic), its companies' {name, description, stage, geography, source, notes}, the calibration block (when non-empty), plus this rubric:
 
 ```
 Score each company 0–10 for Icos Capital ICF investment fit.
