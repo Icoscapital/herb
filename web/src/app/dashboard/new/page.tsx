@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { generateRunSlug } from '@/lib/slug'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -108,8 +109,7 @@ export default function NewMandatePage() {
     const lines = text.trim().split('\n')
     const theme = lines[0].trim()
     const special_instructions = lines.slice(1).join('\n').trim() || null
-    const date = new Date().toISOString().split('T')[0]
-    const slug = `${date}-${theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}`
+    const slug = generateRunSlug(theme)
     const { data: runData, error: e } = await supabase.from('herb_runs').insert({
       user_id: session.user.id,
       submitted_by_email: session.user.email,

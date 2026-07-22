@@ -22,6 +22,34 @@ they are your quality bar and your expansion seeds (see Source E and the recall 
 
 **DO NOT** read `references/search-playbook.md` or `references/field-spec.md` into your main context — those are 2.8k tokens that would persist across every turn. The sub-agent prompts below carry all the search guidance they need. The pre-screen gate is inlined here.
 
+### STEP 2.0 — Read the FULL mandate before doing anything else
+
+Read `ctx['theme']` AND `ctx['special_instructions']` in their **entirety** — mandates
+are often one long run-on sentence or a headline clause followed by several qualifying
+requirements, and it is easy to search on the opening noun phrase and silently drop
+everything after the first period. Every clause is part of the ask, not just the first
+one. Example — theme: *"Find start-ups which are producing and developing natural or
+bio-based hair colorants. These colorants should give healthy hair from the root,
+should be able to give any color on any type of hair, should be non-chemical color or
+bleach, and should bleach without damaging the hair."* The topic is NOT just "hair
+colorants" — extract:
+
+- **`must_haves`** — every concrete, checkable requirement stated anywhere in the text:
+  `["natural/bio-based, not synthetic chemical dye", "improves or maintains hair health from the root", "works across hair colors/types, not shade-limited", "bleaches without damaging hair"]`
+- **`exclusions`** — anything explicitly ruled out inline (e.g. "not already in our
+  pipeline", "excluding consumer subscription boxes").
+- **`query_terms`** — 6–10 specific search terms drawn from BOTH the topic AND every
+  must_have (e.g. `hair colorant`, `root-level hair health`, `damage-free bleach`,
+  `non-chemical hair dye`, `natural hair color technology`) — not just the headline noun.
+
+Every `"{theme keyword}"` / `"{theme keywords}"` placeholder in the sources below means
+**`query_terms`** — rotate through 2–3 different terms per source/batch so search
+coverage reflects the full mandate, not the same single headline word repeated 14
+times across sources. Carry `must_haves` forward to the mandate-fit check (step 4b)
+and to scoring (step 5) — this is where an under-read mandate actually costs you: a
+company can look perfect on the generic thesis while failing every specific
+requirement you actually asked for.
+
 ### Search mode — `ctx['search_mode']` (THIS decides scope; read it first)
 
 - **COMPREHENSIVE** (also accept legacy value `DEEP`): the substantial search.
@@ -273,6 +301,20 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    the same line to the email summary.
 3. Pipedrive cross-check via the dropin-pipedrive MCP `lookup_existing` tool, **batches of 5 max** → keep only `{status, lost_reason, local_lost_date, org_name}`. Tag rows: New / Open — [stage] / Won / Lost — [date]. Skip rows sourced from "Pipedrive CRM" (status already known).
 4. Pre-screen — for each row check the gate inline below. Open/Won/Lost rows stay but skip icos-fit-eval.
+4b. **Mandate-fit check — verify every row against `must_haves` from step 2.0 (skip
+   entirely if the mandate had no specific qualifying requirements beyond its topic).**
+   For each row, check the evidence already gathered (description/notes/why-now)
+   against EVERY must_have:
+   - **Clear contradiction** (evidence explicitly states the opposite of a must-have —
+     e.g. must_have says "non-chemical" and the company's own site says "synthetic
+     dye"): hard fail — `Fail — contradicts mandate: <which requirement>`.
+   - **Unverified** (no evidence either way — the common case; public company
+     materials rarely spell out every qualifying detail): NOT a fail. Tag notes
+     `Mandate fit: 2/4 verified (root-claim, damage-free unverified)` and keep scoring
+     it normally. Companies are not disqualified for a marketing page that simply
+     doesn't mention something — only for stating the opposite.
+   Add one line to the email summary: `Mandate fit: N/M rows verified all must-haves,
+   K contradicted and excluded.`
 5. **Icos Fit scoring — ONLY when `ctx['icos_fit']` is true.** When false, skip this step
    entirely (every row keeps `score=None`; the author can trigger scoring later from the
    results page). When true, run on Opus for sharper judgment. This is the ONE step that
@@ -286,9 +328,12 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    from scripts.herb_memory import get_calibration_examples
    calibration = get_calibration_examples()   # "" until enough team decisions accumulate
    ```
-   Give each agent the row's {name, sector, stage, FTE, business model,
-   technology, HQ, funding, why-now}, the calibration block (when non-empty — it teaches
-   the scorer what the team ACTUALLY pushed vs rejected), plus this rubric:
+   Give each agent **`ctx['theme']` in full** (the actual mandate text, not a paraphrase —
+   the scorer needs to judge fit against everything that was asked, not just the generic
+   thesis below), the row's {name, sector, stage, FTE, business model, technology, HQ,
+   funding, why-now}, the row's `Mandate fit: …` notes tag from step 4b (when present),
+   the calibration block (when non-empty — it teaches the scorer what the team ACTUALLY
+   pushed vs rejected), plus this rubric:
 
    ```
    Score each company 0–10 for Icos Capital ICF investment fit.
@@ -299,6 +344,11 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    PENALIZE: pharma/therapeutics-ONLY with no industrial OR food application (a company doing BOTH pharma AND
      food/industrial is fine — only penalize pharma-only); pure B2C; no defensible tech; no LP relevance.
    A measurable climate/CO2 claim is a PLUS, never a gate — do not down-score solely for missing climate data.
+   MANDATE FIT: the generic thesis above is necessary but not sufficient. Re-read the mandate text given to
+     you IN FULL — every qualifying clause, not just the opening topic — and weigh whether this company
+     actually matches what was specifically asked, not just the general subject area. A company that fits the
+     generic ICF thesis well but only weakly matches the mandate's own specific requirements should score
+     lower than a company that fits both.
    OUTPUT (strict): pipe-delimited, no prose, no header. One row per company:
    Company | Score(0-10 integer) | One-line rationale | Top critical diligence question
    ```
@@ -357,7 +407,8 @@ Call `update_progress(ctx['run_id'], <message>)` at each checkpoint.
 
 ```python
 # companies = list of dicts: {name, description, website, linkedin, stage, geography, segment, score, source, notes, deep_dive?}
-# summary   = optional email lines: recall check result, watch diff count (omit if neither applies)
+# summary   = optional email lines: recall check result, watch diff count, mandate-fit
+#             stats from step 4b (omit any line that doesn't apply)
 finish_run(ctx, companies, summary=summary)  # verifies websites, records herb_seen memory,
                                              # stores results, marks DONE, emails, commits
 ```

@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import * as XLSX from 'xlsx-js-style'
 import { supabase } from '@/lib/supabase'
 import { authedFetch } from '@/lib/api-client'
+import { generateRunSlug } from '@/lib/slug'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -212,7 +213,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
 
       // Fetch earlier rounds in the same lineage (same slug base, lower current_round)
       try {
-        const baseSlug = (r.slug as string | null)?.replace(/-rd+$/, '') ?? null
+        const baseSlug = (r.slug as string | null)?.replace(/-r\d+$/, '') ?? null
         const thisRound = r.current_round ?? 1
         if (baseSlug) {
           const { data: siblings } = await supabase
@@ -411,8 +412,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
         // Create a fresh new run and go back to dashboard
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
-        const date = new Date().toISOString().split('T')[0]
-        const slug = `${date}-${theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30)}`
+        const slug = generateRunSlug(theme)
         const { error } = await supabase.from('herb_runs').insert({
           user_id: session.user.id,
           submitted_by_email: session.user.email,

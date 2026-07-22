@@ -47,6 +47,7 @@ def start_scoring() -> dict:
     return {
         "run_id": run_id,
         "theme": run.data["theme"],
+        "special_instructions": run.data.get("special_instructions") or "",
         "status": run.data["status"],
         "companies": [
             {k: r.get(k) for k in
