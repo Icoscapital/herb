@@ -176,7 +176,16 @@ E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).*
    For each fund fetch its portfolio page (universe rows give the homepage — append/find "portfolio"
    or "companies") and extract companies — READ the page to capture each company's own website.
 3. **X / Twitter** — `site:x.com "{theme keyword}" "raised" "{geography}" 2025` + variants
-4. **LinkedIn** — `site:linkedin.com/company "{theme keyword}" "{geography}"`
+4. **LinkedIn (discovery-first — companies appear here EARLIEST, before Crunchbase/press).**
+   `site:linkedin.com/company "{theme keyword}" "{geography}"` + variants (also try
+   `"{theme keyword}" "{geography}" site:linkedin.com/company`, and role/hiring angles like
+   `"{theme keyword}" "we're hiring" site:linkedin.com/company`). LinkedIn pages are often
+   login-walled, so you'll frequently get only the NAME + one-line tagline from the search-result
+   snippet — that is FINE and expected. **Capture the name even when the full page is gated;
+   breadth of names matters more than depth here.** Do NOT discard a company for thin LinkedIn
+   data and do NOT guess its website from the LinkedIn URL — the enrichment pass (step 2a) looks
+   every LinkedIn-sourced name up on the open web + Crunchbase to fill website, description,
+   stage, sector and FTE. Tag these rows source="LinkedIn" so step 2a knows to enrich them.
 5. **Conferences / competitions** — EU: `EIC Accelerator`, `Hello Tomorrow`, `Bits & Pretzels`,
    `EIT Food`, `Slush`; JP: `Plug and Play Japan`, `ICC Summit`, `IVS`; US: `Hello Tomorrow US`,
    `ARPA-E Summit`, `Web Summit`
@@ -247,7 +256,7 @@ One fund per row. Omit any fund whose portfolio URL you cannot verify. If none: 
 
 Then dedup discovered funds by domain against vc-roster.xlsx and merge into the source-2 working set.
 
-**Model routing (3 tiers):** search/discovery/website-finder/reality-gate sub-agents → **Haiku**
+**Model routing (3 tiers):** search/discovery/website-finder/reality-gate/enrichment sub-agents → **Haiku**
 (bounded extraction, cheapest); you the orchestrator → **Sonnet 5** (the search protocol, dedup,
 Pipedrive, segmentation, write-up); Icos-fit scoring (STEP 2 step 5) → **Opus 4.8**
 (`claude-opus-4-8`, the one reasoning-heavy judgment call that decides top picks — worth the top
@@ -302,6 +311,25 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    company, so this LLM pass is still the one that prevents wrong links.)
    While you're on a company's LinkedIn page during this pass, capture its employee
    bucket if the row's FTE is still Unknown.
+2a. **Enrichment pass — turn thin discoveries into full rows (LinkedIn is the main
+   beneficiary).** LinkedIn surfaces companies EARLIEST but THINNEST — often just a name +
+   tagline. Judging such a row on its empty fields would wrongly drop or under-score a real
+   company, so enrich before pre-screen. Flag every row that is thin: missing website, OR
+   missing/one-line description, OR Unknown stage, OR (source includes "LinkedIn"). For each
+   flagged row, look the company up on the **open web + Crunchbase** to fill in
+   `{website, description, HQ country, stage, funding, FTE, sector signals}`. Batch via
+   enrichment sub-agents (`model=haiku`, batches of 3, up to ~6 companies each):
+   ```
+   For each company (name + any known context), find and return its real data — search the open
+   web and Crunchbase (NOT LinkedIn, which is gated). ≤5 WebSearch calls per company-batch.
+   OUTPUT (strict, pipe-delimited, no prose): Name|Domain|HQ Country|FTE|Stage|1-line description|Sectors
+   Apply the standard DOMAIN RULES. "Unknown" for anything you genuinely cannot verify — never invent.
+   ```
+   Merge enriched fields back into each row (don't overwrite a good existing value with "Unknown").
+   A LinkedIn-discovered company that enrichment CAN'T corroborate anywhere else — no website, no
+   Crunchbase, no press — stays on the longlist but tagged `Unconfirmed (LinkedIn-only)` so the
+   author sees it was found but couldn't be verified, rather than it being silently dropped.
+   Report the funnel: `update_progress(id, "Enriched 34 thin/LinkedIn rows → 29 corroborated, 5 LinkedIn-only")`.
 2b. **Recall check (when seeds given):** every `ctx['seed_companies']` entry MUST be on the
    deduped list. Count how many the search found *independently* (before you add any
    manually). Any seed still missing: run one direct lookup for it and add the row.
