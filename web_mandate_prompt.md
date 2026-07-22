@@ -42,6 +42,20 @@ colorants" — extract:
   must_have (e.g. `hair colorant`, `root-level hair health`, `damage-free bleach`,
   `non-chemical hair dye`, `natural hair color technology`) — not just the headline noun.
 
+**`query_terms` and `must_haves` are INDEPENDENT — an empty `must_haves` must NEVER talk
+you into an empty `query_terms`.** Most mandates are a plain topic with no extra
+qualifying clauses at all (`must_haves = []` is correct and common for those) — but
+`query_terms` must ALWAYS have 6–10 phrases regardless, decomposed from the topic itself
+(technology/approach, sector, application, geography). Example — theme: *"companies in
+the Netherlands focused on causal or predictive AI for industry, especially food or
+chemical sectors"* has no extra qualifying clauses beyond its own topic, so
+`must_haves = []` — but `query_terms` is still fully populated:
+`["causal AI", "predictive AI industrial", "industrial AI Netherlands", "process AI food industry", "predictive maintenance chemical industry", "causal inference manufacturing", "food tech AI Netherlands", "chemical industry AI startup"]`.
+An empty `query_terms` means every `"{theme keyword}"` placeholder below resolves to
+nothing and every source searches on a blank string — silently degrading the entire run.
+If you find yourself about to leave `query_terms` empty, that is a bug in your own
+reasoning, not a valid mandate state — re-derive it from the topic.
+
 Every `"{theme keyword}"` / `"{theme keywords}"` placeholder in the sources below means
 **`query_terms`** — rotate through 2–3 different terms per source/batch so search
 coverage reflects the full mandate, not the same single headline word repeated 14

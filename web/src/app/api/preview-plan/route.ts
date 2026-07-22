@@ -68,14 +68,33 @@ export async function POST(req: NextRequest) {
 
 Return ONLY valid JSON, no prose, no markdown fences:
 {
+  "query_terms": ["specific search term", ...],
   "must_haves": ["concrete checkable requirement", ...],
-  "exclusions": ["thing explicitly ruled out", ...],
-  "query_terms": ["specific search term", ...]
+  "exclusions": ["thing explicitly ruled out", ...]
 }
 
-must_haves: every concrete, checkable requirement stated ANYWHERE in the text, beyond just the topic. If the mandate is a plain topic with no extra qualifying clauses, return an empty array — do not invent requirements.
-exclusions: anything explicitly ruled out inline (e.g. "not already in our pipeline", "excluding consumer apps"). Empty array if none.
-query_terms: 6-10 specific search terms spanning BOTH the topic and every must_have — not just the headline noun repeated.`
+query_terms and must_haves are INDEPENDENT fields — do not let an empty must_haves talk you into an
+empty query_terms. query_terms must ALWAYS contain 6-10 specific phrases, even for a short,
+single-sentence, topic-only mandate with nothing extra qualifying it. Decompose the TOPIC itself —
+technology/approach, sector(s), application, named geography — into distinct searchable phrases.
+This field is almost never empty; only return [] if the mandate literally has no content.
+  Example — mandate: "companies in the Netherlands focused on causal or predictive AI for industry,
+  especially food or chemical sectors" -> query_terms: ["causal AI", "predictive AI industrial",
+  "industrial AI Netherlands", "process AI food industry", "predictive maintenance chemical industry",
+  "causal inference manufacturing", "food tech AI Netherlands", "chemical industry AI startup"]
+  (Note this mandate has NO extra qualifying clauses beyond its topic, so must_haves = [] is correct
+  for it — but query_terms is still fully populated. The two fields do not rise and fall together.)
+
+must_haves: ONLY extra qualifying requirements stated BEYOND the core topic — a specific product
+property, a business-model constraint, an explicit technical must-have. Return an empty array when
+the mandate is just a topic description with nothing further qualifying it (the case above). Do not
+invent requirements to fill this field, and do not empty query_terms just because this one is empty.
+  Example WITH must_haves — mandate: "Find start-ups producing natural or bio-based hair colorants.
+  These should give healthy hair from the root, work on any hair color/type, and bleach without
+  damage." -> must_haves: ["natural/bio-based, not synthetic dye", "improves hair health from the
+  root", "works across hair colors/types", "bleaches without damaging hair"]
+
+exclusions: anything explicitly ruled out inline (e.g. "not already in our pipeline", "excluding consumer apps"). Empty array if none.`
 
     const userContent = [
       `Mandate: ${theme}`,
@@ -110,6 +129,22 @@ query_terms: 6-10 specific search terms spanning BOTH the topic and every must_h
     } catch (parseErr) {
       console.error('[preview-plan] JSON parse failed:', raw.slice(0, 300))
       return NextResponse.json({ error: 'Could not parse extracted plan' }, { status: 502 })
+    }
+
+    // Safety net: query_terms should never come back empty for a real mandate
+    // (unlike must_haves, which is legitimately empty for plain-topic mandates).
+    // If the model still zeroes it out, fall back to the theme's own significant
+    // words rather than showing "no keywords" for a substantive request.
+    if (!extracted.query_terms || extracted.query_terms.length === 0) {
+      const STOPWORDS = new Set(['find', 'startups', 'startup', 'companies', 'company',
+        'that', 'which', 'with', 'from', 'this', 'these', 'those', 'have', 'been',
+        'their', 'they', 'especially', 'focused', 'looking', 'want', 'need', 'also',
+        'other', 'some', 'such', 'more', 'most', 'about', 'into', 'across', 'over'])
+      const words = `${theme} ${specialInstructions}`
+        .toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+        .filter(w => w.length >= 4 && !STOPWORDS.has(w))
+      extracted.query_terms = Array.from(new Set(words)).slice(0, 8)
+      console.warn('[preview-plan] model returned empty query_terms — used fallback:', extracted.query_terms)
     }
 
     const regions = regionsFor(mode, geography)
