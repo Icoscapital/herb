@@ -252,7 +252,7 @@ export default function RadarPage() {
           <div className="mb-5 rounded-2xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
               <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--subtle)' }}>
-                Deals in Follow Up &middot; Corporate/Advanced Follow-up &middot; PUR/DD/FIP, plus manually-added companies
+                All deals in Follow Up &middot; Corporate/Advanced Follow-up &middot; PUR/DD/FIP are checked automatically &mdash; toggle off to exclude
               </span>
             </div>
 
@@ -322,7 +322,7 @@ export default function RadarPage() {
             <p className="text-3xl mb-3">&#128225;</p>
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>No findings yet</p>
             <p className="text-xs" style={{ color: 'var(--subtle)' }}>
-              Toggle deals on or add a company in &ldquo;Manage watch list&rdquo;, then click &ldquo;Check now&rdquo; or wait for the next bi-weekly tick.
+              Every deal in the target stages is checked automatically once synced &mdash; click &ldquo;Check now&rdquo; to sync and check immediately, or wait for the next bi-weekly tick.
             </p>
           </div>
         ) : (

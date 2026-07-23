@@ -15,8 +15,10 @@ Steps:
      Follow-up, Advanced Follow-up, PUR/DD/FIP).
   2. Upsert cached name/domain/stage into herb_radar_watch for every deal
      seen (so the dashboard's toggle list stays fresh without a live
-     Pipedrive call on every page load) — but only enabled=true rows get
-     researched.
+     Pipedrive call on every page load). New deals default to enabled=True
+     (opt-OUT — everyone in the target stages is checked automatically
+     unless toggled off); an existing row's `enabled` is never overwritten
+     here, so a manual toggle-off sticks across ticks.
   3. Read the curated set directly from herb_radar_watch (enabled=true) —
      this covers BOTH pipedrive-synced deals and companies added manually
      from the dashboard (source='manual', no Pipedrive deal at all).
@@ -110,7 +112,10 @@ def main() -> int:
     deals = _resolve_deals(client)
     print(f"[radar] {len(deals)} open deals across target stages")
 
-    # Upsert cached name/domain/stage for every deal seen, without touching `enabled`.
+    # Upsert cached name/domain/stage for every deal seen, without touching
+    # `enabled` on existing rows (so a manual toggle-off sticks). New deals
+    # default to enabled=True — opt-OUT, not opt-in: every deal in the target
+    # stages is checked automatically unless someone turns it off.
     for deal in deals:
         existing = (sb.table("herb_radar_watch").select("id")
                     .eq("pipedrive_deal_id", deal["pipedrive_deal_id"]).execute()).data
@@ -127,7 +132,7 @@ def main() -> int:
                 "domain": deal["domain"],
                 "stage_id": deal["stage_id"],
                 "source": "pipedrive",
-                "enabled": False,
+                "enabled": True,
             }).execute()
 
     # Curated set = every enabled row in herb_radar_watch, whether it's a
