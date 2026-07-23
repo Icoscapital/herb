@@ -1,0 +1,37 @@
+name: Herb Update Radar Tick (bi-weekly)
+
+on:
+  schedule:
+    # GH Actions cron can't express true "every 14 days" — 1st + 15th of each
+    # month is the pragmatic twice-monthly equivalent (gap varies 13-17 days).
+    - cron: '0 6 1,15 * *'
+  workflow_dispatch: {}   # manual trigger for testing
+  repository_dispatch:
+    types: [run-radar-tick]   # dashboard's "Check now" button
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL:  ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GH_PAT:                    ${{ secrets.GH_PAT }}
+      PIPEDRIVE_TOKEN:           ${{ secrets.PIPEDRIVE_TOKEN }}
+      PIPEDRIVE_DOMAIN:          icoscapital
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: pip install -q -r requirements.txt
+
+      - name: Check curated deals for updates
+        run: python -m scripts.radar_tick

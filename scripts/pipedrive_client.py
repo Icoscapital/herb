@@ -76,6 +76,22 @@ class PipedriveClient:
         out = self._get(f"/deals/{deal_id}")
         return out.get("data") or {}
 
+    def list_deals_by_stage(self, stage_id: int, status: str = "open") -> list[dict]:
+        """Paginated fetch of every deal sitting in a given pipeline stage.
+        Deal objects carry custom-field hash keys inline (e.g. DEAL_FIELD["website"]),
+        same shape as get_deal — no per-deal detail call needed."""
+        out: list[dict] = []
+        start = 0
+        while True:
+            r = self._get("/deals", stage_id=stage_id, status=status, start=start, limit=100)
+            batch = r.get("data") or []
+            out.extend(batch)
+            pag = (r.get("additional_data") or {}).get("pagination") or {}
+            if not pag.get("more_items_in_collection"):
+                break
+            start = pag.get("next_start", start + 100)
+        return out
+
     def get_organization(self, org_id: int) -> dict:
         out = self._get(f"/organizations/{org_id}")
         return out.get("data") or {}

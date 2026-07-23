@@ -1,4 +1,4 @@
-"""Flip stuck SEARCHING runs to ERROR.
+"""Flip stuck SEARCHING runs (and stuck RUNNING radar runs) to ERROR.
 
 If a run has status=SEARCHING but its last_heartbeat is older than
 STALE_THRESHOLD_MINUTES, the GitHub Actions job that was supposed to be
@@ -6,7 +6,7 @@ driving it has almost certainly died (workflow crash, timeout, OOM,
 ANTHROPIC_API_KEY revoked, etc). Without this reaper the row sits
 SEARCHING forever — the dashboard shows a spinner that never resolves and
 the user can't re-trigger because the Run button only appears for PENDING
-or ERROR.
+or ERROR. The same failure mode applies to herb_radar_runs stuck RUNNING.
 
 Run hourly from herb-schedule.yml. Idempotent.
 """
@@ -45,23 +45,55 @@ def main() -> int:
 
     if not stuck:
         print(f"[reaper] no stuck runs (cutoff: {cutoff_iso})")
-        return 0
+    else:
+        print(f"[reaper] found {len(stuck)} stuck SEARCHING runs (cutoff: {cutoff_iso})")
+        for r in stuck:
+            last_hb = r.get("last_heartbeat") or "never"
+            msg = (
+                f"Worker died — no heartbeat since {last_hb}. "
+                f"Last progress: {r.get('progress') or 'unknown'}. "
+                f"Re-trigger the run from the dashboard."
+            )
+            sb.table("herb_runs").update({
+                "status": "ERROR",
+                "error_message": msg[:500],
+                "progress": "Failed: worker stopped responding",
+                "last_heartbeat": datetime.now(timezone.utc).isoformat(),
+            }).eq("id", r["id"]).eq("status", "SEARCHING").execute()
+            print(f"[reaper] reaped {r['id']} — {r.get('theme', '')[:60]}")
 
-    print(f"[reaper] found {len(stuck)} stuck SEARCHING runs (cutoff: {cutoff_iso})")
-    for r in stuck:
-        last_hb = r.get("last_heartbeat") or "never"
-        msg = (
-            f"Worker died — no heartbeat since {last_hb}. "
-            f"Last progress: {r.get('progress') or 'unknown'}. "
-            f"Re-trigger the run from the dashboard."
+    # Same failure mode for Update Radar runs — non-fatal if the table doesn't
+    # exist yet (migration not applied).
+    try:
+        radar_result = (
+            sb.table("herb_radar_runs")
+            .select("id, progress")
+            .eq("status", "RUNNING")
+            .lt("last_heartbeat", cutoff_iso)
+            .execute()
         )
-        sb.table("herb_runs").update({
-            "status": "ERROR",
-            "error_message": msg[:500],
-            "progress": "Failed: worker stopped responding",
-            "last_heartbeat": datetime.now(timezone.utc).isoformat(),
-        }).eq("id", r["id"]).eq("status", "SEARCHING").execute()
-        print(f"[reaper] reaped {r['id']} — {r.get('theme', '')[:60]}")
+        radar_stuck = radar_result.data or []
+    except Exception as e:
+        print(f"[reaper] herb_radar_runs not queryable (migration applied?): {e}")
+        radar_stuck = []
+
+    if radar_stuck:
+        print(f"[reaper] found {len(radar_stuck)} stuck RUNNING radar runs (cutoff: {cutoff_iso})")
+        for r in radar_stuck:
+            msg = (
+                f"Worker died — no heartbeat since cutoff. "
+                f"Last progress: {r.get('progress') or 'unknown'}."
+            )
+            sb.table("herb_radar_runs").update({
+                "status": "ERROR",
+                "error_message": msg[:500],
+                "progress": "Failed: worker stopped responding",
+                "last_heartbeat": datetime.now(timezone.utc).isoformat(),
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+            }).eq("id", r["id"]).eq("status", "RUNNING").execute()
+            print(f"[reaper] reaped radar run {r['id']}")
+    else:
+        print(f"[reaper] no stuck radar runs (cutoff: {cutoff_iso})")
 
     return 0
 

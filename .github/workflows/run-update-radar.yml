@@ -1,0 +1,77 @@
+name: Run Update Radar (on-demand)
+
+on:
+  repository_dispatch:
+    types: [run-update-radar]
+
+# Prevent two concurrent workflows for the same run_id.
+concurrency:
+  group: herb-radar-${{ github.event.client_payload.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    env:
+      ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL:  ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SB_URL:                    ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SB_KEY:                    ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      RADAR_RUN_ID:              ${{ github.event.client_payload.run_id }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: pip install -q -r requirements.txt
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run Update Radar research
+        run: |
+          # RADAR_RUN_ID is exported as an env var above. The prompt's STEP 1
+          # reads it via start_radar_run() and processes the curated batch.
+          claude -p "$(cat update_radar_prompt.md)" \
+            --allowedTools Bash,Read,Write,Task,WebSearch,WebFetch \
+            --model claude-sonnet-5 \
+            --max-turns 150
+
+      - name: Verify run reached terminal state
+        if: always()
+        run: |
+          # Belt-and-suspenders: even if Claude returned 0, fail the job if the
+          # row isn't DONE. Catches "Claude exited silently without finalizing".
+          python - <<'PY'
+          import os, sys
+          from supabase import create_client
+          sb = create_client(os.environ["NEXT_PUBLIC_SUPABASE_URL"],
+                             os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+          r = sb.table("herb_radar_runs").select("status,error_message,progress").eq("id", os.environ["RADAR_RUN_ID"]).single().execute()
+          status = r.data.get("status")
+          if status == "DONE":
+              print(f"[verify] run completed successfully: status={status}")
+              sys.exit(0)
+          if status == "ERROR":
+              print(f"[verify] run errored: {r.data.get('error_message')}")
+              sys.exit(1)
+          msg = f"Worker exited without finalizing (status={status}, progress={r.data.get('progress')})"
+          print(f"[verify] {msg}")
+          sb.table("herb_radar_runs").update({
+              "status": "ERROR",
+              "error_message": msg[:500],
+              "progress": "Failed: worker exited mid-run",
+          }).eq("id", os.environ["RADAR_RUN_ID"]).execute()
+          sys.exit(1)
+          PY
