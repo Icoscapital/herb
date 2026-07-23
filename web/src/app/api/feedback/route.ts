@@ -30,6 +30,20 @@ export async function POST(req: NextRequest) {
       round2Instructions = `${origInstructions}${excludeClause}${feedbackClause}`.trim() || null
     }
 
+    // Harvest any company URLs the author named in this round's feedback and fold
+    // them into the new run's seed_companies. Named companies become HARD seeds
+    // (guaranteed inclusion + find-similar expansion) — the prompt also detects
+    // names from free text at run time, but populating the structured field makes
+    // the seed explicit in the preview dialog and inherited by later rounds.
+    const feedbackBlob = [feedback_text, override_instructions].filter(Boolean).join(' ')
+    const urlSeeds = (feedbackBlob.match(/https?:\/\/[^\s,)]+/gi) ?? [])
+      .map(u => u.replace(/[.,);]+$/, ''))          // strip trailing punctuation
+    const inheritedSeeds = (orig.seed_companies ?? '').trim()
+    const mergedSeeds = [inheritedSeeds, ...urlSeeds]
+      .filter(Boolean)
+      .join(', ')
+      .slice(0, 1000) || null
+
     // Determine round number from existing slug
     const slugBase = orig.slug.replace(/-r\d+$/, '')  // strip existing -r2, -r3 suffix
     const roundMatch = orig.slug.match(/-r(\d+)$/)
@@ -55,7 +69,7 @@ export async function POST(req: NextRequest) {
         created_at: new Date().toISOString(),
         // Inherit v2/v3 options when present (tolerates pre-migration rows)
         ...(orig.icos_fit === true ? { icos_fit: true } : {}),
-        ...(orig.seed_companies ? { seed_companies: orig.seed_companies } : {}),
+        ...(mergedSeeds ? { seed_companies: mergedSeeds } : {}),
         ...(orig.watch ? { watch: true } : {}),
         ...(orig.exhaustive ? { exhaustive: true } : {}),
         ...(orig.include_small ? { include_small: true } : {}),

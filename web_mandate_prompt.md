@@ -18,6 +18,26 @@ Series B") — treat it as the authoritative stage filter everywhere below.
 `ctx['seed_companies']` are companies the author ALREADY KNOWS fit the thesis —
 they are your quality bar and your expansion seeds (see Source E and the recall check).
 
+**Build your EFFECTIVE SEED SET before searching, and use it everywhere a "seed" is
+mentioned below.** It is the union of:
+  1. `ctx['seed_companies']` (the structured field), AND
+  2. **every company name or URL the author explicitly names in `ctx['theme']` or
+     `ctx['special_instructions']`** as one to include or find companies like — e.g.
+     "look at company X", "companies like Y", "similar to Z", or a pasted URL such as
+     `https://www.n-factorial.com/`. Detect these from the full text (you are reading it
+     in STEP 2.0 anyway); a bare URL counts — WebFetch it to learn the company's name and
+     what it does.
+An explicitly-named company is a HARD REQUIREMENT, stronger than a normal seed:
+  - **It MUST appear on the final longlist.** If the search doesn't surface it on its own,
+    look it up directly (WebFetch the URL / search the name) and add the row yourself.
+  - **It overrides the gates:** include it even if it fails pre-screen, and even if it is
+    OUTSIDE the run's region scope (e.g. a Canadian company in an EU_ONLY run). Tag its
+    notes `Author-requested` so the reason it's on the list is clear.
+  - If a named company is out of the run's region, ALSO note in the email summary that a
+    Comprehensive/global run would find more companies like it — the author may want to widen.
+  - Feed it into Source E expansion (its investors, competitors, conference peers) exactly
+    like a structured seed, so "companies like this" actually returns similar companies.
+
 ## STEP 2 — Search
 
 **DO NOT** read `references/search-playbook.md` or `references/field-spec.md` into your main context — those are 2.8k tokens that would persist across every turn. The sub-agent prompts below carry all the search guidance they need. The pre-screen gate is inlined here.
@@ -131,8 +151,9 @@ P. **Pipedrive CRM (BOTH modes — run FIRST, before any sub-agent batch)** — 
    went-cold deals that fit the new mandate are exactly what this source resurfaces;
    they follow the normal rules (kept on the longlist, skip icos-fit scoring).
 
-E. **Seed expansion (BOTH modes — when `ctx['seed_companies']` is non-empty).** The named
-   companies *define* the thesis better than keywords. Dispatch one Haiku sub-agent per
+E. **Seed expansion (BOTH modes — when the EFFECTIVE SEED SET is non-empty; that includes
+   companies named in the feedback/instructions, not just `ctx['seed_companies']`).** The
+   named companies *define* the thesis better than keywords. Dispatch one Haiku sub-agent per
    batch of up to 3 seeds:
    ```
    For each company: {seed list with any known context}
@@ -338,9 +359,12 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    Crunchbase, no press — stays on the longlist but tagged `Unconfirmed (LinkedIn-only)` so the
    author sees it was found but couldn't be verified, rather than it being silently dropped.
    Report the funnel: `update_progress(id, "Enriched 34 thin/LinkedIn rows → 29 corroborated, 5 LinkedIn-only")`.
-2b. **Recall check (when seeds given):** every `ctx['seed_companies']` entry MUST be on the
-   deduped list. Count how many the search found *independently* (before you add any
-   manually). Any seed still missing: run one direct lookup for it and add the row.
+2b. **Recall check (when the effective seed set is non-empty):** every seed — structured
+   `ctx['seed_companies']` AND every company/URL the author named in the text — MUST be on the
+   deduped list. Count how many the search found *independently* (before you add any manually).
+   Any seed still missing: run one direct lookup (WebFetch the URL / search the name) and add
+   the row — a company the author explicitly named is never allowed to be absent, even if it
+   fails pre-screen or is out of region (tag it `Author-requested`).
    Build a summary string for the email, e.g.
    `Recall: 2/3 known companies found by the search (Ethos AI required direct lookup — search gap).`
    A seed the search couldn't find on its own means the queries missed part of the
