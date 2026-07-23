@@ -22,6 +22,17 @@ type Finding = {
   found_at: string
 }
 
+type LatestRun = {
+  id: string
+  status: 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR'
+  company_count: number
+  findings_count: number | null
+  progress: string | null
+  error_message: string | null
+  created_at: string
+  finished_at: string | null
+} | null
+
 type Deal = {
   id: string | null
   pipedrive_deal_id: number | null
@@ -66,6 +77,7 @@ export default function RadarPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [findings, setFindings] = useState<Finding[]>([])
+  const [latestRun, setLatestRun] = useState<LatestRun>(null)
   const [deals, setDeals] = useState<Deal[]>([])
   const [dealsLoading, setDealsLoading] = useState(true)
   const [showManage, setShowManage] = useState(false)
@@ -81,6 +93,19 @@ export default function RadarPage() {
     const res = await authedFetch('/api/radar')
     const json = await res.json()
     if (json.findings) setFindings(json.findings)
+    if ('latest_run' in json) {
+      setLatestRun(prev => {
+        // Surface a completion toast the moment a tracked run finishes.
+        if (prev && (prev.status === 'PENDING' || prev.status === 'RUNNING') && json.latest_run?.id === prev.id) {
+          if (json.latest_run.status === 'DONE') {
+            setRunMsg({ text: `Check complete — ${json.latest_run.findings_count ?? 0} new finding(s)`, ok: true })
+          } else if (json.latest_run.status === 'ERROR') {
+            setRunMsg({ text: json.latest_run.error_message || 'Radar check failed', ok: false })
+          }
+        }
+        return json.latest_run
+      })
+    }
   }, [])
 
   const loadDeals = useCallback(async () => {
@@ -105,6 +130,16 @@ export default function RadarPage() {
   useEffect(() => {
     if (showManage && deals.length === 0) loadDeals()
   }, [showManage, deals.length, loadDeals])
+
+  // Poll while a tick is in flight so the page reflects reality instead of
+  // going quiet after the "Check now" click returns — the actual research
+  // (run-update-radar.yml) can run for several minutes.
+  useEffect(() => {
+    const active = latestRun?.status === 'PENDING' || latestRun?.status === 'RUNNING'
+    const interval = active ? 8_000 : 30_000
+    const t = setInterval(loadFindings, interval)
+    return () => clearInterval(t)
+  }, [loadFindings, latestRun?.status])
 
   const toggleDeal = async (deal: Deal) => {
     const key = dealKey(deal)
@@ -170,8 +205,12 @@ export default function RadarPage() {
     try {
       const res = await authedFetch('/api/radar/run-now', { method: 'POST' })
       const json = await res.json()
-      setRunMsg({ text: json.message || json.error || 'Done', ok: !!json.ok })
-      setTimeout(loadFindings, 5000)
+      if (!json.ok) setRunMsg({ text: json.error || 'Could not start check', ok: false })
+      // radar_tick.py takes ~30-60s to sync + dispatch before herb_radar_runs
+      // even exists; poll a few times so the running banner appears promptly.
+      setTimeout(loadFindings, 5_000)
+      setTimeout(loadFindings, 15_000)
+      setTimeout(loadFindings, 45_000)
     } catch (e: any) {
       setRunMsg({ text: String(e), ok: false })
     } finally {
@@ -218,9 +257,13 @@ export default function RadarPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={runNow} disabled={running}
+            <button onClick={runNow} disabled={running || latestRun?.status === 'PENDING' || latestRun?.status === 'RUNNING'}
+              title={latestRun?.status === 'PENDING' || latestRun?.status === 'RUNNING' ? 'A check is already running' : undefined}
               className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-all"
-              style={{ background: running ? 'var(--teal-light)' : 'var(--teal)', color: running ? 'var(--teal)' : '#fff' }}>
+              style={{
+                background: running || latestRun?.status === 'PENDING' || latestRun?.status === 'RUNNING' ? 'var(--teal-light)' : 'var(--teal)',
+                color: running || latestRun?.status === 'PENDING' || latestRun?.status === 'RUNNING' ? 'var(--teal)' : '#fff',
+              }}>
               {running ? <div className="loading-spinner" style={{ width: '10px', height: '10px', borderTopColor: 'var(--teal)' }} /> : '▶ Check now'}
             </button>
             <button onClick={() => setShowManage(v => !v)}
@@ -234,6 +277,18 @@ export default function RadarPage() {
             </button>
           </div>
         </div>
+
+        {(latestRun?.status === 'PENDING' || latestRun?.status === 'RUNNING') && (
+          <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl text-sm"
+            style={{ background: 'var(--teal-light)', color: 'var(--teal)', border: '1px solid var(--teal)' }}>
+            <div className="loading-spinner" style={{ width: '14px', height: '14px', borderTopColor: 'var(--teal)', flexShrink: 0 }} />
+            <span>
+              {latestRun.status === 'PENDING'
+                ? 'Radar check queued — GitHub Actions is spinning up…'
+                : `Checking ${latestRun.company_count} compan${latestRun.company_count === 1 ? 'y' : 'ies'} for updates${latestRun.progress ? ` — ${latestRun.progress}` : '…'}`}
+            </span>
+          </div>
+        )}
 
         {runMsg && (
           <div className="mb-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm"
