@@ -393,6 +393,20 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    Crunchbase, no press — stays on the longlist but tagged `Unconfirmed (LinkedIn-only)` so the
    author sees it was found but couldn't be verified, rather than it being silently dropped.
    Report the funnel: `update_progress(id, "Enriched 34 thin/LinkedIn rows → 29 corroborated, 5 LinkedIn-only")`.
+2a.5 **EU_ONLY region gate (EU_ONLY / STANDARD mode only — skip entirely in COMPREHENSIVE).**
+   "European VCs only" means the results are European — but sources M (Herb memory) and P
+   (Pipedrive CRM) are keyword-based and NOT region-scoped, and web searches sometimes return
+   out-of-region hits, so confirmed non-European companies leak in. Now that enrichment has
+   resolved HQ, **DROP every row whose HQ is CONFIRMED outside Europe** (a clear non-EU country —
+   USA, Canada, Australia, Japan, Israel, India, etc.). This applies to ALL sources, memory and
+   CRM included. Two exemptions, never dropped:
+   - **Author-requested seeds** (the effective seed set) — explicitly named companies stay even
+     if out of region, tagged `Author-requested` (e.g. a Canadian exemplar the author pasted).
+   - **Unknown/ambiguous HQ** — keep (benefit of the doubt; don't drop for missing data, same
+     philosophy as the FTE/website gates). Only a CONFIRMED non-EU HQ is dropped.
+   Report: `update_progress(id, "EU-only region gate: dropped 9 confirmed out-of-region companies")`
+   and add the count to the email summary. (If the author actually wants global reach, that's what
+   COMPREHENSIVE mode is for — say so in the summary when the drop count is high.)
 2b. **Recall check (when the effective seed set is non-empty):** every seed — structured
    `ctx['seed_companies']` AND every company/URL the author named in the text — MUST be on the
    deduped list. Count how many the search found *independently* (before you add any manually).
