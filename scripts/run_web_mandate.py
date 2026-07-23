@@ -139,21 +139,37 @@ def finish_run(ctx: dict, companies: list[dict], summary: str | None = None) -> 
         "Best,\nHerb"
     )
     if ctx.get("submitted_by_email"):
-        # Atomic transition: only send + mark EMAILED if status is still DONE.
-        # If a concurrent worker beat us to it, the update affects 0 rows and
-        # we skip the email.
-        claim = (
-            sb.table("herb_runs")
-            .update({"status": "EMAILING"})
-            .eq("id", run_id)
-            .eq("status", "DONE")
-            .execute()
-        )
-        if claim.data:
-            send_email(ctx["submitted_by_email"], subject, body)
-            mark_emailed(run_id)
-        else:
-            print(f"[run-web-mandate] concurrent worker already started email for {run_id} — skipping")
+        # Atomic claim: only ONE worker transitions DONE -> (EMAILING ->) EMAILED,
+        # so the email is sent exactly once even if two workers race. A claim that
+        # affects 0 rows means another worker beat us to it — skip silently.
+        #
+        # EMAILING is the crash-safe intermediate ("claimed, sending now"). If it
+        # isn't allowed by the herb_runs_status_check constraint yet (migration
+        # 20260723_emailing_status.sql not applied), the EMAILING update raises a
+        # check-constraint error — fall back to claiming straight to EMAILED so the
+        # email still goes out rather than the whole run erroring at the finish line.
+        def _claim(to_status: str) -> bool:
+            return bool(
+                sb.table("herb_runs")
+                .update({"status": to_status})
+                .eq("id", run_id)
+                .eq("status", "DONE")
+                .execute()
+                .data
+            )
+        try:
+            if _claim("EMAILING"):
+                send_email(ctx["submitted_by_email"], subject, body)
+                mark_emailed(run_id)
+            else:
+                print(f"[run-web-mandate] concurrent worker already emailing {run_id} — skipping")
+        except Exception as e:
+            print(f"[run-web-mandate] EMAILING claim failed ({str(e)[:100]}); "
+                  "falling back to direct DONE->EMAILED claim")
+            if _claim("EMAILED"):
+                send_email(ctx["submitted_by_email"], subject, body)
+            else:
+                print(f"[run-web-mandate] concurrent worker already emailed {run_id} — skipping")
     else:
         print("[run-web-mandate] no submitter email — skipping send + EMAILED transition")
 
