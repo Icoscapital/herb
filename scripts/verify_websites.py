@@ -29,6 +29,22 @@ MAX_WORKERS = 8
 UA = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36")}
 
+# Hosts that are NEVER a company's own website. If one of these got stored in the
+# website field (e.g. a Crunchbase profile URL used as the site), it's wrong — blank
+# it deterministically so a bad link never survives, regardless of the LLM pass.
+NON_OWN_SITE_HOSTS = {
+    "crunchbase.com", "linkedin.com", "twitter.com", "x.com", "facebook.com",
+    "instagram.com", "youtube.com", "pitchbook.com", "dealroom.co", "tracxn.com",
+    "cbinsights.com", "wikipedia.org", "medium.com", "github.com", "angel.co",
+    "wellfound.com", "f6s.com", "startupintros.com", "leadsontrees.com",
+    "techcrunch.com", "sifted.eu", "tech.eu",
+}
+
+
+def _is_non_own_site(domain: str) -> bool:
+    d = _norm_domain(domain)
+    return any(d == h or d.endswith("." + h) for h in NON_OWN_SITE_HOSTS)
+
 
 def _norm_domain(raw: str) -> str:
     s = (raw or "").strip().lower()
@@ -54,10 +70,13 @@ def _name_tokens(name: str) -> list[str]:
 
 
 def check_website(domain: str, company_name: str) -> dict:
-    """Returns {status: ok|rewrite|unverified|dead, domain, note}."""
+    """Returns {status: ok|rewrite|unverified|dead|blocked, domain, note}."""
     dom = _norm_domain(domain)
     if not dom or "." not in dom:
         return {"status": "dead", "domain": "", "note": "invalid domain"}
+    # A directory/social/news host is never the company's own site — blank it.
+    if _is_non_own_site(dom):
+        return {"status": "blocked", "domain": "", "note": f"{dom} is a directory/social page, not the company site"}
 
     resp = None
     for scheme in ("https", "http"):
@@ -103,13 +122,16 @@ def verify_companies(companies: list[dict]) -> list[dict]:
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         results = list(ex.map(run_one, targets))
 
-    stats = {"ok": 0, "rewrite": 0, "unverified": 0, "dead": 0}
+    stats = {"ok": 0, "rewrite": 0, "unverified": 0, "dead": 0, "blocked": 0}
     for i, res in results:
         c = companies[i]
         stats[res["status"]] += 1
         if res["status"] == "dead":
             c["website"] = ""
             note = "Website removed: unreachable"
+        elif res["status"] == "blocked":
+            c["website"] = ""
+            note = f"Website removed: {res['note']}"
         elif res["status"] == "rewrite":
             c["website"] = res["domain"]
             note = ""
@@ -120,7 +142,8 @@ def verify_companies(companies: list[dict]) -> list[dict]:
         if note:
             c["notes"] = f"{c['notes']} | {note}" if c.get("notes") else note
     print(f"[verify_websites] {stats['ok']} ok, {stats['rewrite']} canonicalized, "
-          f"{stats['unverified']} kept-unverified, {stats['dead']} blanked")
+          f"{stats['unverified']} kept-unverified, {stats['dead']} blanked, "
+          f"{stats['blocked']} directory-hosts blanked")
     return companies
 
 

@@ -316,28 +316,40 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
 
 1. Merge raw rows with `ctx['additional_companies']`.
 2. Dedup by domain (fuzzy >85% on name where domain is missing); merge source tags.
-   **Website resolution + sanity pass (do this for every kept row):** the `website`
-   must be the company's OWN homepage. First flag every row whose domain is missing,
-   looks name-derived (name + a guessed/sector-flavored TLD like `.co.kr`/`.tech`/
-   `.bio`/`.eco`/`.ai`), or could be a same-named different company (doesn't match
-   the row's HQ country + sector). For each flagged row run a quick
-   `"{company}" {sector} {HQ country} official website` search and set the verified
-   official homepage. If more than ~8 rows are flagged, dispatch website-finder
-   sub-agents (model=haiku) in batches of 3 — each takes a chunk and returns
-   `Company | verified domain | Unknown` — to respect the WebSearch rate cap.
-   **TLD-variant tiebreaker:** when a company resolves to several variants
-   (`fermeate.com` vs `fermeate.bio`), the canonical one is whichever the company
-   ITSELF points to — the link in its LinkedIn/Crunchbase "Website" field, or the
-   target the others redirect to when opened. Don't assume a sector-flavored TLD
-   (`.bio`/`.eco`/`.tech`) is right just because the company is in that space —
-   confirm against the company's own canonical link (it's usually the `.com`).
-   Drop (blank) only domains that are clearly a parent/subsidiary/university/
-   accelerator/VC-portfolio/LinkedIn/Crunchbase/news page, or that the search can't
-   confirm. A blank is better than a wrong link, but a findable company should NOT
-   be left blank. (A deterministic HTTP check also runs inside `finish_run` — it
-   opens every stored website, blanks unreachable ones and follows redirects to the
-   canonical domain — but it can't catch a *live* site that belongs to the wrong
-   company, so this LLM pass is still the one that prevents wrong links.)
+   **Website resolution + sanity pass — MANDATORY for every kept row (this is not
+   optional and not best-effort; a findable company left blank is a defect).** The
+   `website` must be the company's OWN homepage. Flag every row whose domain is (a)
+   missing/blank, (b) a placeholder or a name-derived guess (anything like
+   `Unknown (x likely)`, or the company name + a bolted-on TLD), (c) a
+   Crunchbase/LinkedIn/portfolio/news URL rather than the company's own site, or (d)
+   possibly a same-named different company. **For EVERY flagged row run a real web
+   search** — `"{company}" {sector} {HQ country} official website` — and set the
+   domain the search authoritatively returns. Run website-finder sub-agents
+   (`model=haiku`, batches of 3, each returns `Company | verified domain | Unknown`)
+   whenever more than ~5 rows are flagged; below that, resolve them yourself. Do NOT
+   store results while rows the web can resolve are still blank.
+
+   **A search-confirmed domain is VERIFIED, not a guess — accept it.** The rule against
+   sector-flavored TLDs (`.bio`/`.eco`/`.tech`/`.ai`) is ONLY about not *inventing* one
+   from the name. When an actual web search returns that domain as the company's own
+   result — its title/URL names this company and matches its sector + HQ — it IS the
+   answer: record it. Example: a search for "Arsenale Bioyards" returns `arsenale.bio`
+   as the company's own site → the correct website is `arsenale.bio`. Do NOT down-rank a
+   confirmed `.bio` in favor of a `.com` that no source actually attributes to the
+   company, and NEVER guess `arsenalebioyards.com` from the name — search, then record
+   what the search shows.
+   **TLD-variant tiebreaker:** when a company genuinely resolves to several *real*
+   variants (`fermeate.com` vs `fermeate.bio`, both attributed to it), the canonical one
+   is whichever the company ITSELF points to — its LinkedIn/Crunchbase "Website" field,
+   or the target the others redirect to when opened.
+   Drop (blank) a domain ONLY when it is clearly a parent/subsidiary/university/
+   accelerator/VC-portfolio/LinkedIn/Crunchbase/news page, or when a real search genuinely
+   cannot find the company's own site. A blank is better than a WRONG link — but "I didn't
+   look" is not an acceptable reason for a blank; the search must actually have been run.
+   (A deterministic HTTP check also runs inside `finish_run` — it opens every stored
+   website, blanks unreachable ones and follows redirects to the canonical domain — but it
+   can't FIND a missing site or catch a live site belonging to the wrong company, so this
+   LLM pass is the one that must get the website right.)
    While you're on a company's LinkedIn page during this pass, capture its employee
    bucket if the row's FTE is still Unknown.
 2a. **Enrichment pass — turn thin discoveries into full rows (LinkedIn is the main
