@@ -655,18 +655,50 @@ ${mdToHtml(json.memo)}
     const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Segment', 'Score', 'Source', 'Notes', 'Deep Dive']
     const colWidths = [25, 60, 35, 35, 14, 14, 20, 8, 20, 60, 80]
     const rows = companies.map(c => cols.map(k => c[k] ?? ''))
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
-    // Column widths
+
+    // ── Search-context banner: capture WHAT was requested at the top of the sheet ──
+    const r = run as any
+    const modeLabel = (run.search_mode === 'STANDARD' || run.search_mode === 'EU_ONLY')
+      ? 'European VCs only' : 'Comprehensive'
+    const submitter = run.submitted_by_name ?? run.submitted_by_email ?? 'Unknown'
+    const requested = run.created_at ? new Date(run.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+    const banner: string[][] = [
+      ['HERB SEARCH', run.theme ?? ''],
+      ['Requested', [requested, submitter && `by ${submitter}`].filter(Boolean).join(' · ')],
+      ['Scope', `${modeLabel} · ${run.geography ?? ''} · Stage: ${run.stage ?? ''}`],
+    ]
+    if (run.special_instructions) banner.push(['Instructions', run.special_instructions])
+    if (r.seed_companies) banner.push(['Seed companies', String(r.seed_companies)])
+    banner.push(['Options', [
+      `Icos Fit scoring: ${r.icos_fit ? 'on' : 'off'}`,
+      `Include <10 FTE: ${r.include_small ? 'yes' : 'no'}`,
+      run.current_round ? `Round ${run.current_round}` : '',
+      `${companies.length} companies`,
+    ].filter(Boolean).join(' · ')])
+
+    const headerRow = banner.length + 1  // banner rows, then 1 blank separator, then headers (0-based index)
+    const ws = XLSX.utils.aoa_to_sheet([...banner, [], headers, ...rows])
     ws['!cols'] = colWidths.map(w => ({ wch: w }))
-    // Freeze top row
-    ws['!freeze'] = { xSplit: 0, ySplit: 1 }
-    // Auto-filter
-    ws['!autofilter'] = { ref: `A1:K1` }
-    // Bold + navy headers
+    // Freeze everything down to and including the header row
+    ws['!freeze'] = { xSplit: 0, ySplit: headerRow + 1 }
+    // Auto-filter on the (now-offset) header row
+    const hr1 = headerRow + 1  // 1-based row number
+    ws['!autofilter'] = { ref: `A${hr1}:K${hr1}` }
+    // Bold + navy header cells
     for (let c = 0; c < headers.length; c++) {
-      const cell = XLSX.utils.encode_cell({ r: 0, c })
+      const cell = XLSX.utils.encode_cell({ r: headerRow, c })
       if (ws[cell]) ws[cell].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '1A2B4A' } } }
     }
+    // Style the banner: title row navy-bold, label column (A) bold grey
+    const titleCell = ws[XLSX.utils.encode_cell({ r: 0, c: 0 })]
+    if (titleCell) titleCell.s = { font: { bold: true, sz: 13, color: { rgb: '1A2B4A' } } }
+    const themeCell = ws[XLSX.utils.encode_cell({ r: 0, c: 1 })]
+    if (themeCell) themeCell.s = { font: { bold: true, sz: 13, color: { rgb: '1A2B4A' } } }
+    for (let rIdx = 1; rIdx < banner.length; rIdx++) {
+      const lc = ws[XLSX.utils.encode_cell({ r: rIdx, c: 0 })]
+      if (lc) lc.s = { font: { bold: true, color: { rgb: '5F6368' } } }
+    }
+
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Longlist')
     XLSX.writeFile(wb, `herb-${run.theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.xlsx`)

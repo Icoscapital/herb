@@ -74,29 +74,57 @@ const STATUS_CFG: Record<string, { label: string; dotColor: string; textColor: s
   COMPLETED: { label: 'Completed',    dotColor: 'var(--teal)', textColor: 'var(--teal)', bgColor: 'var(--teal-light)', pulse: false },
 }
 
-async function downloadXLSX(runId: string, theme: string) {
+async function downloadXLSX(run: Run) {
   const { data } = await supabase
-    .from('herb_longlist').select('*').eq('run_id', runId).order('score', { ascending: false })
+    .from('herb_longlist').select('*').eq('run_id', run.id).order('score', { ascending: false })
   if (!data || data.length === 0) { alert('No results to download yet.'); return }
-  const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'score', 'source', 'notes'] as const
-  const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Score', 'Source', 'Notes']
-  const colWidths = [25, 60, 35, 35, 14, 14, 8, 20, 60]
+  const cols = ['name', 'description', 'website', 'linkedin', 'stage', 'geography', 'segment', 'score', 'source', 'notes', 'deep_dive'] as const
+  const headers = ['Company', 'Description', 'Website', 'LinkedIn', 'Stage', 'Geography', 'Segment', 'Score', 'Source', 'Notes', 'Deep Dive']
+  const colWidths = [25, 60, 35, 35, 14, 14, 20, 8, 20, 60, 80]
   const rows = data.map((c: any) => cols.map(k => c[k] ?? ''))
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
-  // Column widths
+
+  // ── Search-context banner: capture WHAT was requested at the top of the sheet ──
+  const r = run as any
+  const modeLabel = (run.search_mode === 'STANDARD' || run.search_mode === 'EU_ONLY')
+    ? 'European VCs only' : 'Comprehensive'
+  const submitter = run.submitted_by_name ?? run.submitted_by_email ?? 'Unknown'
+  const requested = run.created_at ? new Date(run.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  const banner: string[][] = [
+    ['HERB SEARCH', run.theme ?? ''],
+    ['Requested', [requested, submitter && `by ${submitter}`].filter(Boolean).join(' · ')],
+    ['Scope', `${modeLabel} · ${run.geography ?? ''} · Stage: ${run.stage ?? ''}`],
+  ]
+  if (run.special_instructions) banner.push(['Instructions', run.special_instructions])
+  if (r.seed_companies) banner.push(['Seed companies', String(r.seed_companies)])
+  banner.push(['Options', [
+    `Icos Fit scoring: ${r.icos_fit ? 'on' : 'off'}`,
+    `Include <10 FTE: ${r.include_small ? 'yes' : 'no'}`,
+    run.current_round ? `Round ${run.current_round}` : '',
+    `${data.length} companies`,
+  ].filter(Boolean).join(' · ')])
+
+  const headerRow = banner.length + 1
+  const ws = XLSX.utils.aoa_to_sheet([...banner, [], headers, ...rows])
   ws['!cols'] = colWidths.map(w => ({ wch: w }))
-  // Freeze top row
-  ws['!freeze'] = { xSplit: 0, ySplit: 1 }
-  // Auto-filter on header row
-  ws['!autofilter'] = { ref: `A1:I1` }
-  // Bold headers
+  ws['!freeze'] = { xSplit: 0, ySplit: headerRow + 1 }
+  const hr1 = headerRow + 1
+  ws['!autofilter'] = { ref: `A${hr1}:K${hr1}` }
   for (let c = 0; c < headers.length; c++) {
-    const cell = XLSX.utils.encode_cell({ r: 0, c })
+    const cell = XLSX.utils.encode_cell({ r: headerRow, c })
     if (ws[cell]) ws[cell].s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '1A2B4A' } } }
   }
+  const titleCell = ws[XLSX.utils.encode_cell({ r: 0, c: 0 })]
+  if (titleCell) titleCell.s = { font: { bold: true, sz: 13, color: { rgb: '1A2B4A' } } }
+  const themeCell = ws[XLSX.utils.encode_cell({ r: 0, c: 1 })]
+  if (themeCell) themeCell.s = { font: { bold: true, sz: 13, color: { rgb: '1A2B4A' } } }
+  for (let rIdx = 1; rIdx < banner.length; rIdx++) {
+    const lc = ws[XLSX.utils.encode_cell({ r: rIdx, c: 0 })]
+    if (lc) lc.s = { font: { bold: true, color: { rgb: '5F6368' } } }
+  }
+
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Longlist')
-  XLSX.writeFile(wb, `herb-${theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.xlsx`)
+  XLSX.writeFile(wb, `herb-${run.theme.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.xlsx`)
 }
 
 export default function LogPage() {
@@ -553,7 +581,7 @@ export default function LogPage() {
                         onClick={async e => {
                           e.preventDefault(); e.stopPropagation()
                           setDownloading(run.id)
-                          await downloadXLSX(run.id, run.theme)
+                          await downloadXLSX(run)
                           setDownloading(null)
                         }}
                         title="Download Excel"
