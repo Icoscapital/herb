@@ -212,11 +212,15 @@ E. **Seed expansion (BOTH modes — when the EFFECTIVE SEED SET is non-empty; th
    `EIT Food`, `Slush`; JP: `Plug and Play Japan`, `ICC Summit`, `IVS`; US: `Hello Tomorrow US`,
    `ARPA-E Summit`, `Web Summit`
 5b. **Sector trade media (BOTH modes — always run).** Read `references/media-sources.md`; IF the
-   mandate's sector matches a block there (match on that block's keyword line), search each listed
-   outlet `site:<domain> "{query_term}"` and FETCH the pages marked 📊 directly (ecosystem reports /
+   mandate's sector matches a block there (match on that block's keyword line), search the listed
+   outlets `site:<domain> "{query_term}"` and FETCH the pages marked 📊 directly (ecosystem reports /
    startup databases that name many companies at once — e.g. Forward Fooding, Digital Food Lab, GFI).
-   These specialized outlets surface on-thesis companies earlier than mainstream databases, so this
-   runs even in EU_ONLY mode. If no sector block matches the mandate, skip this source (no cost).
+   **Bound it like any other source — do NOT hand all ~19 outlets to one agent (that agent runs >10
+   min and gets killed by the background-task ceiling, taking the whole run down).** Split the matched
+   outlets across Haiku sub-agents in batches of ≤5 outlets each, ≤5 WebSearch/WebFetch calls per
+   agent, dispatched in the normal 3-agents-per-batch rhythm. These specialized outlets surface
+   on-thesis companies earlier than mainstream databases, so this runs even in EU_ONLY mode. If no
+   sector block matches the mandate, skip this source (no cost).
 6. **University tech-transfer & spinouts** — EU: ETH, TUM, Wageningen, Imperial, EPFL, Max Planck,
    KU Leuven; JP: UTokyo IPC, Kyoto-iCAP, Tohoku, Osaka; US: MIT TLO, Stanford OTL, Berkeley.
    Query `"{theme keyword}" spinout/spin-off {institution} 2023 2024 2025`. Surfaces companies
@@ -258,6 +262,16 @@ E. **Seed expansion (BOTH modes — when the EFFECTIVE SEED SET is non-empty; th
 WebSearch has an org-wide 10k-tok/min cap. Firing many in parallel burns it. Dispatch **3 per batch**,
 wait, next batch. EU_ONLY ≈ 2–3 batches; COMPREHENSIVE ≈ 5–7 batches of search agents (more when the
 mandate spans EU+JP+US, since sources 0/5/6/7/8 fan out per region). Runtime budget is fine (360-min job).
+
+**Await each batch fully before moving on — never leave a sub-agent running in the background while
+you proceed to consolidation.** If a single sub-agent stalls and hasn't returned in a few minutes,
+proceed WITHOUT it and note the gap (`update_progress(id, "trade-media agent stalled — proceeding
+without it")`) rather than blocking. A lingering background agent that outlives the harness's
+background-task wait ceiling terminates the ENTIRE run before `finish_run` can store anything — a
+slow source must never be allowed to sink the whole run. Keep each sub-agent bounded (≤5 web calls,
+a handful of targets) so none runs long enough to trigger this. **Finalization (STEP 3
+`finish_run`) is sacred: reaching it with partial results always beats losing everything to one
+stalled agent.**
 
 **Portfolio scraping scales with the fund working-set** (source 2 can now return 100–250 funds on
 broad themes; 400–900+ in exhaustive mode). Portfolio-scrape sub-agents are WebFetch-heavy (fetching

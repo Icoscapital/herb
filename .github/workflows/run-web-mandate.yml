@@ -34,6 +34,12 @@ jobs:
       GIT_COMMIT_NAME:                 herb-bot
       GIT_COMMIT_EMAIL:                herb@icoscapital.com
       RUN_ID:                          ${{ github.event.client_payload.run_id }}
+      # Claude Code terminates the whole run if a background sub-agent is still
+      # going after this ceiling (default 600s=10min). Comprehensive/global runs
+      # legitimately have long-running scrape agents — a too-low ceiling killed a
+      # run mid-consolidation and lost all found companies. 30 min gives long
+      # agents room; the 360-min job timeout remains the real backstop.
+      CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS: "1800000"
 
     steps:
       - name: Checkout
