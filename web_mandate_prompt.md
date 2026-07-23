@@ -297,7 +297,12 @@ Search sub-agent config: `subagent_type=general-purpose`, `model=haiku`. Sub-age
 Search {source} for: theme={theme}, geography={geography}, stage={stage}.
 QUERIES: {query}
 LIMITS: ≤5 WebSearch calls total. On HTTP 429 sleep 30s, retry once; if still 429 output "{source} | rate-limited" and stop.
-OUTPUT (strict): pipe-delimited table. Cols: Company|Domain|HQ Country|FTE|Stage|Raised|Last Round|Investors|Tech|Sectors|URL|Why Now.
+OUTPUT (strict): pipe-delimited table. Cols: Company|Domain|LinkedIn|HQ Country|FTE|Stage|Raised|Last Round|Investors|Tech|Sectors|URL|Why Now.
+LinkedIn = the company's LinkedIn URL (`linkedin.com/company/<slug>`) when you see it — you are
+searching/reading LinkedIn as a source anyway, so capture it. It's the most reliable company
+identifier and the main agent uses it to cross-check the company on Crunchbase/Google. "Unknown"
+if not shown; do NOT guess the slug from the name (same rule as Domain). This is a company-page
+URL, never a personal profile.
 FTE = employee count or LinkedIn bucket exactly as shown ("12", "11-50", "51-200") on the page you're
 already reading — LinkedIn shows it in the company header, Crunchbase in the About box. Do NOT spend
 extra searches on it; "Unknown" if the page doesn't show it.
@@ -361,12 +366,15 @@ DOMAIN RULES (the dashboard links this column — a WRONG link is worse than a b
    `{website, description, HQ country, stage, funding, FTE, sector signals}`. Batch via
    enrichment sub-agents (`model=haiku`, batches of 3, up to ~6 companies each):
    ```
-   For each company (name + any known context), find and return its real data — search the open
-   web and Crunchbase (NOT LinkedIn, which is gated). ≤5 WebSearch calls per company-batch.
-   OUTPUT (strict, pipe-delimited, no prose): Name|Domain|HQ Country|FTE|Stage|1-line description|Sectors
+   For each company (name + any known context), find and return its real data — CROSS-CHECK it on
+   the open web AND Crunchbase (a LinkedIn-discovered company must be corroborated by at least one
+   of these before it counts as verified). ≤5 WebSearch calls per company-batch.
+   OUTPUT (strict, pipe-delimited, no prose): Name|Domain|LinkedIn|HQ Country|FTE|Stage|1-line description|Sectors
+   LinkedIn = linkedin.com/company/<slug> if known (carry through the value that discovered it).
    Apply the standard DOMAIN RULES. "Unknown" for anything you genuinely cannot verify — never invent.
    ```
-   Merge enriched fields back into each row (don't overwrite a good existing value with "Unknown").
+   Merge enriched fields back into each row (don't overwrite a good existing value with "Unknown"),
+   including the LinkedIn URL — it must survive into the stored row's `linkedin` field.
    A LinkedIn-discovered company that enrichment CAN'T corroborate anywhere else — no website, no
    Crunchbase, no press — stays on the longlist but tagged `Unconfirmed (LinkedIn-only)` so the
    author sees it was found but couldn't be verified, rather than it being silently dropped.
