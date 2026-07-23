@@ -70,10 +70,15 @@ def get_mandate_by_id(run_id: str) -> list:
 
 
 def mark_searching(run_id: str) -> None:
-    """Transition run to SEARCHING and set initial progress."""
+    """Transition run to SEARCHING and set initial progress.
+
+    Clears any error_message from a prior failed attempt — otherwise a re-run
+    that succeeds would still show the old error on the dashboard.
+    """
     _get_sb().table("herb_runs").update({
         "status": "SEARCHING",
         "progress": "Starting up…",
+        "error_message": None,
         "last_heartbeat": _now(),
     }).eq("id", run_id).execute()
 
