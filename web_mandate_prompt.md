@@ -273,6 +273,18 @@ a handful of targets) so none runs long enough to trigger this. **Finalization (
 `finish_run`) is sacred: reaching it with partial results always beats losing everything to one
 stalled agent.**
 
+**TURN BUDGET — you have ~350 tool calls, and hitting that ceiling loses everything (the run is
+cut off before `finish_run`).** Broad "map the global landscape" mandates can generate more
+scraping/enrichment work than the budget allows. So SPEND IT DELIBERATELY: front-load the
+highest-signal sources (memory, Pipedrive, Crunchbase, VC portfolios, LinkedIn, trade media),
+and once you hold a solid deduped list (say ~50+ real companies), treat remaining
+portfolio-scraping/enrichment as OPTIONAL polish. If you sense you're past ~two-thirds of your
+budget and still searching, STOP expanding, run the after-collection steps (dedup → website
+resolution → pre-screen → optional scoring) on what you have, and CALL `finish_run`. A stored
+80-company longlist is a win; hitting turn 350 mid-scrape with nothing stored is a total loss.
+Note any sources you skipped for budget in the email summary
+(`update_progress`/summary: "stopped scraping at 90/180 funds to guarantee finalization").
+
 **Portfolio scraping scales with the fund working-set** (source 2 can now return 100–250 funds on
 broad themes; 400–900+ in exhaustive mode). Portfolio-scrape sub-agents are WebFetch-heavy (fetching
 a known portfolio URL is NOT WebSearch-rate-limited), so give each scrape agent **up to 6 funds**
