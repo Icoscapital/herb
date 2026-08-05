@@ -314,6 +314,77 @@ def get_run_files(run_id: str) -> list:
     return run_files + global_files
 
 
+def _norm_hdr(v) -> str:
+    return str(v).strip().lower() if v is not None else ""
+
+
+# Exact header labels that name the company column (checked before substring rules).
+_NAME_EXACT = ("companies", "company name", "company", "organization name",
+               "organisation name", "organization", "organisation", "name")
+
+
+def find_header_row(rows: list) -> int:
+    """Index of the real header row. PitchBook exports carry ~7 title/metadata
+    rows before the column headers, so row 0 is not the header. The header is the
+    first row (within the first 25) containing an exact name label like
+    'Companies' or 'Company Name'. Falls back to 0 if none found."""
+    for i, row in enumerate(rows[:25]):
+        cells = {_norm_hdr(c) for c in row}
+        if cells & set(_NAME_EXACT):
+            return i
+    return 0
+
+
+def find_name_col(headers: list[str]) -> int:
+    """Company-name column. Must beat the 'Company ID' decoy: prefer an exact
+    name label, then a header containing 'compan'/'name' but NOT 'id', else 0."""
+    norm = [_norm_hdr(h) for h in headers]
+    for want in _NAME_EXACT:
+        if want in norm:
+            return norm.index(want)
+    for i, h in enumerate(norm):
+        if ("compan" in h or "name" in h) and "id" not in h:
+            return i
+    return 0
+
+
+def find_domain_col(headers: list[str]):
+    """Company website column — the company's OWN site, not investor websites or
+    Majestic SEO 'referring domains'. Prefer exact 'website'/'domain'."""
+    norm = [_norm_hdr(h) for h in headers]
+    for want in ("website", "domain", "url"):
+        if want in norm:
+            return norm.index(want)
+    bad = ("investor", "referring", "majestic", "linkedin", "view", "former")
+    for i, h in enumerate(norm):
+        if any(k in h for k in ("website", "domain")) and not any(b in h for b in bad):
+            return i
+    for i, h in enumerate(norm):
+        if "url" in h and not any(b in h for b in bad):
+            return i
+    return None
+
+
+def find_linkedin_col(headers: list[str]):
+    norm = [_norm_hdr(h) for h in headers]
+    for i, h in enumerate(norm):
+        if "linkedin" in h:
+            return i
+    return None
+
+
+def find_siteurl_col(headers: list[str]):
+    """URL column for a check-sites file (portfolio/source URLs)."""
+    norm = [_norm_hdr(h) for h in headers]
+    for want in ("url", "website", "link", "portfolio"):
+        if want in norm:
+            return norm.index(want)
+    for i, h in enumerate(norm):
+        if any(k in h for k in ("url", "website", "link")):
+            return i
+    return None
+
+
 def load_attachments(run_id: str) -> tuple[list[dict], list[dict]]:
     """Download and parse all herb_files attachments for a run.
 
@@ -336,17 +407,20 @@ def load_attachments(run_id: str) -> tuple[list[dict], list[dict]]:
         r.raise_for_status()
         return r.content
 
-    def _parse_xlsx_rows(raw: bytes):
+    def _read_rows(raw: bytes, is_csv: bool) -> list:
+        """Return all rows as lists of cell values, regardless of format."""
+        if is_csv:
+            text = raw.decode('utf-8-sig', errors='replace')
+            return [row for row in csv.reader(io.StringIO(text))]
         import openpyxl, tempfile, os as _os
         with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
             tmp.write(raw); tmp_path = tmp.name
         try:
             wb = openpyxl.load_workbook(tmp_path, read_only=True, data_only=True)
             ws = wb.active
-            headers = [str(c.value or '').lower() for c in next(ws.iter_rows(min_row=1, max_row=1))]
-            for row in ws.iter_rows(min_row=2, values_only=True):
-                yield headers, row
+            rows = [list(r) for r in ws.iter_rows(values_only=True)]
             wb.close()
+            return rows
         finally:
             _os.unlink(tmp_path)
 
@@ -355,40 +429,46 @@ def load_attachments(run_id: str) -> tuple[list[dict], list[dict]]:
         try:
             raw = _download(f['url'])
             is_csv = f['name'].lower().endswith('.csv')
+            rows = _read_rows(raw, is_csv)
+            if not rows:
+                print(f"[load_attachments] {f.get('name')}: no rows"); continue
+
+            # PitchBook exports carry ~7 title/metadata rows before the header —
+            # find the real header row rather than assuming row 0.
+            h_idx = find_header_row(rows)
+            headers = [str(c) if c is not None else '' for c in rows[h_idx]]
+            data = rows[h_idx + 1:]
+
+            def _cell(row, col):
+                return str(row[col]).strip() if col is not None and col < len(row) and row[col] is not None else ''
 
             if slot in ('pitchbook', 'company-list'):
-                if is_csv:
-                    reader = csv.DictReader(io.StringIO(raw.decode('utf-8', errors='replace')))
-                    for row in reader:
-                        name = row.get('Company') or row.get('Name') or row.get('company') or ''
-                        domain = row.get('Domain') or row.get('Website') or row.get('website') or ''
-                        if name.strip():
-                            additional_companies.append({'name': name.strip(), 'domain': domain.strip(), 'source': f['name']})
-                else:
-                    for headers, row in _parse_xlsx_rows(raw):
-                        name_col = next((i for i, h in enumerate(headers) if 'company' in h or 'name' in h), 0)
-                        domain_col = next((i for i, h in enumerate(headers) if 'domain' in h or 'website' in h or 'url' in h), None)
-                        name = str(row[name_col] or '').strip()
-                        domain = str(row[domain_col] or '').strip() if domain_col is not None else ''
-                        if name:
-                            additional_companies.append({'name': name, 'domain': domain, 'source': f['name']})
+                name_col = find_name_col(headers)
+                domain_col = find_domain_col(headers)
+                li_col = find_linkedin_col(headers)
+                kept = 0
+                for row in data:
+                    name = _cell(row, name_col)
+                    # Skip stray footer/blank rows and any leaked ID-only value.
+                    if not name or name.lower() in ('', 'nan', 'none'):
+                        continue
+                    rec = {'name': name, 'domain': _cell(row, domain_col), 'source': f['name']}
+                    li = _cell(row, li_col)
+                    if li:
+                        rec['linkedin'] = li
+                    additional_companies.append(rec)
+                    kept += 1
+                print(f"[load_attachments] {f['name']}: header row {h_idx + 1}, "
+                      f"name col '{headers[name_col] if name_col < len(headers) else '?'}', "
+                      f"{kept} companies")
 
             elif slot == 'check-sites':
-                if is_csv:
-                    reader = csv.DictReader(io.StringIO(raw.decode('utf-8', errors='replace')))
-                    for row in reader:
-                        site_name = row.get('name') or row.get('Name') or row.get('VC') or ''
-                        site_url = row.get('url') or row.get('URL') or row.get('website') or ''
-                        if site_url.strip():
-                            extra_check_sites.append({'name': site_name.strip(), 'url': site_url.strip()})
-                else:
-                    for headers, row in _parse_xlsx_rows(raw):
-                        name_col = next((i for i, h in enumerate(headers) if 'name' in h or 'vc' in h), 0)
-                        url_col = next((i for i, h in enumerate(headers) if 'url' in h or 'website' in h), None)
-                        site_name = str(row[name_col] or '').strip()
-                        site_url = str(row[url_col] or '').strip() if url_col is not None else ''
-                        if site_url:
-                            extra_check_sites.append({'name': site_name, 'url': site_url})
+                name_col = find_name_col(headers)
+                url_col = find_siteurl_col(headers)
+                for row in data:
+                    site_url = _cell(row, url_col)
+                    if site_url:
+                        extra_check_sites.append({'name': _cell(row, name_col), 'url': site_url})
         except Exception as e:
             print(f"[load_attachments] could not parse {f.get('name')}: {e}")
 
