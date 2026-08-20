@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 120
 
     env:
-      ANTHROPIC_API_KEY:         ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_API_KEY:         ${{ secrets.HERB_RADAR_ANTHROPIC_API_KEY }}
       NEXT_PUBLIC_SUPABASE_URL:  ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SB_URL:                    ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
