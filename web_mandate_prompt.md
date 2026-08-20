@@ -278,11 +278,16 @@ cut off before `finish_run`).** Broad "map the global landscape" mandates can ge
 scraping/enrichment work than the budget allows. So SPEND IT DELIBERATELY: front-load the
 highest-signal sources (memory, Pipedrive, Crunchbase, VC portfolios, LinkedIn, trade media),
 and once you hold a solid deduped list (say ~50+ real companies), treat remaining
-portfolio-scraping/enrichment as OPTIONAL polish. If you sense you're past ~two-thirds of your
-budget and still searching, STOP expanding, run the after-collection steps (dedup → website
-resolution → pre-screen → optional scoring) on what you have, and CALL `finish_run`. A stored
-80-company longlist is a win; hitting turn 350 mid-scrape with nothing stored is a total loss.
-Note any sources you skipped for budget in the email summary
+portfolio-scraping/enrichment as OPTIONAL polish. **For a broad "map the global landscape"
+mandate specifically, stop expanding once you're past ~40% of your turn budget** (narrower
+themed/DEEP searches can keep using the ~two-thirds heuristic below) — broad-landscape runs are
+the ones that both burn the most tool calls per unit of coverage AND, once a session's context
+crosses ~200k tokens, get billed at a materially higher per-token rate, so the cost of continuing
+to expand rises faster than the value of one more source. Past that point, run the
+after-collection steps (dedup → website resolution → pre-screen → optional scoring) on what you
+have, and CALL `finish_run`. A stored 80-company longlist is a win; hitting turn 350 mid-scrape
+with nothing stored is a total loss. For any other mandate type, ~two-thirds of budget is still
+the right point to stop expanding. Note any sources you skipped for budget in the email summary
 (`update_progress`/summary: "stopped scraping at 90/180 funds to guarantee finalization").
 
 **Portfolio scraping scales with the fund working-set** (source 2 can now return 100–250 funds on

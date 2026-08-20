@@ -113,9 +113,11 @@ def main() -> int:
     print(f"[radar] {len(deals)} open deals across target stages")
 
     # Upsert cached name/domain/stage for every deal seen, without touching
-    # `enabled` on existing rows (so a manual toggle-off sticks). New deals
-    # default to enabled=True — opt-OUT, not opt-in: every deal in the target
-    # stages is checked automatically unless someone turns it off.
+    # `enabled` on existing rows (so a manual toggle-on/off sticks either way).
+    # New deals default to enabled=False — opt-IN: a new deal only gets
+    # bi-weekly radar checks once someone deliberately turns it on from the
+    # dashboard. (Reverted 2026-08-19 from a brief opt-out default — see
+    # 20260819_herb_radar_default_optin.sql.)
     for deal in deals:
         existing = (sb.table("herb_radar_watch").select("id")
                     .eq("pipedrive_deal_id", deal["pipedrive_deal_id"]).execute()).data
@@ -132,7 +134,7 @@ def main() -> int:
                 "domain": deal["domain"],
                 "stage_id": deal["stage_id"],
                 "source": "pipedrive",
-                "enabled": True,
+                "enabled": False,
             }).execute()
 
     # Curated set = every enabled row in herb_radar_watch, whether it's a
