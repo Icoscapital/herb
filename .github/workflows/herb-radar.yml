@@ -1,10 +1,9 @@
-name: Herb Update Radar Tick (bi-weekly)
+name: Herb Update Radar Tick (manual)
 
+# No schedule — the bi-weekly cron was removed 2026-08-20. Radar now only
+# ticks when someone clicks "Check now" on the dashboard, or via
+# workflow_dispatch for manual testing from the Actions tab.
 on:
-  schedule:
-    # GH Actions cron can't express true "every 14 days" — 1st + 15th of each
-    # month is the pragmatic twice-monthly equivalent (gap varies 13-17 days).
-    - cron: '0 6 1,15 * *'
   workflow_dispatch: {}   # manual trigger for testing
   repository_dispatch:
     types: [run-radar-tick]   # dashboard's "Check now" button

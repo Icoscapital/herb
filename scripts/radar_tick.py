@@ -1,9 +1,10 @@
 """
-Update Radar ticker — bi-weekly check of curated Pipedrive deals for market updates.
+Update Radar ticker — on-demand check of curated Pipedrive deals for market updates.
 
-Invoked by .github/workflows/herb-radar.yml (cron: 1st + 15th of each month,
-or manual workflow_dispatch, or repository_dispatch from the dashboard's
-"Check now" button).
+Invoked by .github/workflows/herb-radar.yml — manual workflow_dispatch, or
+repository_dispatch from the dashboard's "Check now" button. No schedule
+(the bi-weekly cron was removed 2026-08-20); radar only ticks when someone
+clicks the button.
 
 Unlike watch_tick.py (which re-runs sourcing mandates to find brand-new
 companies), this checks EXISTING deals already in the pipeline for three
@@ -15,10 +16,10 @@ Steps:
      Follow-up, Advanced Follow-up, PUR/DD/FIP).
   2. Upsert cached name/domain/stage into herb_radar_watch for every deal
      seen (so the dashboard's toggle list stays fresh without a live
-     Pipedrive call on every page load). New deals default to enabled=True
-     (opt-OUT — everyone in the target stages is checked automatically
-     unless toggled off); an existing row's `enabled` is never overwritten
-     here, so a manual toggle-off sticks across ticks.
+     Pipedrive call on every page load). New deals default to enabled=False
+     (opt-IN — a deal is only checked once someone deliberately turns it on
+     from the dashboard); an existing row's `enabled` is never overwritten
+     here, so a manual toggle either way sticks across ticks.
   3. Read the curated set directly from herb_radar_watch (enabled=true) —
      this covers BOTH pipedrive-synced deals and companies added manually
      from the dashboard (source='manual', no Pipedrive deal at all).
@@ -115,8 +116,9 @@ def main() -> int:
     # Upsert cached name/domain/stage for every deal seen, without touching
     # `enabled` on existing rows (so a manual toggle-on/off sticks either way).
     # New deals default to enabled=False — opt-IN: a new deal only gets
-    # bi-weekly radar checks once someone deliberately turns it on from the
-    # dashboard. (Reverted 2026-08-19 from a brief opt-out default — see
+    # radar checks (on-demand only, no schedule as of 2026-08-20) once
+    # someone deliberately turns it on from the dashboard. (Reverted
+    # 2026-08-19 from a brief opt-out default — see
     # 20260819_herb_radar_default_optin.sql.)
     for deal in deals:
         existing = (sb.table("herb_radar_watch").select("id")

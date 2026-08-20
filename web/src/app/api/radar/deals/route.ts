@@ -5,7 +5,7 @@
  * stages (Follow Up, Corporate Follow-up, Advanced Follow-up, PUR/DD/FIP),
  * left-joined with herb_radar_watch for the current curated-list toggle
  * state — live rather than reading herb_radar_watch alone so the list is
- * accurate even before the first bi-weekly tick has run. Manually-added
+ * accurate even before a "Check now" tick has ever run. Manually-added
  * companies (source='manual', no Pipedrive deal) are appended from
  * herb_radar_watch directly since there's nothing to fetch from Pipedrive.
  */

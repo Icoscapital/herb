@@ -2,9 +2,10 @@
  * POST /api/radar/run-now
  *
  * Manual trigger — dispatches the herb-radar.yml tick workflow (run-radar-tick
- * repository_dispatch event) so a manual "Check now" click goes through the
- * exact same curated-set resolution logic (scripts/radar_tick.py) as the
- * bi-weekly cron, rather than a separate code path.
+ * repository_dispatch event) so a "Check now" click goes through the same
+ * curated-set resolution logic (scripts/radar_tick.py) as the removed
+ * bi-weekly cron used to. This is now the ONLY way radar ticks run — the
+ * schedule was removed 2026-08-20.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/lib/api-auth'

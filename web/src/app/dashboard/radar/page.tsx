@@ -253,7 +253,7 @@ export default function RadarPage() {
           <div>
             <h1 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>Update Radar</h1>
             <p className="text-xs mt-0.5" style={{ color: 'var(--subtle)' }}>
-              {enabledCount} compan{enabledCount === 1 ? 'y' : 'ies'} watched &middot; checked bi-weekly &middot; funding, competitor funding, commercial wins &amp; major news only
+              {enabledCount} compan{enabledCount === 1 ? 'y' : 'ies'} watched &middot; checked on demand (no schedule) &middot; funding, competitor funding, commercial wins &amp; major news only
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -377,7 +377,7 @@ export default function RadarPage() {
             <p className="text-3xl mb-3">&#128225;</p>
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>No findings yet</p>
             <p className="text-xs" style={{ color: 'var(--subtle)' }}>
-              Every deal in the target stages is checked automatically once synced &mdash; click &ldquo;Check now&rdquo; to sync and check immediately, or wait for the next bi-weekly tick.
+              Deals are watched only once enabled below &mdash; toggle the ones you want checked, then click &ldquo;Check now&rdquo; to sync and check them. There&rsquo;s no automatic schedule; nothing runs until you click it.
             </p>
           </div>
         ) : (
