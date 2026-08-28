@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { authedFetch } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
@@ -128,9 +128,37 @@ export default function WatchFollowPage() {
     return () => clearInterval(t)
   }, [loadFindings, latestRun?.status])
 
-  const acknowledge = async (id: string, acknowledged: boolean) => {
-    setFindings(prev => prev.map(f => f.id === id ? { ...f, acknowledged } : f))
-    await authedFetch('/api/watch-follow', { method: 'PATCH', body: JSON.stringify({ id, acknowledged }) })
+  /**
+   * One story, seen from several companies, rendered once.
+   *
+   * A competitor raise is genuinely relevant to every company it competes with, so it is STORED per
+   * company — dedupe is per (pipedrive_deal_id, dedupe_key), so each company keeps its own copy and
+   * its own acknowledge state. But rendering it once per company made one €7.2M raise look like four
+   * findings (2026-08-28: InsectBiotech against INVERTAPRO, MEALFOOD EUROPE, MICRONUTRIS and
+   * PROTIFARM — 4 of that run's 5 findings).
+   *
+   * Grouped on source (falling back to the headline) rather than special-casing COMPETITOR_FUNDING:
+   * a company's own funding news carries its own source and stays ungrouped naturally, and any other
+   * shared story gets the same treatment for free.
+   */
+  const groups = useMemo(() => {
+    const m = new Map<string, Finding[]>()
+    for (const f of findings) {
+      const key = `${f.update_type}|${(f.source_url || f.headline || '').trim().toLowerCase()}`
+      const at = m.get(key)
+      if (at) at.push(f)
+      else m.set(key, [f])
+    }
+    return [...m.values()]
+  }, [findings])
+
+  /** Acknowledging a grouped story acknowledges every company's copy — they are one thing to read. */
+  const acknowledgeGroup = async (g: Finding[]) => {
+    const next = !g.every(f => f.acknowledged)
+    const ids = new Set(g.map(f => f.id))
+    setFindings(prev => prev.map(f => ids.has(f.id) ? { ...f, acknowledged: next } : f))
+    await Promise.all(g.map(f =>
+      authedFetch('/api/watch-follow', { method: 'PATCH', body: JSON.stringify({ id: f.id, acknowledged: next }) })))
   }
 
   const runNow = async () => {
@@ -316,13 +344,17 @@ export default function WatchFollowPage() {
           </div>
         ) : (
           <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            {findings.map((f, i) => {
+            {groups.map((g, i) => {
+              const f = g[0]
               const cfg = TYPE_CFG[f.update_type]
+              // Acknowledged only once every company's copy is — a half-acknowledged group still
+              // has something unread in it.
+              const allAck = g.every(x => x.acknowledged)
               return (
                 <div key={f.id} className="px-5 py-4"
                   style={{
-                    borderBottom: i < findings.length - 1 ? '1px solid var(--border)' : 'none',
-                    opacity: f.acknowledged ? 0.55 : 1,
+                    borderBottom: i < groups.length - 1 ? '1px solid var(--border)' : 'none',
+                    opacity: allAck ? 0.55 : 1,
                   }}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -330,17 +362,37 @@ export default function WatchFollowPage() {
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: cfg.bg, color: cfg.color }}>
                           {cfg.label}
                         </span>
-                        {f.pipedrive_deal_id ? (
-                          <a href={`https://${PD_DOMAIN}.pipedrive.com/deal/${f.pipedrive_deal_id}`} target="_blank" rel="noreferrer"
-                            className="text-xs font-medium hover:underline" style={{ color: 'var(--navy)' }}>
-                            {f.company_name}
-                          </a>
+                        {g.length === 1 ? (
+                          f.pipedrive_deal_id ? (
+                            <a href={`https://${PD_DOMAIN}.pipedrive.com/deal/${f.pipedrive_deal_id}`} target="_blank" rel="noreferrer"
+                              className="text-xs font-medium hover:underline" style={{ color: 'var(--navy)' }}>
+                              {f.company_name}
+                            </a>
+                          ) : (
+                            <span className="text-xs font-medium" style={{ color: 'var(--navy)' }}>{f.company_name}</span>
+                          )
                         ) : (
-                          <span className="text-xs font-medium" style={{ color: 'var(--navy)' }}>{f.company_name}</span>
+                          <span className="text-xs font-medium" style={{ color: 'var(--navy)' }}>{g.length} companies</span>
                         )}
                         <span className="text-xs" style={{ color: 'var(--subtle)' }}>{timeAgo(f.found_at)}</span>
                       </div>
                       <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>{f.headline}</p>
+                      {/* Name them, so a grouped story still says who it affects — each linked to
+                          its own deal, since that is what someone acts on. */}
+                      {g.length > 1 && (
+                        <p className="text-xs mt-1" style={{ color: 'var(--subtle)' }}>
+                          Affects{' '}
+                          {g.map((x, n) => (
+                            <span key={x.id}>
+                              {n > 0 && ', '}
+                              {x.pipedrive_deal_id ? (
+                                <a href={`https://${PD_DOMAIN}.pipedrive.com/deal/${x.pipedrive_deal_id}`} target="_blank" rel="noreferrer"
+                                  className="hover:underline" style={{ color: 'var(--navy)' }}>{x.company_name}</a>
+                              ) : x.company_name}
+                            </span>
+                          ))}
+                        </p>
+                      )}
                       {f.detail && <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>{f.detail}</p>}
                       {f.source_url && (
                         <a href={f.source_url} target="_blank" rel="noreferrer"
@@ -349,14 +401,14 @@ export default function WatchFollowPage() {
                         </a>
                       )}
                     </div>
-                    <button onClick={() => acknowledge(f.id, !f.acknowledged)}
-                      title={f.acknowledged ? 'Mark unread' : 'Acknowledge'}
+                    <button onClick={() => acknowledgeGroup(g)}
+                      title={allAck ? 'Mark unread' : 'Acknowledge'}
                       className="text-xs font-medium px-2.5 py-1 rounded-lg transition-all shrink-0"
                       style={{
-                        color: f.acknowledged ? 'var(--subtle)' : 'var(--teal)',
-                        background: f.acknowledged ? 'var(--bg)' : 'var(--teal-light)',
+                        color: allAck ? 'var(--subtle)' : 'var(--teal)',
+                        background: allAck ? 'var(--bg)' : 'var(--teal-light)',
                       }}>
-                      {f.acknowledged ? 'Reopen' : 'Acknowledge'}
+                      {allAck ? 'Reopen' : 'Acknowledge'}
                     </button>
                   </div>
                 </div>
