@@ -13,6 +13,18 @@ If `ctx['companies']` is empty: print "nothing to check" and exit — done.
 
 ## STEP 2 — Research (Task sub-agents, batches of 4–6 companies, run in parallel)
 
+**Report progress as you go.** After each batch of sub-agents returns:
+
+```python
+from scripts.herb_watch_follow_run import update_progress
+update_progress(ctx['run_id'], f"checked {done}/{total} companies")
+```
+
+`update_progress` has always existed here but nothing ever called it, so a run sat on "Starting up…"
+from dispatch to completion and a live run was indistinguishable from a stalled one — over a hundred
+companies can take a while. It also refreshes `last_heartbeat`, which is what `reap_stuck_runs.py`
+uses to tell a dead worker from a slow one; without it a long healthy run risks being reaped.
+
 Dispatch config: `subagent_type=general-purpose`, `model=haiku` — this is bounded search/extraction against an explicit rubric, the same tier as web_mandate_prompt.md's search sub-agents. Do not move this onto Opus/Sonnet — it multiplies cost for no quality gain on this kind of task.
 
 For **each company** in a sub-agent's batch, check exactly these four things — nothing else:
