@@ -33,25 +33,14 @@ type LatestRun = {
   finished_at: string | null
 } | null
 
-type Deal = {
-  id: string | null
-  pipedrive_deal_id: number | null
+// Read-only — every entry here is a live Pipedrive deal that qualifies
+// automatically (stage + CEP Interest + Framework Verdict). There's no
+// manual add/toggle any more.
+type ScopedDeal = {
+  pipedrive_deal_id: number
   company_name: string
   domain: string
-  stage_id: number | null
-  source: 'pipedrive' | 'manual'
-  enabled: boolean
-}
-
-function dealKey(d: Deal): string {
-  return d.id ?? `pd-${d.pipedrive_deal_id}`
-}
-
-const STAGE_LABEL: Record<number, string> = {
-  139: 'Follow Up',
-  145: 'Corporate Follow-up',
-  144: 'Advanced Follow-up',
-  100: 'PUR/DD/FIP',
+  stage_name: string
 }
 
 const TYPE_CFG: Record<Finding['update_type'], { label: string; color: string; bg: string }> = {
@@ -73,24 +62,20 @@ function timeAgo(iso: string) {
 
 const PD_DOMAIN = 'icoscapital'
 
-export default function RadarPage() {
+export default function WatchFollowPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [findings, setFindings] = useState<Finding[]>([])
   const [latestRun, setLatestRun] = useState<LatestRun>(null)
-  const [deals, setDeals] = useState<Deal[]>([])
-  const [dealsLoading, setDealsLoading] = useState(true)
-  const [showManage, setShowManage] = useState(false)
-  const [toggling, setToggling] = useState<string | null>(null)
+  const [scopedDeals, setScopedDeals] = useState<ScopedDeal[]>([])
+  const [scopedLoading, setScopedLoading] = useState(true)
+  const [showScope, setShowScope] = useState(false)
   const [running, setRunning] = useState(false)
   const [runMsg, setRunMsg] = useState<{ text: string; ok: boolean } | null>(null)
-  const [newName, setNewName] = useState('')
-  const [newDomain, setNewDomain] = useState('')
-  const [adding, setAdding] = useState(false)
   const router = useRouter()
 
   const loadFindings = useCallback(async () => {
-    const res = await authedFetch('/api/radar')
+    const res = await authedFetch('/api/watch-follow')
     const json = await res.json()
     if (json.findings) setFindings(json.findings)
     if ('latest_run' in json) {
@@ -100,7 +85,7 @@ export default function RadarPage() {
           if (json.latest_run.status === 'DONE') {
             setRunMsg({ text: `Check complete — ${json.latest_run.findings_count ?? 0} new finding(s)`, ok: true })
           } else if (json.latest_run.status === 'ERROR') {
-            setRunMsg({ text: json.latest_run.error_message || 'Radar check failed', ok: false })
+            setRunMsg({ text: json.latest_run.error_message || 'Check failed', ok: false })
           }
         }
         return json.latest_run
@@ -108,14 +93,14 @@ export default function RadarPage() {
     }
   }, [])
 
-  const loadDeals = useCallback(async () => {
-    setDealsLoading(true)
+  const loadScopedDeals = useCallback(async () => {
+    setScopedLoading(true)
     try {
-      const res = await authedFetch('/api/radar/deals')
+      const res = await authedFetch('/api/watch-follow/deals')
       const json = await res.json()
-      if (json.deals) setDeals(json.deals)
+      if (json.deals) setScopedDeals(json.deals)
     } finally {
-      setDealsLoading(false)
+      setScopedLoading(false)
     }
   }, [])
 
@@ -128,12 +113,12 @@ export default function RadarPage() {
   }, [router, loadFindings])
 
   useEffect(() => {
-    if (showManage && deals.length === 0) loadDeals()
-  }, [showManage, deals.length, loadDeals])
+    if (showScope && scopedDeals.length === 0) loadScopedDeals()
+  }, [showScope, scopedDeals.length, loadScopedDeals])
 
   // Poll while a tick is in flight so the page reflects reality instead of
   // going quiet after the "Check now" click returns — the actual research
-  // (run-update-radar.yml) can run for several minutes.
+  // (run-watch-follow.yml) can run for several minutes.
   useEffect(() => {
     const active = latestRun?.status === 'PENDING' || latestRun?.status === 'RUNNING'
     const interval = active ? 8_000 : 30_000
@@ -141,73 +126,21 @@ export default function RadarPage() {
     return () => clearInterval(t)
   }, [loadFindings, latestRun?.status])
 
-  const toggleDeal = async (deal: Deal) => {
-    const key = dealKey(deal)
-    setToggling(key)
-    const next = !deal.enabled
-    setDeals(prev => prev.map(d => dealKey(d) === key ? { ...d, enabled: next } : d))
-    try {
-      await authedFetch('/api/radar/toggle', {
-        method: 'POST',
-        body: JSON.stringify(
-          deal.id
-            ? { id: deal.id, enabled: next }
-            : {
-                pipedrive_deal_id: deal.pipedrive_deal_id,
-                enabled: next,
-                company_name: deal.company_name,
-                domain: deal.domain,
-                stage_id: deal.stage_id,
-              }
-        ),
-      })
-    } finally {
-      setToggling(null)
-    }
-  }
-
-  const addCompany = async () => {
-    const name = newName.trim()
-    if (!name) return
-    setAdding(true)
-    try {
-      const res = await authedFetch('/api/radar/companies', {
-        method: 'POST',
-        body: JSON.stringify({ company_name: name, domain: newDomain.trim() }),
-      })
-      const json = await res.json()
-      if (json.ok && json.company) {
-        setDeals(prev => [{
-          id: json.company.id,
-          pipedrive_deal_id: null,
-          company_name: json.company.company_name,
-          domain: json.company.domain || '',
-          stage_id: null,
-          source: 'manual',
-          enabled: json.company.enabled,
-        }, ...prev])
-        setNewName('')
-        setNewDomain('')
-      }
-    } finally {
-      setAdding(false)
-    }
-  }
-
   const acknowledge = async (id: string, acknowledged: boolean) => {
     setFindings(prev => prev.map(f => f.id === id ? { ...f, acknowledged } : f))
-    await authedFetch('/api/radar', { method: 'PATCH', body: JSON.stringify({ id, acknowledged }) })
+    await authedFetch('/api/watch-follow', { method: 'PATCH', body: JSON.stringify({ id, acknowledged }) })
   }
 
   const runNow = async () => {
     setRunning(true)
     setRunMsg(null)
     try {
-      const res = await authedFetch('/api/radar/run-now', { method: 'POST' })
+      const res = await authedFetch('/api/watch-follow/run-now', { method: 'POST' })
       const json = await res.json()
       if (!json.ok) setRunMsg({ text: json.error || 'Could not start check', ok: false })
-      // radar_tick.py takes ~30-60s to sync + dispatch before herb_radar_runs
-      // even exists; poll a few times so the running banner appears promptly.
+      // watch_follow_tick.py takes ~30-60s to resolve stages + qualify deals
+      // + dispatch before herb_watch_follow_runs even exists; poll a few
+      // times so the running banner appears promptly.
       setTimeout(loadFindings, 5_000)
       setTimeout(loadFindings, 15_000)
       setTimeout(loadFindings, 45_000)
@@ -224,7 +157,6 @@ export default function RadarPage() {
     </div>
   )
 
-  const enabledCount = deals.filter(d => d.enabled).length
   const unacknowledged = findings.filter(f => !f.acknowledged)
 
   return (
@@ -236,7 +168,7 @@ export default function RadarPage() {
           <div className="flex items-center gap-4">
             <img src="/icos-logo.svg" alt="Icos Capital" style={{ width: '88px', height: 'auto' }} />
             <div className="w-px h-6" style={{ background: 'var(--border)' }} />
-            <span className="text-sm font-medium" style={{ color: 'var(--navy)' }}>Update Radar</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--navy)' }}>Updates On Watch &amp; Follow</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs hidden sm:block" style={{ color: 'var(--subtle)' }}>{user?.email}</span>
@@ -251,9 +183,9 @@ export default function RadarPage() {
 
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>Update Radar</h1>
+            <h1 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>Updates On Watch &amp; Follow</h1>
             <p className="text-xs mt-0.5" style={{ color: 'var(--subtle)' }}>
-              {enabledCount} compan{enabledCount === 1 ? 'y' : 'ies'} watched &middot; checked on demand (no schedule) &middot; funding, competitor funding, commercial wins &amp; major news only
+              Companies in scope are selected automatically &middot; checked on demand (no schedule) &middot; funding, competitor funding, commercial wins &amp; major news only
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -266,14 +198,14 @@ export default function RadarPage() {
               }}>
               {running ? <div className="loading-spinner" style={{ width: '10px', height: '10px', borderTopColor: 'var(--teal)' }} /> : '▶ Check now'}
             </button>
-            <button onClick={() => setShowManage(v => !v)}
+            <button onClick={() => setShowScope(v => !v)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
               style={{
-                background: showManage ? 'var(--navy-light)' : 'var(--surface)',
-                color: showManage ? 'var(--navy)' : 'var(--subtle)',
-                border: showManage ? '1px solid var(--navy)' : '1px solid var(--border)',
+                background: showScope ? 'var(--navy-light)' : 'var(--surface)',
+                color: showScope ? 'var(--navy)' : 'var(--subtle)',
+                border: showScope ? '1px solid var(--navy)' : '1px solid var(--border)',
               }}>
-              Manage watch list
+              Currently in scope
             </button>
           </div>
         </div>
@@ -284,7 +216,7 @@ export default function RadarPage() {
             <div className="loading-spinner" style={{ width: '14px', height: '14px', borderTopColor: 'var(--teal)', flexShrink: 0 }} />
             <span>
               {latestRun.status === 'PENDING'
-                ? 'Radar check queued — GitHub Actions is spinning up…'
+                ? 'Check queued — GitHub Actions is spinning up…'
                 : `Checking ${latestRun.company_count} compan${latestRun.company_count === 1 ? 'y' : 'ies'} for updates${latestRun.progress ? ` — ${latestRun.progress}` : '…'}`}
             </span>
           </div>
@@ -302,68 +234,38 @@ export default function RadarPage() {
           </div>
         )}
 
-        {/* Watch-list manager */}
-        {showManage && (
+        {/* Read-only "currently in scope" list — no toggles, nothing to manage. */}
+        {showScope && (
           <div className="mb-5 rounded-2xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
               <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--subtle)' }}>
-                All deals in Follow Up &middot; Corporate/Advanced Follow-up &middot; PUR/DD/FIP are checked automatically &mdash; toggle off to exclude
+                Selected automatically &mdash; Corporate view stage or later, CEP Interest flagged, not marked No Go
               </span>
             </div>
 
-            {/* Add a company with no Pipedrive deal */}
-            <div className="px-5 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
-              <input value={newName} onChange={e => setNewName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addCompany() }}
-                placeholder="Company name"
-                className="text-sm px-3 py-1.5 rounded-lg outline-none flex-1"
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }} />
-              <input value={newDomain} onChange={e => setNewDomain(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addCompany() }}
-                placeholder="Domain (optional)"
-                className="text-sm px-3 py-1.5 rounded-lg outline-none"
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', width: '200px' }} />
-              <button onClick={addCompany} disabled={adding || !newName.trim()}
-                className="text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-all shrink-0"
-                style={{ background: 'var(--teal)', color: '#fff', opacity: adding || !newName.trim() ? 0.6 : 1 }}>
-                {adding ? '…' : '+ Add company'}
-              </button>
-            </div>
-
-            {dealsLoading ? (
+            {scopedLoading ? (
               <div className="flex items-center justify-center py-10">
                 <div className="loading-spinner" style={{ width: '18px', height: '18px' }} />
               </div>
-            ) : deals.length === 0 ? (
-              <div className="text-xs py-8 text-center" style={{ color: 'var(--subtle)' }}>No open deals found in these stages.</div>
+            ) : scopedDeals.length === 0 ? (
+              <div className="text-xs py-8 text-center" style={{ color: 'var(--subtle)' }}>No deals currently qualify.</div>
             ) : (
               <div>
-                {deals.map((d, i) => (
-                  <div key={dealKey(d)} className="grid items-center px-5 py-2.5"
+                {scopedDeals.map((d, i) => (
+                  <div key={d.pipedrive_deal_id} className="grid items-center px-5 py-2.5"
                     style={{
-                      gridTemplateColumns: '1fr 160px 60px',
+                      gridTemplateColumns: '1fr 200px',
                       gap: '12px',
-                      borderBottom: i < deals.length - 1 ? '1px solid var(--border)' : 'none',
+                      borderBottom: i < scopedDeals.length - 1 ? '1px solid var(--border)' : 'none',
                     }}>
                     <div className="min-w-0">
-                      {d.source === 'pipedrive' ? (
-                        <a href={`https://${PD_DOMAIN}.pipedrive.com/deal/${d.pipedrive_deal_id}`} target="_blank" rel="noreferrer"
-                          className="text-sm font-medium truncate hover:underline" style={{ color: 'var(--text)' }}>
-                          {d.company_name || `Deal #${d.pipedrive_deal_id}`}
-                        </a>
-                      ) : (
-                        <span className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>{d.company_name}</span>
-                      )}
+                      <a href={`https://${PD_DOMAIN}.pipedrive.com/deal/${d.pipedrive_deal_id}`} target="_blank" rel="noreferrer"
+                        className="text-sm font-medium truncate hover:underline" style={{ color: 'var(--text)' }}>
+                        {d.company_name || `Deal #${d.pipedrive_deal_id}`}
+                      </a>
                       {d.domain && <p className="text-xs truncate mt-0.5" style={{ color: 'var(--subtle)' }}>{d.domain}</p>}
                     </div>
-                    <span className="text-xs" style={{ color: 'var(--subtle)' }}>
-                      {d.source === 'manual' ? 'Manual' : (STAGE_LABEL[d.stage_id ?? -1] ?? d.stage_id)}
-                    </span>
-                    <label className="flex justify-end items-center cursor-pointer">
-                      <input type="checkbox" checked={d.enabled} disabled={toggling === dealKey(d)}
-                        onChange={() => toggleDeal(d)}
-                        style={{ width: '16px', height: '16px', accentColor: 'var(--teal)' }} />
-                    </label>
+                    <span className="text-xs text-right" style={{ color: 'var(--subtle)' }}>{d.stage_name}</span>
                   </div>
                 ))}
               </div>
@@ -377,7 +279,7 @@ export default function RadarPage() {
             <p className="text-3xl mb-3">&#128225;</p>
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>No findings yet</p>
             <p className="text-xs" style={{ color: 'var(--subtle)' }}>
-              Deals are watched only once enabled below &mdash; toggle the ones you want checked, then click &ldquo;Check now&rdquo; to sync and check them. There&rsquo;s no automatic schedule; nothing runs until you click it.
+              Companies in scope are selected automatically &mdash; nothing to toggle. Click &ldquo;Check now&rdquo; to run a check; there&rsquo;s no automatic schedule.
             </p>
           </div>
         ) : (
@@ -432,7 +334,7 @@ export default function RadarPage() {
         )}
 
         <p className="text-center text-xs mt-5" style={{ color: 'var(--subtle)' }}>
-          {unacknowledged.length} unacknowledged &middot; checked on the 1st &amp; 15th of each month
+          {unacknowledged.length} unacknowledged &middot; on-demand only, no schedule &middot; scope is selected automatically, nothing to toggle
         </p>
       </div>
     </div>

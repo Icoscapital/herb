@@ -1,11 +1,11 @@
 /**
- * POST /api/radar/run-now
+ * POST /api/watch-follow/run-now
  *
- * Manual trigger — dispatches the herb-radar.yml tick workflow (run-radar-tick
- * repository_dispatch event) so a "Check now" click goes through the same
- * curated-set resolution logic (scripts/radar_tick.py) as the removed
- * bi-weekly cron used to. This is now the ONLY way radar ticks run — the
- * schedule was removed 2026-08-20.
+ * Manual trigger — dispatches the herb-watch-follow-tick.yml tick workflow
+ * (run-watch-follow-tick repository_dispatch event) so a "Check now" click
+ * goes through the same live criteria-selection logic
+ * (scripts/watch_follow_tick.py) as the removed bi-weekly cron used to.
+ * This is the ONLY way ticks run — there is no schedule.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/lib/api-auth'
@@ -32,15 +32,15 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
         'User-Agent': 'herb-vercel',
       },
-      body: JSON.stringify({ event_type: 'run-radar-tick' }),
+      body: JSON.stringify({ event_type: 'run-watch-follow-tick' }),
     }
   )
 
   if (!dispatchRes.ok) {
     const errBody = await dispatchRes.text()
-    console.error('[radar/run-now] GitHub dispatch failed:', dispatchRes.status, errBody)
+    console.error('[watch-follow/run-now] GitHub dispatch failed:', dispatchRes.status, errBody)
     return NextResponse.json({ ok: false, error: `Dispatch failed (${dispatchRes.status})` }, { status: 502 })
   }
 
-  return NextResponse.json({ ok: true, message: 'Radar check started — GitHub Actions is spinning up (~30s)' })
+  return NextResponse.json({ ok: true, message: 'Check started — GitHub Actions is spinning up (~30s)' })
 }

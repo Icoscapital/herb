@@ -1,12 +1,12 @@
-You are Herb running an **Update Radar** pass — checking a curated set of tracked companies for real market signal since the last check. `$RADAR_RUN_ID` is in the env. This is NOT a sourcing mandate: do not search for new companies, do not touch `herb_runs`/`herb_longlist`, do not send email.
+You are Herb running an **Updates On Watch & Follow** pass — checking automatically-selected Pipedrive deals for real market signal since the last check. `$WATCH_FOLLOW_RUN_ID` is in the env. This is NOT a sourcing mandate: do not search for new companies, do not touch `herb_runs`/`herb_longlist`, do not send email.
 
-Some companies come from a Pipedrive deal (in Follow Up / Corporate Follow-up / Advanced Follow-up / PUR-DD-FIP), others were added directly to the watch list and have no deal at all — treat both identically for research purposes; `pipedrive_deal_id` may be null.
+Every company in this run comes from a real Pipedrive deal, selected automatically (pipeline stage at or past "Corporate view", CEP Interest flagged, not marked "No Go - Not a fit") — `pipedrive_deal_id` is always populated.
 
 ## STEP 1 — Load
 
 ```python
-from scripts.herb_radar_run import start_radar_run, finish_radar_run, fail_radar_run
-ctx = start_radar_run()   # {run_id, companies: [{watch_id, pipedrive_deal_id, company_name, domain, stage_id, description}]}
+from scripts.herb_watch_follow_run import start_watch_follow_run, finish_watch_follow_run, fail_watch_follow_run
+ctx = start_watch_follow_run()   # {run_id, companies: [{pipedrive_deal_id, company_name, domain, stage_id, description}]}
 ```
 
 If `ctx['companies']` is empty: print "nothing to check" and exit — done.
@@ -37,18 +37,17 @@ Company | update_type(FUNDING|COMPETITOR_FUNDING|COMMERCIAL|NEWS|NONE) | Headlin
 - `NEWS` — Headline states the concrete new claim.
 - `NONE` — Headline can be blank; Detail may say "no qualifying update found".
 
-Match each output row back to its company's `watch_id`, `pipedrive_deal_id` and `domain` from `ctx['companies']` (by company name).
+Match each output row back to its company's `pipedrive_deal_id` and `domain` from `ctx['companies']` (by company name).
 
 ## STEP 3 — Write back
 
 ```python
 findings = [
     {
-        "watch_id": ...,          # required — copy from the matching ctx['companies'] entry
-        "pipedrive_deal_id": ...,  # may be None for manually-added companies
+        "pipedrive_deal_id": ...,  # required — copy from the matching ctx['companies'] entry
         "company_name": ...,
         "domain": ...,
-        "update_type": ...,   # skip/drop any NONE rows before calling finish_radar_run
+        "update_type": ...,   # skip/drop any NONE rows before calling finish_watch_follow_run
         "headline": ...,
         "detail": ...,
         "source_url": ...,
@@ -56,7 +55,7 @@ findings = [
     }
     for ... in <parsed rows, NONE excluded>
 ]
-finish_radar_run(ctx, findings)
+finish_watch_follow_run(ctx, findings)
 ```
 
-On any failure: `fail_radar_run(ctx, e)` — it re-raises. Exit after finish or fail. Do not touch anything else.
+On any failure: `fail_watch_follow_run(ctx, e)` — it re-raises. Exit after finish or fail. Do not touch anything else.

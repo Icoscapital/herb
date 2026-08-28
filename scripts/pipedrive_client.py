@@ -92,6 +92,15 @@ class PipedriveClient:
             start = pag.get("next_start", start + 100)
         return out
 
+    def list_stages(self, pipeline_id: int) -> list[dict]:
+        """Every stage in a pipeline, as Pipedrive returns them (not
+        guaranteed sorted). Used to resolve target stage ids live by
+        order_nr rather than hardcoding ids — this pipeline's stage ids and
+        names get renamed/reordered periodically, so a hardcoded list goes
+        stale fast."""
+        out = self._get("/stages", pipeline_id=pipeline_id)
+        return out.get("data") or []
+
     def get_organization(self, org_id: int) -> dict:
         out = self._get(f"/organizations/{org_id}")
         return out.get("data") or {}

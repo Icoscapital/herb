@@ -1,0 +1,171 @@
+"""
+Updates On Watch & Follow ticker — on-demand check of automatically-selected
+Pipedrive deals for market updates.
+
+Invoked by .github/workflows/herb-watch-follow-tick.yml — manual
+workflow_dispatch, or repository_dispatch from the dashboard's "Check now"
+button. No schedule; it only ticks when someone clicks the button.
+
+Unlike watch_tick.py (which re-runs sourcing mandates to find brand-new
+companies), this checks EXISTING deals already in the pipeline for three
+specific signal types: new financing (company or named competitor),
+commercial updates (partnership/customer win), and major website/news.
+
+Renamed 2026-08-27 from radar_tick.py / "Update Radar" — the old name
+collided with the unrelated sourcing-mandate "Watch" feature (watch_tick.py).
+This rename also drops the manual opt-in watch list entirely: there is no
+more herb_radar_watch table and no toggle. Every tick, the candidate set is
+computed fresh, live, from Pipedrive:
+
+  - Stage: the deal's pipeline-9 stage has order_nr >= 4 ("Corporate view"
+    or any stage after it in board order). Stage ids/names on this pipeline
+    have been renamed and reordered three times in the last week, so they
+    are resolved live via GET /stages?pipeline_id=9 every run — never
+    hardcoded.
+  - Status: open, won, AND lost (not deleted) — status=all_not_deleted.
+  - CEP Interest (DEAL_FIELD["corporate_interest"]) must be non-empty —
+    some corporate has flagged interest. Herb has no per-corporate login
+    concept (unlike Vantage), so any non-empty value qualifies.
+  - Framework Verdict (DEAL_FIELD["framework_verdict"]) must NOT include
+    option id 728 ("No Go - Not a fit"). Null/empty (not yet categorised)
+    still qualifies.
+
+This mirrors a Supabase function called radar_candidates() already built in
+Vantage (a sibling app against the same Pipedrive account) — credit there
+for the criteria definition.
+
+Env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GH_PAT,
+     PIPEDRIVE_DOMAIN, PIPEDRIVE_TOKEN.
+"""
+from __future__ import annotations
+
+import os
+import sys
+
+import requests
+
+from .herb_web_run import _get_sb
+from .pipedrive_client import PipedriveClient
+from .schema_constants import DEAL_FIELD, PIPELINE_ICOS
+
+GH_REPO = "Icoscapital/herb"
+FRAMEWORK_VERDICT_NO_GO = "728"
+MIN_ORDER_NR = 4
+
+
+def _domain(website: str | None) -> str:
+    if not website:
+        return ""
+    return (
+        str(website).strip().lower()
+        .replace("https://", "").replace("http://", "")
+        .replace("www.", "").split("/")[0]
+    )
+
+
+def _resolve_target_stages(client: PipedriveClient) -> list[int]:
+    """Live lookup of every pipeline-9 stage at or past 'Corporate view' in
+    board order — resolved by order_nr, never hardcoded (see module
+    docstring)."""
+    stages = client.list_stages(PIPELINE_ICOS)
+    ordered = sorted(stages, key=lambda s: s.get("order_nr") or 0)
+    return [s["id"] for s in ordered if (s.get("order_nr") or 0) >= MIN_ORDER_NR]
+
+
+def _qualifies(deal: dict) -> bool:
+    """CEP Interest non-empty AND Framework Verdict doesn't carry 'No Go'."""
+    cep_interest = deal.get(DEAL_FIELD["corporate_interest"])
+    if not cep_interest:
+        return False
+    verdict = deal.get(DEAL_FIELD["framework_verdict"])
+    if verdict:
+        option_ids = {v.strip() for v in str(verdict).split(",") if v.strip()}
+        if FRAMEWORK_VERDICT_NO_GO in option_ids:
+            return False
+    return True
+
+
+def _resolve_deals(client: PipedriveClient, stage_ids: list[int]) -> list[dict]:
+    """Fetch + normalize every open/won/lost deal across the target stages
+    that passes the CEP Interest + Framework Verdict criteria."""
+    resolved: list[dict] = []
+    seen_deal_ids: set[int] = set()
+    for stage_id in stage_ids:
+        for d in client.list_deals_by_stage(stage_id, status="all_not_deleted"):
+            deal_id = d.get("id")
+            if not deal_id or deal_id in seen_deal_ids:
+                continue
+            if not _qualifies(d):
+                continue
+            seen_deal_ids.add(deal_id)
+            org = d.get("org_id") or {}
+            resolved.append({
+                "pipedrive_deal_id": deal_id,
+                "company_name": (org.get("name") if isinstance(org, dict) else None) or d.get("title") or "",
+                "domain": _domain(d.get(DEAL_FIELD["website"])),
+                "stage_id": stage_id,
+                "description": d.get(DEAL_FIELD["short_description"]) or "",
+            })
+    return resolved
+
+
+def _dispatch(run_id: str, pat: str) -> bool:
+    r = requests.post(
+        f"https://api.github.com/repos/{GH_REPO}/dispatches",
+        headers={"Authorization": f"Bearer {pat}",
+                 "Accept": "application/vnd.github+json",
+                 "User-Agent": "herb-watch-follow"},
+        json={"event_type": "run-watch-follow", "client_payload": {"run_id": run_id}},
+        timeout=30,
+    )
+    if r.status_code != 204:
+        print(f"[watch-follow] dispatch failed for {run_id}: {r.status_code} {r.text[:200]}")
+    return r.status_code == 204
+
+
+def main() -> int:
+    pat = os.environ.get("GH_PAT", "")
+    if not pat:
+        print("[watch-follow] GH_PAT not set — cannot dispatch")
+        return 1
+    domain = os.environ.get("PIPEDRIVE_DOMAIN", "icoscapital")
+    token = os.environ.get("PIPEDRIVE_TOKEN", "")
+    if not domain or not token:
+        print("[watch-follow] PIPEDRIVE_DOMAIN/PIPEDRIVE_TOKEN not set")
+        return 1
+
+    sb = _get_sb()
+    client = PipedriveClient(domain, token)
+
+    stage_ids = _resolve_target_stages(client)
+    print(f"[watch-follow] target stages resolved live: {stage_ids}")
+
+    curated = _resolve_deals(client, stage_ids)
+    print(f"[watch-follow] {len(curated)} deals qualify (stage + CEP interest + framework verdict)")
+
+    if not curated:
+        print("[watch-follow] no qualifying deals — nothing to check")
+        return 0
+
+    ins = (sb.table("herb_watch_follow_runs")
+           .insert({"status": "PENDING", "companies": curated})
+           .execute())
+    run_id = (ins.data or [{}])[0].get("id")
+    if not run_id:
+        print("[watch-follow] insert failed — aborting")
+        return 1
+
+    if _dispatch(run_id, pat):
+        print(f"[watch-follow] dispatched run {run_id} for {len(curated)} qualifying companies")
+    else:
+        sb.table("herb_watch_follow_runs").update({
+            "status": "ERROR",
+            "error_message": "dispatch to run-watch-follow failed",
+        }).eq("id", run_id).execute()
+        return 1
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

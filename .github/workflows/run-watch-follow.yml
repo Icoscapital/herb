@@ -1,12 +1,14 @@
-name: Run Update Radar (on-demand)
+name: Run Updates On Watch & Follow (on-demand)
 
+# Renamed 2026-08-27 from run-update-radar.yml / "Update Radar" (see
+# supabase/migrations/20260827_herb_watch_follow_rename.sql for why).
 on:
   repository_dispatch:
-    types: [run-update-radar]
+    types: [run-watch-follow]
 
 # Prevent two concurrent workflows for the same run_id.
 concurrency:
-  group: herb-radar-${{ github.event.client_payload.run_id }}
+  group: herb-watch-follow-${{ github.event.client_payload.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -15,12 +17,16 @@ jobs:
     timeout-minutes: 120
 
     env:
+      # HERB_RADAR_ANTHROPIC_API_KEY is a leftover secret name from before
+      # the rename — it's just an opaque GitHub secret name pointing at the
+      # same Anthropic API key, and secrets can't be renamed from a repo
+      # checkout, so it's left as-is deliberately (nothing to change here).
       ANTHROPIC_API_KEY:         ${{ secrets.HERB_RADAR_ANTHROPIC_API_KEY }}
       NEXT_PUBLIC_SUPABASE_URL:  ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SB_URL:                    ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SB_KEY:                    ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      RADAR_RUN_ID:              ${{ github.event.client_payload.run_id }}
+      WATCH_FOLLOW_RUN_ID:       ${{ github.event.client_payload.run_id }}
 
     steps:
       - name: Checkout
@@ -39,11 +45,12 @@ jobs:
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Run Update Radar research
+      - name: Run Updates On Watch & Follow research
         run: |
-          # RADAR_RUN_ID is exported as an env var above. The prompt's STEP 1
-          # reads it via start_radar_run() and processes the curated batch.
-          claude -p "$(cat update_radar_prompt.md)" \
+          # WATCH_FOLLOW_RUN_ID is exported as an env var above. The prompt's
+          # STEP 1 reads it via start_watch_follow_run() and processes the
+          # automatically-selected batch.
+          claude -p "$(cat watch_follow_prompt.md)" \
             --allowedTools Bash,Read,Write,Task,WebSearch,WebFetch \
             --model claude-sonnet-5 \
             --max-turns 150
@@ -58,7 +65,7 @@ jobs:
           from supabase import create_client
           sb = create_client(os.environ["NEXT_PUBLIC_SUPABASE_URL"],
                              os.environ["SUPABASE_SERVICE_ROLE_KEY"])
-          r = sb.table("herb_radar_runs").select("status,error_message,progress").eq("id", os.environ["RADAR_RUN_ID"]).single().execute()
+          r = sb.table("herb_watch_follow_runs").select("status,error_message,progress").eq("id", os.environ["WATCH_FOLLOW_RUN_ID"]).single().execute()
           status = r.data.get("status")
           if status == "DONE":
               print(f"[verify] run completed successfully: status={status}")
@@ -68,10 +75,10 @@ jobs:
               sys.exit(1)
           msg = f"Worker exited without finalizing (status={status}, progress={r.data.get('progress')})"
           print(f"[verify] {msg}")
-          sb.table("herb_radar_runs").update({
+          sb.table("herb_watch_follow_runs").update({
               "status": "ERROR",
               "error_message": msg[:500],
               "progress": "Failed: worker exited mid-run",
-          }).eq("id", os.environ["RADAR_RUN_ID"]).execute()
+          }).eq("id", os.environ["WATCH_FOLLOW_RUN_ID"]).execute()
           sys.exit(1)
           PY

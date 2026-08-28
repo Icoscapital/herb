@@ -13,13 +13,18 @@ PIPELINE_INCUBATORS = 12
 STAGE_DATA_ENTRY = 96            # default landing stage for new intake
 STAGE_LEADS = 137
 STAGE_DEALS_TO_DISCUSS = 141
-STAGE_FOLLOW_UP = 139
-STAGE_CORPORATE_FOLLOWUP = 145
-STAGE_ADVANCED_FOLLOWUP = 144
 STAGE_FOLLOW_ON_PORTFOLIO = 142
 STAGE_QUICKSCAN = 99
-STAGE_PUR_DD_FIP = 100
 STAGE_WATCH_AND_FOLLOW = 107
+
+# NOTE: the old STAGE_FOLLOW_UP / STAGE_CORPORATE_FOLLOWUP /
+# STAGE_ADVANCED_FOLLOWUP / STAGE_PUR_DD_FIP constants were removed
+# 2026-08-27 (Updates On Watch & Follow rename). This Pipedrive pipeline's
+# stage ids/names have been renamed and reordered three times in the last
+# week alone, so hardcoded stage ids are no longer safe to keep around at
+# all — scripts/watch_follow_tick.py and web/src/app/api/watch-follow/deals
+# now resolve target stages live via GET /stages?pipeline_id=9, filtered to
+# order_nr >= 4, every time they run.
 
 VISIBILITY_ITEM_OWNER = 1
 VISIBILITY_ALL_USERS = 3
@@ -43,6 +48,7 @@ DEAL_FIELD = {
     "food_systems":       "d7b2d7dda0fd431d3d343396b1b3950b7aace27c",
     "decarbonisation":    "a22f452beb56b76b04ef4b56de35b4df98753b60",
     "corporate_interest": "eae659774facd085f9b39b19ce437bf65276112e",
+    "framework_verdict":  "22e0b9aee74aac97920abc2eb07bbc4c2b9b3966",
 }
 
 ORG_FIELD = {
@@ -131,6 +137,16 @@ DECARBONISATION = {
     "Carbon sequestration":445,
     "Carbon utilization":  444,
     "Carbon IT":           659,
+}
+
+# Framework Verdict — used by Updates On Watch & Follow (scripts/watch_follow_tick.py)
+# to exclude deals marked "No Go - Not a fit" (728) from the automatic
+# selection criteria. Option ids confirmed live via Vantage's pd_field_map.
+FRAMEWORK_VERDICT = {
+    "Invest - Corporate and Icos fit (now /future)": 725,
+    "Inform - CEP Interest": 726,
+    "Monitor - Watch& Follow": 727,
+    "No Go - Not a fit": 728,
 }
 
 SOURCE_TYPE = {

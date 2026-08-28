@@ -1,11 +1,11 @@
 /**
- * GET /api/radar
+ * GET /api/watch-follow
  *
- * Lists Update Radar findings, newest first, plus the latest tick's status
- * (herb_radar_runs) so the dashboard can show a live "research in progress"
- * indicator instead of going quiet after the tick itself finishes — the
- * actual research (run-update-radar.yml) can run for several minutes across
- * a large curated set.
+ * Lists Updates On Watch & Follow findings, newest first, plus the latest
+ * tick's status (herb_watch_follow_runs) so the dashboard can show a live
+ * "research in progress" indicator instead of going quiet after the tick
+ * itself finishes — the actual research (run-watch-follow.yml) can run for
+ * several minutes across a large automatically-selected set.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser, serviceClient } from '@/lib/api-auth'
@@ -19,12 +19,12 @@ export async function GET(req: NextRequest) {
   const sb = serviceClient()
   const [{ data, error }, { data: runData }] = await Promise.all([
     sb
-      .from('herb_radar_findings')
+      .from('herb_watch_follow_findings')
       .select('id, pipedrive_deal_id, company_name, domain, update_type, headline, detail, source_url, confidence, acknowledged, found_at')
       .order('found_at', { ascending: false })
       .limit(200),
     sb
-      .from('herb_radar_runs')
+      .from('herb_watch_follow_runs')
       .select('id, status, companies, findings_count, progress, error_message, created_at, finished_at')
       .order('created_at', { ascending: false })
       .limit(1)
@@ -62,7 +62,7 @@ export async function PATCH(req: NextRequest) {
   }
   const sb = serviceClient()
   const { error } = await sb
-    .from('herb_radar_findings')
+    .from('herb_watch_follow_findings')
     .update({ acknowledged: !!acknowledged })
     .eq('id', id)
   if (error) {

@@ -318,10 +318,10 @@ export default function LogPage() {
             <span className="text-xs hidden sm:block" style={{ color: 'var(--subtle)' }}>{user?.email}</span>
             <button onClick={() => supabase.auth.signOut().then(() => router.push('/login'))}
               className="text-xs" style={{ color: 'var(--muted)' }}>Sign out</button>
-            <Link href="/dashboard/radar"
+            <Link href="/dashboard/watch-follow"
               className="text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
               style={{ color: 'var(--navy)' }}>
-              Update Radar
+              Updates On Watch &amp; Follow
             </Link>
             <Link href="/dashboard/new"
               className="flex items-center gap-1 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-all"

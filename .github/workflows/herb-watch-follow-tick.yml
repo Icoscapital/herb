@@ -1,12 +1,13 @@
-name: Herb Update Radar Tick (manual)
+name: Herb Updates On Watch & Follow Tick (manual)
 
-# No schedule — the bi-weekly cron was removed 2026-08-20. Radar now only
-# ticks when someone clicks "Check now" on the dashboard, or via
-# workflow_dispatch for manual testing from the Actions tab.
+# No schedule — ticks only when someone clicks "Check now" on the dashboard,
+# or via workflow_dispatch for manual testing from the Actions tab. Renamed
+# 2026-08-27 from herb-radar.yml / "Update Radar" (see
+# supabase/migrations/20260827_herb_watch_follow_rename.sql for why).
 on:
   workflow_dispatch: {}   # manual trigger for testing
   repository_dispatch:
-    types: [run-radar-tick]   # dashboard's "Check now" button
+    types: [run-watch-follow-tick]   # dashboard's "Check now" button
 
 jobs:
   tick:
@@ -32,5 +33,5 @@ jobs:
       - name: Install Python deps
         run: pip install -q -r requirements.txt
 
-      - name: Check curated deals for updates
-        run: python -m scripts.radar_tick
+      - name: Check automatically-selected deals for updates
+        run: python -m scripts.watch_follow_tick
