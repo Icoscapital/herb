@@ -34,8 +34,12 @@ This mirrors a Supabase function called radar_candidates() already built in
 Vantage (a sibling app against the same Pipedrive account) — credit there
 for the criteria definition.
 
+Optionally narrowed by WATCH_FOLLOW_TERMS (2026-08-28) — key terms matched against company name,
+description and domain. Additive to the criteria above, never a replacement: terms can only shrink
+the qualifying set, so no keyword can pull in a deal the criteria excluded.
+
 Env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GH_PAT,
-     PIPEDRIVE_DOMAIN, PIPEDRIVE_TOKEN.
+     PIPEDRIVE_DOMAIN, PIPEDRIVE_TOKEN, WATCH_FOLLOW_TERMS (optional).
 """
 from __future__ import annotations
 
@@ -109,6 +113,35 @@ def _resolve_deals(client: PipedriveClient, stage_ids: list[int]) -> list[dict]:
     return resolved
 
 
+def _matches_terms(deal: dict, groups: list[list[str]]) -> bool:
+    """Same semantics as Vantage's search box, so the two agree: commas mean OR, spaces within a
+    comma-separated phrase mean AND. "protein, packaging" matches either; "plant protein" needs both.
+
+    Vantage gets this from a Postgres tsquery over an indexed tsvector; Herb has no local mirror to
+    index, so it is a substring match over the fields we already fetched. The tradeoff is no stemming
+    — Vantage's "protein" also matches "proteins", this does not — which is acceptable for narrowing
+    a set someone is about to eyeball, and avoids a second round-trip per deal.
+    """
+    if not groups:
+        return True
+    haystack = " ".join([
+        str(deal.get("company_name") or ""),
+        str(deal.get("description") or ""),
+        str(deal.get("domain") or ""),
+    ]).lower()
+    return any(all(word in haystack for word in group) for group in groups)
+
+
+def _parse_terms(raw: str) -> list[list[str]]:
+    """"protein, plant based" -> [["protein"], ["plant", "based"]]"""
+    groups: list[list[str]] = []
+    for part in raw.split(","):
+        words = [w for w in part.strip().lower().split() if w]
+        if words:
+            groups.append(words)
+    return groups
+
+
 def _dispatch(run_id: str, pat: str) -> bool:
     r = requests.post(
         f"https://api.github.com/repos/{GH_REPO}/dispatches",
@@ -143,12 +176,20 @@ def main() -> int:
     curated = _resolve_deals(client, stage_ids)
     print(f"[watch-follow] {len(curated)} deals qualify (stage + CEP interest + framework verdict)")
 
+    # Optional keyword narrowing, applied AFTER the criteria so it can only ever shrink the set.
+    terms = (os.environ.get("WATCH_FOLLOW_TERMS") or "").strip()
+    if terms:
+        groups = _parse_terms(terms)
+        before = len(curated)
+        curated = [d for d in curated if _matches_terms(d, groups)]
+        print(f"[watch-follow] narrowed by {terms!r}: {before} -> {len(curated)}")
+
     if not curated:
         print("[watch-follow] no qualifying deals — nothing to check")
         return 0
 
     ins = (sb.table("herb_watch_follow_runs")
-           .insert({"status": "PENDING", "companies": curated})
+           .insert({"status": "PENDING", "companies": curated, "terms": terms or None})
            .execute())
     run_id = (ins.data or [{}])[0].get("id")
     if not run_id:

@@ -5,7 +5,11 @@ name: Herb Updates On Watch & Follow Tick (manual)
 # 2026-08-27 from herb-radar.yml / "Update Radar" (see
 # supabase/migrations/20260827_herb_watch_follow_rename.sql for why).
 on:
-  workflow_dispatch: {}   # manual trigger for testing
+  workflow_dispatch:      # manual trigger for testing
+    inputs:
+      terms:
+        description: 'Optional key terms to narrow the set (commas mean OR), blank = no narrowing'
+        required: false
   repository_dispatch:
     types: [run-watch-follow-tick]   # dashboard's "Check now" button
 
@@ -20,6 +24,7 @@ jobs:
       GH_PAT:                    ${{ secrets.GH_PAT }}
       PIPEDRIVE_TOKEN:           ${{ secrets.PIPEDRIVE_TOKEN }}
       PIPEDRIVE_DOMAIN:          icoscapital
+      WATCH_FOLLOW_TERMS:        ${{ github.event.client_payload.terms || github.event.inputs.terms }}
 
     steps:
       - name: Checkout

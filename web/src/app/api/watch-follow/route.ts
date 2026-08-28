@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       .limit(200),
     sb
       .from('herb_watch_follow_runs')
-      .select('id, status, companies, findings_count, progress, error_message, created_at, finished_at')
+      .select('id, status, terms, companies, findings_count, progress, error_message, created_at, finished_at')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
     ? {
         id: runData.id,
         status: runData.status,
+        terms: runData.terms ?? null,
         company_count: Array.isArray(runData.companies) ? runData.companies.length : 0,
         findings_count: runData.findings_count,
         progress: runData.progress,

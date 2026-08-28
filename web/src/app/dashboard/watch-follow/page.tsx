@@ -25,6 +25,7 @@ type Finding = {
 type LatestRun = {
   id: string
   status: 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR'
+  terms: string | null
   company_count: number
   findings_count: number | null
   progress: string | null
@@ -72,6 +73,7 @@ export default function WatchFollowPage() {
   const [showScope, setShowScope] = useState(false)
   const [running, setRunning] = useState(false)
   const [runMsg, setRunMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [terms, setTerms] = useState('')
   const router = useRouter()
 
   const loadFindings = useCallback(async () => {
@@ -135,7 +137,10 @@ export default function WatchFollowPage() {
     setRunning(true)
     setRunMsg(null)
     try {
-      const res = await authedFetch('/api/watch-follow/run-now', { method: 'POST' })
+      const res = await authedFetch('/api/watch-follow/run-now', {
+        method: 'POST',
+        body: JSON.stringify({ terms: terms.trim() || null }),
+      })
       const json = await res.json()
       if (!json.ok) setRunMsg({ text: json.error || 'Could not start check', ok: false })
       // watch_follow_tick.py takes ~30-60s to resolve stages + qualify deals
@@ -187,8 +192,35 @@ export default function WatchFollowPage() {
             <p className="text-xs mt-0.5" style={{ color: 'var(--subtle)' }}>
               Companies in scope are selected automatically &middot; checked on demand (no schedule) &middot; funding, competitor funding, commercial wins &amp; major news only
             </p>
+            {/* When this was last actually checked. Without it a quiet feed is ambiguous — nothing
+                found, or nothing run? — and "no news" only reassures if you know it is recent. */}
+            <p className="text-xs mt-0.5" style={{ color: 'var(--subtle)' }}>
+              {latestRun ? (
+                <>Last checked{' '}
+                  <span style={{ color: 'var(--text)', fontWeight: 500 }}>
+                    {new Date(latestRun.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                  {latestRun.terms ? ` · “${latestRun.terms}”` : ''}
+                  {` · ${latestRun.company_count} compan${latestRun.company_count === 1 ? 'y' : 'ies'}`}
+                  {latestRun.status === 'DONE'
+                    ? `, ${latestRun.findings_count ?? 0} finding${latestRun.findings_count === 1 ? '' : 's'}`
+                    : latestRun.status === 'ERROR' ? ' — that run failed' : ''}
+                </>
+              ) : 'Never checked.'}
+            </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Narrows WITHIN the standing criteria, never around them — a term can only shrink the
+                set, so it cannot surface a deal the criteria excluded. */}
+            <input
+              value={terms}
+              onChange={e => setTerms(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !running && latestRun?.status !== 'PENDING' && latestRun?.status !== 'RUNNING') runNow() }}
+              placeholder="Narrow by keywords (optional)"
+              title="Optional. Commas mean any of these; words without a comma must all appear. Leave blank to check every company in scope."
+              className="text-xs px-3 py-1.5 rounded-lg outline-none"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', width: '230px' }}
+            />
             <button onClick={runNow} disabled={running || latestRun?.status === 'PENDING' || latestRun?.status === 'RUNNING'}
               title={latestRun?.status === 'PENDING' || latestRun?.status === 'RUNNING' ? 'A check is already running' : undefined}
               className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-all"
@@ -217,7 +249,7 @@ export default function WatchFollowPage() {
             <span>
               {latestRun.status === 'PENDING'
                 ? 'Check queued — GitHub Actions is spinning up…'
-                : `Checking ${latestRun.company_count} compan${latestRun.company_count === 1 ? 'y' : 'ies'} for updates${latestRun.progress ? ` — ${latestRun.progress}` : '…'}`}
+                : `Checking ${latestRun.company_count} compan${latestRun.company_count === 1 ? 'y' : 'ies'}${latestRun.terms ? ` matching “${latestRun.terms}”` : ''} for updates${latestRun.progress ? ` — ${latestRun.progress}` : '…'}`}
             </span>
           </div>
         )}

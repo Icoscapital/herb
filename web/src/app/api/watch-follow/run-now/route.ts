@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'GITHUB_PAT not configured' }, { status: 500 })
   }
 
+  // Optional keyword narrowing, passed through to watch_follow_tick.py. Capped so a pasted essay
+  // cannot become a repository_dispatch payload; the tick treats empty/whitespace as no narrowing.
+  const body = await req.json().catch(() => ({}))
+  const terms = String(body?.terms ?? '').trim().slice(0, 200) || null
+
   const dispatchRes = await fetch(
     `https://api.github.com/repos/${GH_REPO}/dispatches`,
     {
@@ -32,7 +37,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
         'User-Agent': 'herb-vercel',
       },
-      body: JSON.stringify({ event_type: 'run-watch-follow-tick' }),
+      body: JSON.stringify({ event_type: 'run-watch-follow-tick', client_payload: { terms } }),
     }
   )
 
