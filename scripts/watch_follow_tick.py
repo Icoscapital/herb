@@ -76,8 +76,39 @@ def _resolve_target_stages(client: PipedriveClient) -> list[int]:
     return [s["id"] for s in ordered if (s.get("order_nr") or 0) >= MIN_ORDER_NR]
 
 
-def _qualifies(deal: dict) -> bool:
-    """CEP Interest non-empty AND Framework Verdict doesn't carry 'No Go'."""
+def _excluded_lost_reasons(sb) -> set[str]:
+    """Lost reasons that take a company out entirely, from the table rather than hardcoded — the
+    values are still being confirmed against Pipedrive's own Lost Reason options, and a literal that
+    matches nothing is a filter that silently does nothing. Lowercased and stripped for comparison,
+    because lost_reason is free text in practice ("no corporate buy-in" vs "No corporate buy-in")."""
+    try:
+        rows = (sb.table("herb_watch_follow_excluded_lost_reason")
+                .select("lost_reason").execute()).data or []
+    except Exception as e:
+        # Non-fatal: a missing table must not stop a run, but say so rather than silently widening.
+        print(f"[watch-follow] excluded-lost-reason table not queryable, no reasons excluded: {e}")
+        return set()
+    return {str(r["lost_reason"]).strip().lower() for r in rows if r.get("lost_reason")}
+
+
+def _qualifies(deal: dict, excluded_reasons: set[str] = frozenset()) -> bool:
+    """Not won AND CEP Interest non-empty AND Framework Verdict doesn't carry 'No Go' AND not lost
+    for a reason that rules the company out permanently."""
+    # Won deals are excluded (Nityen 2026-08-28): a won deal is one Icos invested in, so it is
+    # portfolio rather than something to form a view on, and its news belongs in a portfolio review.
+    # LOST stays in — a company Icos passed on can still interest a corporate, and a competitor raise
+    # against one is still worth knowing.
+    #
+    # Filtered here rather than via the status query param: Pipedrive's /deals status accepts one of
+    # open / won / lost / deleted / all_not_deleted, with no "open and lost" value — so narrowing at
+    # the API would mean two paginated passes per stage instead of one.
+    if deal.get("status") == "won":
+        return False
+    # A permanent mismatch (wrong business, model, geography) stops us watching; a timing or process
+    # loss does not, since the company could become relevant again.
+    reason = str(deal.get("lost_reason") or "").strip().lower()
+    if reason and reason in excluded_reasons:
+        return False
     cep_interest = deal.get(DEAL_FIELD["corporate_interest"])
     if not cep_interest:
         return False
@@ -89,9 +120,11 @@ def _qualifies(deal: dict) -> bool:
     return True
 
 
-def _resolve_deals(client: PipedriveClient, stage_ids: list[int]) -> list[dict]:
-    """Fetch + normalize every open/won/lost deal across the target stages
-    that passes the CEP Interest + Framework Verdict criteria."""
+def _resolve_deals(client: PipedriveClient, stage_ids: list[int],
+                   excluded_reasons: set[str] = frozenset()) -> list[dict]:
+    """Fetch + normalize every open or lost deal across the target stages that passes the
+    not-won + CEP Interest + Framework Verdict criteria. Won deals are fetched (the API has no
+    open-and-lost status) and dropped by _qualifies."""
     resolved: list[dict] = []
     seen_deal_ids: set[int] = set()
     for stage_id in stage_ids:
@@ -99,7 +132,7 @@ def _resolve_deals(client: PipedriveClient, stage_ids: list[int]) -> list[dict]:
             deal_id = d.get("id")
             if not deal_id or deal_id in seen_deal_ids:
                 continue
-            if not _qualifies(d):
+            if not _qualifies(d, excluded_reasons):
                 continue
             seen_deal_ids.add(deal_id)
             org = d.get("org_id") or {}
@@ -173,7 +206,11 @@ def main() -> int:
     stage_ids = _resolve_target_stages(client)
     print(f"[watch-follow] target stages resolved live: {stage_ids}")
 
-    curated = _resolve_deals(client, stage_ids)
+    excluded_reasons = _excluded_lost_reasons(sb)
+    if excluded_reasons:
+        print(f"[watch-follow] excluding {len(excluded_reasons)} lost reason(s)")
+
+    curated = _resolve_deals(client, stage_ids, excluded_reasons)
     print(f"[watch-follow] {len(curated)} deals qualify (stage + CEP interest + framework verdict)")
 
     # Optional keyword narrowing, applied AFTER the criteria so it can only ever shrink the set.

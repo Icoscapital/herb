@@ -299,7 +299,7 @@ export default function WatchFollowPage() {
           <div className="mb-5 rounded-2xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
               <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--subtle)' }}>
-                Selected automatically &mdash; Corporate view stage or later, CEP Interest flagged, not marked No Go
+                Selected automatically &mdash; Corporate view stage or later, CEP Interest flagged, not marked No Go, not won
               </span>
             </div>
 

@@ -8,7 +8,8 @@
  *     after it in board order) — resolved live via GET /stages every call,
  *     never hardcoded, since this pipeline's stage ids/names have been
  *     renamed/reordered repeatedly;
- *   - status is open, won, or lost (not deleted) — status=all_not_deleted;
+ *   - status is open or lost, never won — fetched as all_not_deleted (the API has no open-and-lost
+ *     value) and won dropped in qualifies();
  *   - CEP Interest (a multi-select custom field) is non-empty;
  *   - Framework Verdict does not include option 728 ("No Go - Not a fit");
  *     null/unset verdict (not yet categorised) still qualifies.
@@ -67,6 +68,9 @@ async function pdGetAllForStage(stageId: number): Promise<any[]> {
 }
 
 function qualifies(deal: any): boolean {
+  // Must mirror scripts/watch_follow_tick.py exactly, or this page lists companies the tick will not
+  // actually check. Won excluded 2026-08-28 — a won deal is portfolio, not dealflow to form a view on.
+  if (deal.status === 'won') return false
   const cepInterest = deal[FIELD_CEP_INTEREST]
   if (!cepInterest) return false
   const verdict = deal[FIELD_FRAMEWORK_VERDICT]
