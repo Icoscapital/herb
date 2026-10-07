@@ -5,6 +5,10 @@ const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+// How long the signed URL returned to the browser stays valid. Short on
+// purpose: the client only needs it for the current page session.
+const SIGNED_URL_TTL_S = 15 * 60
+
 function serviceClient() {
   return createClient(SB_URL, SB_SERVICE)
 }
@@ -72,6 +76,8 @@ async function persistFileRecord(params: {
 }
 
 // POST /api/upload  — upload a single file, returns { ok, url, path, name, size }
+//   url  — signed URL, expires after SIGNED_URL_TTL_S; do not treat as durable
+//   path — storage object key, the stable reference for later downloads
 // Form fields: file (required), slotType (optional), index (optional),
 //              runId (optional), isGlobal (optional, 'true'/'false')
 export async function POST(req: NextRequest) {
@@ -105,7 +111,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    const { data: { publicUrl } } = sb.storage.from('herb-uploads').getPublicUrl(path)
+    // The bucket is private: hand back a short-lived signed URL instead of a
+    // public one. `path` is the durable reference — the worker downloads by
+    // path with the service key (scripts/herb_web_run.py), and the url stored
+    // in herb_files / herb_runs.attachments is only valid for SIGNED_URL_TTL_S.
+    const { data: signed, error: signErr } = await sb.storage
+      .from('herb-uploads')
+      .createSignedUrl(path, SIGNED_URL_TTL_S)
+
+    if (signErr || !signed?.signedUrl) {
+      console.error('[upload] sign error:', signErr)
+      await sb.storage.from('herb-uploads').remove([path])
+      return NextResponse.json({ error: signErr?.message ?? 'Could not sign URL' }, { status: 500 })
+    }
+    const signedUrl = signed.signedUrl
     console.log('[upload] success:', path)
 
     // Persist to herb_files (non-blocking, non-fatal)
@@ -115,14 +134,14 @@ export async function POST(req: NextRequest) {
         runId,
         slotType,
         name: file.name,
-        url: publicUrl,
+        url: signedUrl,
         path,
         size: file.size,
         isGlobal,
       })
     }
 
-    return NextResponse.json({ ok: true, url: publicUrl, path, name: file.name, size: file.size })
+    return NextResponse.json({ ok: true, url: signedUrl, path, name: file.name, size: file.size })
   } catch (err: any) {
     console.error('[upload] error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })

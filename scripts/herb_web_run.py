@@ -397,15 +397,18 @@ def load_attachments(run_id: str) -> tuple[list[dict], list[dict]]:
 
     Errors on individual files are logged and skipped (non-fatal).
     """
-    import requests, csv, io
+    import csv, io
     files = get_run_files(run_id)
     additional_companies: list[dict] = []
     extra_check_sites: list[dict] = []
 
-    def _download(url: str) -> bytes:
-        r = requests.get(url, timeout=30)
-        r.raise_for_status()
-        return r.content
+    # The herb-uploads bucket is private: herb_files.url is a short-lived signed
+    # URL that has long expired by the time a run executes. Download by object
+    # path with the service-role client instead (bypasses storage RLS).
+    storage = _get_sb().storage.from_("herb-uploads")
+
+    def _download(path: str) -> bytes:
+        return storage.download(path)
 
     def _read_rows(raw: bytes, is_csv: bool) -> list:
         """Return all rows as lists of cell values, regardless of format."""
@@ -427,7 +430,7 @@ def load_attachments(run_id: str) -> tuple[list[dict], list[dict]]:
     for f in files:
         slot = f.get('slot_type')
         try:
-            raw = _download(f['url'])
+            raw = _download(f['path'])
             is_csv = f['name'].lower().endswith('.csv')
             rows = _read_rows(raw, is_csv)
             if not rows:
