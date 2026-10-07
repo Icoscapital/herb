@@ -17,31 +17,31 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/lib/api-auth'
+import { Pipedrive, ICOS_PIPEDRIVE, DEAL_FIELD_NAMES, DEAL_OPTION_LABELS, type FieldMap } from '@/lib/icos-pipedrive'
 
-const PD_TOKEN = process.env.PIPEDRIVE_TOKEN!
-const PD_DOMAIN = process.env.PIPEDRIVE_DOMAIN || 'icoscapital'
-const PD_BASE = `https://${PD_DOMAIN}.pipedrive.com/api/v1`
-const PIPELINE_ICOS = 9
+const PD_TOKEN = process.env.PIPEDRIVE_TOKEN || process.env.PIPEDRIVE_API_TOKEN || ''
+const PIPELINE_ICOS = ICOS_PIPEDRIVE.pipelineId
 const MIN_ORDER_NR = 4
 
-// From scripts/schema_constants.py's DEAL_FIELD.
-const FIELD_WEBSITE = '6b60ca85da3cdd92e5e810b929876c53e8562ade'
-const FIELD_CEP_INTEREST = 'eae659774facd085f9b39b19ce437bf65276112e'
-const FIELD_FRAMEWORK_VERDICT = '22e0b9aee74aac97920abc2eb07bbc4c2b9b3966'
-const FRAMEWORK_VERDICT_NO_GO = '728'
+// Pipedrive goes through the estate-wide @icos/pipedrive client (web/src/lib/icos-pipedrive.ts, vendored).
+// Custom-field keys and the "No Go" option id are resolved by NAME per request (Vantage rule 3) —
+// scripts/schema_constants.py still carries the hashes for the Python side.
+let _pd: Pipedrive | null = null
+const pd = () => (_pd ??= new Pipedrive())
 
-async function pdGet(path: string, params: Record<string, string>): Promise<any> {
-  const url = new URL(`${PD_BASE}${path}`)
-  url.searchParams.set('api_token', PD_TOKEN)
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
-  const r = await fetch(url.toString())
-  if (!r.ok) throw new Error(`Pipedrive GET ${path} → ${r.status}: ${await r.text()}`)
-  return r.json()
+type Keys = { website: string; cepInterest: string; frameworkVerdict: string; noGoOptionId: string }
+function keysFrom(fields: FieldMap): Keys {
+  return {
+    website: fields.key(DEAL_FIELD_NAMES.website),
+    cepInterest: fields.key(DEAL_FIELD_NAMES.cepInterest),
+    frameworkVerdict: fields.key(DEAL_FIELD_NAMES.frameworkVerdict),
+    noGoOptionId: String(fields.optionId(DEAL_FIELD_NAMES.frameworkVerdict, DEAL_OPTION_LABELS.frameworkVerdictNoGo)),
+  }
 }
 
+
 async function resolveTargetStages(): Promise<Map<number, string>> {
-  const json = await pdGet('/stages', { pipeline_id: String(PIPELINE_ICOS) })
-  const stages = (json.data ?? []) as Array<{ id: number; name: string; order_nr: number }>
+  const stages = (await pd().stages(PIPELINE_ICOS)) as Array<{ id: number; name: string; order_nr: number }>
   const map = new Map<number, string>()
   for (const s of stages) {
     if ((s.order_nr ?? 0) >= MIN_ORDER_NR) map.set(s.id, s.name)
@@ -49,34 +49,20 @@ async function resolveTargetStages(): Promise<Map<number, string>> {
   return map
 }
 
-async function pdGetAllForStage(stageId: number): Promise<any[]> {
-  const out: any[] = []
-  let start = 0
-  for (;;) {
-    const json = await pdGet('/deals', {
-      stage_id: String(stageId),
-      status: 'all_not_deleted',
-      start: String(start),
-      limit: '100',
-    })
-    out.push(...(json.data ?? []))
-    const pag = json?.additional_data?.pagination
-    if (!pag?.more_items_in_collection) break
-    start = pag.next_start ?? start + 100
-  }
-  return out
+function pdGetAllForStage(stageId: number): Promise<any[]> {
+  return pd().all('/deals', { stage_id: stageId, status: 'all_not_deleted' }, { limit: 100 })
 }
 
-function qualifies(deal: any): boolean {
+function qualifies(deal: any, k: Keys): boolean {
   // Must mirror scripts/watch_follow_tick.py exactly, or this page lists companies the tick will not
   // actually check. Won excluded 2026-08-28 — a won deal is portfolio, not dealflow to form a view on.
   if (deal.status === 'won') return false
-  const cepInterest = deal[FIELD_CEP_INTEREST]
+  const cepInterest = deal[k.cepInterest]
   if (!cepInterest) return false
-  const verdict = deal[FIELD_FRAMEWORK_VERDICT]
+  const verdict = deal[k.frameworkVerdict]
   if (verdict) {
     const optionIds = String(verdict).split(',').map((v: string) => v.trim())
-    if (optionIds.includes(FRAMEWORK_VERDICT_NO_GO)) return false
+    if (optionIds.includes(k.noGoOptionId)) return false
   }
   return true
 }
@@ -92,6 +78,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const stageNames = await resolveTargetStages()
+    const k = keysFrom(await pd().dealFieldMap())
     const seenIds = new Set<number>()
     const deals: Array<{
       pipedrive_deal_id: number
@@ -103,12 +90,12 @@ export async function GET(req: NextRequest) {
     for (const [stageId, stageName] of stageNames) {
       const batch = await pdGetAllForStage(stageId)
       for (const d of batch) {
-        if (!d.id || seenIds.has(d.id) || !qualifies(d)) continue
+        if (!d.id || seenIds.has(d.id) || !qualifies(d, k)) continue
         seenIds.add(d.id)
         deals.push({
           pipedrive_deal_id: d.id,
           company_name: d.org_id?.name || d.title || '',
-          domain: (d[FIELD_WEBSITE] || '').toString().toLowerCase()
+          domain: (d[k.website] || '').toString().toLowerCase()
             .replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0],
           stage_name: stageName,
         })

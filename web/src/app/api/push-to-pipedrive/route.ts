@@ -22,48 +22,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser, serviceClient } from '@/lib/api-auth'
 import { callClaude, textOf, logCall } from '@/lib/icos-llm'
+import { Pipedrive, ICOS_PIPEDRIVE, DEAL_FIELD_NAMES } from '@/lib/icos-pipedrive'
 
-const PD_TOKEN = process.env.PIPEDRIVE_TOKEN!
-const PD_DOMAIN = process.env.PIPEDRIVE_DOMAIN || 'icoscapital'
-const PD_USER = parseInt(process.env.USER_PIPEDRIVE_ID || '5523', 10)
+const PD_TOKEN = process.env.PIPEDRIVE_TOKEN || process.env.PIPEDRIVE_API_TOKEN || ''
+const PD_USER = parseInt(process.env.USER_PIPEDRIVE_ID || String(ICOS_PIPEDRIVE.defaultOwnerUserId), 10)
 const PD_IM_OPTION = parseInt(process.env.USER_INVESTMENT_MANAGER_OPTION_ID || '423', 10)
-const PD_PIPELINE = parseInt(process.env.DEFAULT_PIPELINE_ID || '9', 10)
-const PD_STAGE = parseInt(process.env.DEFAULT_STAGE_ID || '141', 10)
+const PD_PIPELINE = parseInt(process.env.DEFAULT_PIPELINE_ID || String(ICOS_PIPEDRIVE.pipelineId), 10)
+const PD_STAGE = parseInt(process.env.DEFAULT_STAGE_ID || String(ICOS_PIPEDRIVE.stageDealsToDiscuss), 10)
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || ''
 
-// Custom field hash keys (from scripts/schema_constants.py)
-const FIELD_INVESTMENT_MANAGER = '68533ca253cf72116f283dd6b4f33694495ed511'
-const FIELD_WEBSITE = '6b60ca85da3cdd92e5e810b929876c53e8562ade'
-
-const PD_BASE = `https://${PD_DOMAIN}.pipedrive.com/api/v1`
+// Pipedrive goes through the estate-wide @icos/pipedrive client (web/src/lib/icos-pipedrive.ts, vendored).
+// Custom-field keys are resolved by NAME per request (dealFieldMap) instead of hard-coded hashes.
+let _pd: Pipedrive | null = null
+const pd = () => (_pd ??= new Pipedrive())
 
 type PDOrg = { id: number; name: string; address?: string }
 type PDDeal = { id: number; title: string; status: string; pipeline_id: number; lost_reason?: string; close_time?: string }
 
-async function pdGet(path: string, params: Record<string, string> = {}): Promise<any> {
-  const url = new URL(PD_BASE + path)
-  url.searchParams.set('api_token', PD_TOKEN)
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
-  const r = await fetch(url.toString(), { method: 'GET' })
-  if (!r.ok) throw new Error(`Pipedrive GET ${path} → ${r.status}: ${await r.text()}`)
-  return r.json()
-}
+const pdGet = (path: string, params: Record<string, string> = {}): Promise<any> => pd().get(path, params)
 
-async function pdPost(path: string, body: any): Promise<any> {
-  const url = new URL(PD_BASE + path)
-  url.searchParams.set('api_token', PD_TOKEN)
-  const r = await fetch(url.toString(), {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!r.ok) throw new Error(`Pipedrive POST ${path} → ${r.status}: ${await r.text()}`)
-  return r.json()
-}
+const pdPost = (path: string, body: any): Promise<any> => pd().post(path, body)
 
-function dealUrl(dealId: number): string {
-  return `https://${PD_DOMAIN}.pipedrive.com/deal/${dealId}`
-}
+const dealUrl = (dealId: number): string => pd().dealUrl(dealId)
 
 export async function POST(req: NextRequest) {
   try {
@@ -168,7 +148,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. Create deal
+    // 5. Create deal. Custom-field keys by name (Vantage rule 3): hashes change when a field is recreated.
+    const fields = await pd().dealFieldMap()
     const dealPayload: any = {
       title: `${co.name} - Herb`,
       org_id: orgId,
@@ -176,10 +157,10 @@ export async function POST(req: NextRequest) {
       stage_id: PD_STAGE,
       user_id: PD_USER,
       visible_to: 3, // all_users
-      [FIELD_INVESTMENT_MANAGER]: PD_IM_OPTION,
+      [fields.key(DEAL_FIELD_NAMES.investmentManager)]: PD_IM_OPTION,
     }
     if (personId) dealPayload.person_id = personId
-    if (co.website) dealPayload[FIELD_WEBSITE] = co.website
+    if (co.website) dealPayload[fields.key(DEAL_FIELD_NAMES.website)] = co.website
     const dealResp = await pdPost('/deals', dealPayload)
     const dealId = dealResp?.data?.id
     if (!dealId) {
