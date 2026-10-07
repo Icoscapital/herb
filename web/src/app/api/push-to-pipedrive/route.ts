@@ -21,6 +21,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser, serviceClient } from '@/lib/api-auth'
+import { callClaude, textOf, logCall } from '@/lib/icos-llm'
 
 const PD_TOKEN = process.env.PIPEDRIVE_TOKEN!
 const PD_DOMAIN = process.env.PIPEDRIVE_DOMAIN || 'icoscapital'
@@ -205,7 +206,7 @@ export async function POST(req: NextRequest) {
     //    Non-fatal: if anything fails we still return success on the deal creation.
     let assessmentNote: string | null = null
     try {
-      assessmentNote = await generateThesisAssessment(co)
+      assessmentNote = await generateThesisAssessment(sb, co)
       if (assessmentNote) {
         await pdPost('/notes', { content: assessmentNote, deal_id: dealId })
       }
@@ -248,7 +249,9 @@ async function stampNote(
  * Falls back to `null` if the key is missing, the API call fails, or the
  * response is empty. Callers must handle null.
  */
-async function generateThesisAssessment(co: {
+const ASSESSMENT_MODEL = 'claude-haiku-4-5'
+
+async function generateThesisAssessment(sb: any, co: {
   name: string
   description: string | null
   geography: string | null
@@ -284,28 +287,15 @@ Plain prose only. No headers, no bullet points, no preamble like "This company..
     co.notes && `Notes from search: ${co.notes}`,
   ].filter(Boolean).join('\n')
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5',
-      max_tokens: 300,
-      system,
-      messages: [{ role: 'user', content: userContent }],
-    }),
-  })
-
-  if (!res.ok) {
-    const errText = await res.text()
-    throw new Error(`Anthropic ${res.status}: ${errText.slice(0, 200)}`)
+  let text = ''
+  try {
+    const r = await callClaude({ model: ASSESSMENT_MODEL, maxTokens: 300, system, messages: [{ role: 'user', content: userContent }] })
+    text = textOf(r.content)
+    await logCall(sb, { app: 'herb', ref: `company:${(co as any).id ?? co.name}`, kind: 'thesis_note', model: r.model, usage: r.usage, stop_reason: r.stop_reason, ms: r.ms })
+  } catch (e: any) {
+    await logCall(sb, { app: 'herb', ref: `company:${(co as any).id ?? co.name}`, kind: 'thesis_note', model: ASSESSMENT_MODEL, ok: false, error: String(e?.message ?? e) })
+    throw e
   }
-
-  const json = await res.json()
-  const text: string = json?.content?.[0]?.text?.trim() ?? ''
   if (!text) return null
 
   // Wrap as Pipedrive-friendly HTML with a header so the user can tell what it is.

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireUser } from '@/lib/api-auth'
+import { requireUser, serviceClient } from '@/lib/api-auth'
+import { callClaude, jsonOf, textOf, logCall } from '@/lib/icos-llm'
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY!
+// Opus 4.8 for the confirm-gate extraction: this preview stands in front of expensive
+// multi-hour searches, so max reasoning quality on decomposing the mandate into keywords +
+// must-haves is worth the small per-call cost and the few extra seconds of dialog latency.
+const MODEL = 'claude-opus-4-8'
 
 /**
  * Fast, synchronous preview of what a mandate will actually search for —
@@ -102,38 +107,24 @@ exclusions: anything explicitly ruled out inline (e.g. "not already in our pipel
       seedCompanies && `Example companies already known to fit: ${seedCompanies}`,
     ].filter(Boolean).join('\n')
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        // Opus 4.8 for the confirm-gate extraction: this preview stands in
-        // front of expensive multi-hour searches, so max reasoning quality on
-        // decomposing the mandate into keywords + must-haves is worth the small
-        // per-call cost and the few extra seconds of dialog latency.
-        model: 'claude-opus-4-8',
-        max_tokens: 600,
-        system,
-        messages: [{ role: 'user', content: userContent }],
-      }),
-    })
-    if (!res.ok) {
-      const errText = await res.text()
-      console.error('[preview-plan] Anthropic error:', res.status, errText.slice(0, 300))
-      return NextResponse.json({ error: `Plan extraction failed (${res.status})` }, { status: 502 })
-    }
-    const json = await res.json()
-    const raw: string = json?.content?.[0]?.text?.trim() ?? '{}'
-    let extracted: { must_haves?: string[]; exclusions?: string[]; query_terms?: string[] } = {}
+    const sb = serviceClient()
+    let r
     try {
-      extracted = JSON.parse(raw.replace(/^```(json)?/i, '').replace(/```$/, '').trim())
-    } catch (parseErr) {
-      console.error('[preview-plan] JSON parse failed:', raw.slice(0, 300))
+      r = await callClaude({ model: MODEL, maxTokens: 600, system, messages: [{ role: 'user', content: userContent }] })
+      await logCall(sb, { app: 'herb', kind: 'preview_plan', model: r.model, usage: r.usage, stop_reason: r.stop_reason, ms: r.ms })
+    } catch (e: any) {
+      console.error('[preview-plan] Anthropic error:', e?.status ?? '', String(e?.message ?? e).slice(0, 300))
+      await logCall(sb, { app: 'herb', kind: 'preview_plan', model: MODEL, ok: false, error: String(e?.message ?? e) })
+      return NextResponse.json({ error: `Plan extraction failed (${e?.status ?? 'error'})` }, { status: 502 })
+    }
+    type Plan = { must_haves?: string[]; exclusions?: string[]; query_terms?: string[] }
+    // jsonOf strips a ```json fence and tolerates prose around the object.
+    const parsed = jsonOf<Plan>(r.content)
+    if (!parsed) {
+      console.error('[preview-plan] JSON parse failed:', textOf(r.content).slice(0, 300))
       return NextResponse.json({ error: 'Could not parse extracted plan' }, { status: 502 })
     }
+    const extracted: Plan = parsed
 
     // Safety net: query_terms should never come back empty for a real mandate
     // (unlike must_haves, which is legitimately empty for plain-topic mandates).

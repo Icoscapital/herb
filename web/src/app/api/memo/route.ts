@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser, serviceClient } from '@/lib/api-auth'
+import { callClaude, textOf, logCall } from '@/lib/icos-llm'
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY!
+const MODEL = 'claude-sonnet-5'
 
 /**
  * IC one-pager: composes a partner-meeting-ready memo for one longlist
@@ -63,27 +65,16 @@ Rules: facts from the provided data only — never invent numbers, customers, or
       co.deep_dive && `Deep-dive research:\n${co.deep_dive}`,
     ].filter(Boolean).join('\n')
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 1200,
-        system,
-        messages: [{ role: 'user', content: userContent }],
-      }),
-    })
-    if (!res.ok) {
-      const errText = await res.text()
-      console.error('[memo] Anthropic error:', res.status, errText.slice(0, 300))
-      return NextResponse.json({ error: `Memo generation failed (${res.status})` }, { status: 502 })
+    let memo = ''
+    try {
+      const r = await callClaude({ model: MODEL, maxTokens: 1200, system, messages: [{ role: 'user', content: userContent }] })
+      memo = textOf(r.content)
+      await logCall(sb, { app: 'herb', ref: `company:${company_id}`, kind: 'memo', model: r.model, usage: r.usage, stop_reason: r.stop_reason, ms: r.ms })
+    } catch (e: any) {
+      console.error('[memo] Anthropic error:', e?.status ?? '', String(e?.message ?? e).slice(0, 300))
+      await logCall(sb, { app: 'herb', ref: `company:${company_id}`, kind: 'memo', model: MODEL, ok: false, error: String(e?.message ?? e) })
+      return NextResponse.json({ error: `Memo generation failed (${e?.status ?? 'error'})` }, { status: 502 })
     }
-    const json = await res.json()
-    const memo: string = json?.content?.[0]?.text?.trim() ?? ''
     if (!memo) {
       return NextResponse.json({ error: 'Empty memo returned' }, { status: 502 })
     }
