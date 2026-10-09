@@ -5,8 +5,10 @@
  * server-side) and returns the authenticated user's id. Returns null on any
  * failure — callers should respond 401.
  *
- * Use `requireRunOwner` to also assert that the run referenced in the request
- * belongs to the authenticated user.
+ * Use `requireRunAccess` to also assert that the run referenced in the request
+ * exists. Searches are team-shared: any signed-in user may edit, re-run, score
+ * or give feedback on any run, not just the one who created it. `user_id` on a
+ * run records the creator and is never used as an access check.
  */
 import { NextRequest } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
@@ -34,10 +36,10 @@ export function serviceClient(): SupabaseClient {
 }
 
 /**
- * Verify the caller is authenticated AND owns the referenced run.
+ * Verify the caller is authenticated and the referenced run exists.
  * Returns { userId, run } on success, null otherwise.
  */
-export async function requireRunOwner(
+export async function requireRunAccess(
   req: NextRequest,
   runId: string,
   selectColumns = '*'
@@ -51,9 +53,5 @@ export async function requireRunOwner(
     .eq('id', runId)
     .single()
   if (error || !run) return null
-  if ((run as any).user_id && (run as any).user_id !== userId) {
-    console.error(`[api-auth] user ${userId} attempted to access run ${runId} owned by ${(run as any).user_id}`)
-    return null
-  }
   return { userId, run }
 }

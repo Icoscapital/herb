@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireRunOwner, serviceClient } from '@/lib/api-auth'
+import { requireRunAccess, serviceClient } from '@/lib/api-auth'
 
 const GH_PAT = process.env.GITHUB_PAT!
 const GH_REPO = 'Icoscapital/herb'
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'run_id required' }, { status: 400 })
     }
 
-    const owner = await requireRunOwner(req, run_id, 'id, status, theme, user_id')
+    const owner = await requireRunAccess(req, run_id, 'id, status, theme, user_id')
     if (!owner) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

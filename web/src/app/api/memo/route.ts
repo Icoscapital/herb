@@ -28,14 +28,11 @@ export async function POST(req: NextRequest) {
     const sb = serviceClient()
     const { data: co, error } = await sb
       .from('herb_longlist')
-      .select('*, herb_runs!inner(theme, user_id)')
+      .select('*, herb_runs!inner(theme)')
       .eq('id', company_id)
       .single()
     if (error || !co) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 })
-    }
-    if ((co.herb_runs as any)?.user_id && (co.herb_runs as any).user_id !== userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const system = `You write one-page investment committee pre-memos for Icos Capital, a European deeptech VC (thesis: food/nutrition, specialty chemicals, advanced materials, industry AI, CCUS; strategic LPs: Nouryon, Bühler, FrieslandCampina).

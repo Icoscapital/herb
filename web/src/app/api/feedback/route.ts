@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireRunOwner, serviceClient } from '@/lib/api-auth'
+import { requireRunAccess, serviceClient } from '@/lib/api-auth'
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,8 +8,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'run_id required' }, { status: 400 })
     }
 
-    // Verify caller is authenticated AND owns the original run
-    const owner = await requireRunOwner(req, run_id, '*')
+    // Verify caller is authenticated (searches are team-shared)
+    const owner = await requireRunAccess(req, run_id, '*')
     if (!owner) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

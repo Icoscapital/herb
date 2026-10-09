@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'PIPEDRIVE_TOKEN not configured' }, { status: 500 })
     }
 
-    // Auth: caller must be signed in and own the run this company belongs to
+    // Auth: caller must be signed in (searches are team-shared)
     const userId = await requireUser(req)
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
@@ -71,17 +71,6 @@ export async function POST(req: NextRequest) {
       .single()
     if (fetchErr || !co) {
       return NextResponse.json({ ok: false, error: 'company not found' }, { status: 404 })
-    }
-
-    // Verify the user owns the parent run
-    const { data: parentRun } = await sb
-      .from('herb_runs')
-      .select('user_id')
-      .eq('id', co.run_id)
-      .single()
-    if (parentRun?.user_id && parentRun.user_id !== userId) {
-      console.error(`[push-to-pipedrive] user ${userId} attempted push for company ${company_id} in run owned by ${parentRun.user_id}`)
-      return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 })
     }
 
     // 2. Search for existing org by name

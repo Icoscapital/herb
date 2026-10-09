@@ -157,12 +157,21 @@ export async function DELETE(req: NextRequest) {
     const { path } = await req.json()
     if (!path) return NextResponse.json({ error: 'No path' }, { status: 400 })
 
-    // Security: path must belong to this user
+    const sb = serviceClient()
+
+    // Security: your own uploads, or a file attached to a search (searches are
+    // team-shared). Global check-sites lists stay personal.
     if (!path.startsWith(`mandates/${userId}/`)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      const { data: rec } = await sb
+        .from('herb_files')
+        .select('is_global')
+        .eq('path', path)
+        .maybeSingle()
+      if (!rec || rec.is_global) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
 
-    const sb = serviceClient()
     const { error } = await sb.storage.from('herb-uploads').remove([path])
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
